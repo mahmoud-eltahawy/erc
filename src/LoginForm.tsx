@@ -1,8 +1,10 @@
 import { invoke } from '@tauri-apps/api/tauri';
-import { BaseSyntheticEvent, useRef, useEffect, useState } from 'react';
+import { BaseSyntheticEvent, useRef, useEffect } from 'react';
+import { useEmployee, useEmployeeUpdate } from './employeeProvider';
 
 export default function LoginForm(){
-  let [current_employee, setEmployee] = useState(null)
+  const current_employee = useEmployee()
+  const setEmployee = useEmployeeUpdate()
   const formR = useRef<HTMLFormElement>(null)
   const cardR = useRef<HTMLInputElement>(null)
   const passwordR = useRef<HTMLInputElement>(null)

@@ -1,11 +1,14 @@
 import LoginForm from './LoginForm'
 import ShiftIdentity from './ShiftIdentity'
+import {EmployeeProvider} from './employeeProvider'
 
 function App() {
   return (
       <section>
         <ShiftIdentity/>
-        <LoginForm/>
+        <EmployeeProvider>
+          <LoginForm/>
+        </EmployeeProvider>
       </section>
   );
 }
