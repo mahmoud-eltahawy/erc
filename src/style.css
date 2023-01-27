@@ -1,0 +1,72 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Montserrat", sans-serif;
+  text-align: center;
+}
+
+body {
+  padding: 20px;
+  min-height: 100vh;
+  background-image: url('./assets/errc-wallpaper.webp');
+}
+
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+
+  color: #0f0f0f;
+  background-color: gray;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+button,
+input {
+  display: inline-block;
+  width: 350px;
+  margin: 20px auto;
+  padding: 10px 45px;
+  background-size: 15px 15px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 2px 5px -1px,
+    rgba(0, 0, 0, 0.3) 0px 1px 3px -1px;
+}
+
+button {
+  background-color: rgb(97, 62, 252);
+  color:#f6f6f6;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color:#f6f6f6;
+  color: #0f0f0f;
+  border-color: #396cd8;
+}
+
+input,
+button {
+  outline: none;
+}
+
+.shiftIdContainer{
+  display: flex;
+  font-size: xx-large;
+}
+.shiftIdMember{
+  display: inline-block;
+  padding: .5em;
+  margin: .3em auto;
+  border: 2px solid;
+  border-bottom-left-radius: 20px;
+}
