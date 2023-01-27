@@ -1,9 +1,12 @@
-import "./App.css";
+import LoginForm from './LoginForm'
 import ShiftIdentity from './ShiftIdentity'
 
 function App() {
   return (
-      <ShiftIdentity/>
+      <section>
+        <ShiftIdentity/>
+        <LoginForm/>
+      </section>
   );
 }
 
