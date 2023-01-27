@@ -1,6 +1,7 @@
 import LoginForm from './LoginForm'
 import ShiftIdentity from './ShiftIdentity'
 import {EmployeeProvider} from './employeeProvider'
+import Wall from './Wall';
 
 function App() {
   return (
@@ -8,6 +9,11 @@ function App() {
         <ShiftIdentity/>
         <EmployeeProvider>
           <LoginForm/>
+          <Wall>
+            <button>اضافة عطل</button>
+            <button>اضافة موظف</button>
+            <button>اظهار الاعطال</button>
+          </Wall>
         </EmployeeProvider>
       </section>
   );

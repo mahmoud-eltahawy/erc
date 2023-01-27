@@ -32,6 +32,8 @@ export default function LoginForm(){
   useEffect(() => {
       if(current_employee){
           formR.current!.style.display = "none"
+      } else {
+          formR.current!.style.display = "block"
       }
   },[current_employee])
 

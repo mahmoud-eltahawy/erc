@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react'
+import { Employee } from './main'
 
-const employeeContext = React.createContext<any>(null)
+const employeeContext = React.createContext<Employee | null>(null)
 const employeeUpdateContext = React.createContext<any>(null)
 
 export function useEmployee(){
@@ -12,7 +13,7 @@ export function useEmployeeUpdate(){
 }
 
 export function EmployeeProvider(probs:{children : any}){
-    const [employee,setEmployee] = useState<any>(null)
+    const [employee,setEmployee] = useState<Employee | null>(null)
 
     return (
         <employeeContext.Provider value={employee}>

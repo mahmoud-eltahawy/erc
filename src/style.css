@@ -60,15 +60,44 @@ button {
 }
 
 .shiftIdContainer{
+  margin: 0px;
+  padding: 0px;
   display: flex;
-  font-size: xx-large;
+  font-size: large;
 }
 .shiftIdMember{
   display: inline-block;
+  margin: 0px auto;
+  padding: .5em;
+  border: 2px solid;
+  border-bottom-left-radius: 20px;
+}
+
+.LogoutButton{
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  background-color: transparent;
+  width: 10%;
   padding: .5em;
   margin: .3em auto;
   border: 2px solid;
-  border-bottom-left-radius: 20px;
+  border-color: black;
+  color: black;
+  border-top-left-radius: 20px;
+}
+.NameP{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  background-color: transparent;
+  width: 15%;
+  padding: .5em;
+  margin: .3em auto;
+  border: 2px solid;
+  border-color: black;
+  color: black;
+  border-top-right-radius: 20px;
 }
 .LoginFormContainer{
    display: block;

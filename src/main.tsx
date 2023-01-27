@@ -8,3 +8,15 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <App />
   </React.StrictMode>
 );
+
+
+export type Employee = {
+    id            : string,
+    card_id       : string,
+    department_id : string,
+    first_name    : string,
+    middle_name   : string,
+    last_name     : string,
+    password      : string,
+    position      : string,
+}
