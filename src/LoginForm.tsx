@@ -1,11 +1,9 @@
 import { invoke } from '@tauri-apps/api/tauri';
-import { BaseSyntheticEvent, useRef, useEffect } from 'react';
-import { useEmployee, useEmployeeUpdate } from './employeeProvider';
+import { BaseSyntheticEvent, useRef } from 'react';
+import { useEmployeeUpdate } from './employeeProvider';
 
 export default function LoginForm(){
-  const current_employee = useEmployee()
   const setEmployee = useEmployeeUpdate()
-  const formR = useRef<HTMLFormElement>(null)
   const cardR = useRef<HTMLInputElement>(null)
   const passwordR = useRef<HTMLInputElement>(null)
 
@@ -29,16 +27,9 @@ export default function LoginForm(){
       cardC.focus()
   }
 
-  useEffect(() => {
-      if(current_employee){
-          formR.current!.style.display = "none"
-      } else {
-          formR.current!.style.display = "block"
-      }
-  },[current_employee])
 
   return (
-    <section ref={formR} className={"LoginFormContainer"}>
+    <section className={"LoginFormContainer"}>
       <form onSubmit={handleSubmit}>
         <input ref={cardR} className={"LoginFormInput"} type="number" placeholder="رقم التعريف" required/>
         <input ref={passwordR} className={"LoginFormInput"} type="password" placeholder="كلمة السر" required/>

@@ -1,13 +1,20 @@
 import { useMemo, useState } from "react"
 import { Name } from "./main"
 
-export function SearchBar(props : {defaultPlaceholder   : string,
-                                   resultPlaceholder    : string,
-                                   mtMessage            : string,
-                                   nyMessage            : string,
-                                   isMulti              : boolean,
-                                   optionsList          : Name[]}){
-  const {defaultPlaceholder,resultPlaceholder,mtMessage,nyMessage,isMulti,optionsList} = props
+export function SearchBar({
+    defaultPlaceholder,
+    resultPlaceholder,
+    mtMessage,
+    nyMessage = null,
+    isMulti,
+    optionsList
+} : {
+    defaultPlaceholder   : string,
+    resultPlaceholder    : string,
+    mtMessage            : string,
+    nyMessage            : string | null,
+    isMulti              : boolean,
+    optionsList          : Name[]}){
 
   const theInterval = 450
   const [selectViewDisplay,setSelectViewDisplay]        = useState(false)
@@ -88,7 +95,7 @@ export function SearchBar(props : {defaultPlaceholder   : string,
               } >{chosen.name}</option>
             )
           }
-        {!chosens.length? disabledOption(nyMessage) : <></>}
+        {!chosens.length? disabledOption(nyMessage!) : <></>}
         </select>
 
   const searchView = <section

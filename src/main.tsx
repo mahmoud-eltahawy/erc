@@ -1,11 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { EmployeeProvider } from "./employeeProvider";
 import "./style.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <EmployeeProvider>
+      <App/>
+    </EmployeeProvider>
   </React.StrictMode>
 );
 
@@ -24,4 +27,13 @@ export type Employee = {
 export type Name = {
   id   : string,
   name : string
+}
+
+export type ProblemDeps = {
+    machines  : Name[],
+    employees : Name[],
+    spareParts: Name[],
+    problems  : Name[],
+    shiftBegin: string,
+    shiftEnd  : string
 }
