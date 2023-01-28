@@ -113,3 +113,35 @@ button {
    background-color:beige;
    border: solid 3px;
 }
+
+::placeholder{
+  color: black;
+}
+.searchBarContainer{
+  display: block;
+  padding: .1em;
+  margin: .2em auto;
+  border: solid 3px;
+}
+.searchBarView{
+  display: flex;
+  padding: .1em;
+  margin: .3em auto;
+}
+.searchBarViewMember{
+  display: inline-block;
+  font-size: 20px;
+  margin: .1em auto;
+  width: 40%;
+  background-color:lightyellow;
+  color: black;
+  border: solid 3px;
+}
+.insertField{
+  display: block;
+  background-color: transparent;
+  font-size: 24px;
+  width: 70%;
+  padding: .1em;
+  margin: .1em auto;
+}

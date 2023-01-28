@@ -11,12 +11,17 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
 
 
 export type Employee = {
-    id            : string,
-    card_id       : string,
-    department_id : string,
-    first_name    : string,
-    middle_name   : string,
-    last_name     : string,
-    password      : string,
-    position      : string,
+  id            : string,
+  card_id       : string,
+  department_id : string,
+  first_name    : string,
+  middle_name   : string,
+  last_name     : string,
+  password      : string,
+  position      : string,
+}
+
+export type Name = {
+  id   : string,
+  name : string
 }
