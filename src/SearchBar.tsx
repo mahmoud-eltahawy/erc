@@ -16,15 +16,15 @@ export function SearchBar({
     isMulti              : boolean,
     optionsList          : Name[]}){
 
-  const theInterval = 450
-  const [selectViewDisplay,setSelectViewDisplay]        = useState(false)
-  const [isSearching,setIsSearching]                    = useState(false)
+  const wildChar = ' '
   const [target, setTarget]                             = useState('')
   const [list,setList]                                  = useState(optionsList)
   const [chosens,setChosens]                            = useState<Name[]>([])
   const filtered = useMemo<Name[]>(() => {
-      return list.filter(membr => membr.name.includes(target))
+      return list.filter(membr => membr.name.includes(target) || target === wildChar)
     }, [target,list])
+
+  const showSelectView = target.length > 0 || target === wildChar
 
   const getChosenOne = () => {
     if(chosens[0]){
@@ -39,51 +39,30 @@ export function SearchBar({
   }
 
   const headInput = <input
-    onMouseOver={() => setIsSearching(true)}
-    onInput={() => setIsSearching(true)}
-    onFocus={() => setIsSearching(true)}
-    onMouseLeave={() => {
-        if(!selectViewDisplay){
-          setInterval(() => {
-            setIsSearching(false)
-          },theInterval)
-        }
-      }
-    }
     placeholder={isMulti ? `${resultPlaceholder} : ${chosens.length}` :  getChosenOne()}
     className={"insertField"}
     type="text"
     value={target}
     onChange={e => setTarget(e.currentTarget.value)} />
 
-    const choiceSelect = <select
-          multiple className="searchBarViewMember">
-          {
-            filtered
-              .map(member => <option onClick={() => {
-                setChosens(chosens => {
-                    setTarget('')
-                    if(isMulti){
-                      if (!chosens.includes(member)){
-                        chosens.unshift(member)
-                      }
-                      return chosens
-                    }
-                    return [member]
-                  })
-                  if(isMulti){
-                    setList(list => list.filter(m => m !== member))
-                  }
-                }} key={member.id} >{member.name}</option>)
-          }
-          {!filtered.length? disabledOption(mtMessage): <></>}
-        </select>
 
-  const resultSelect = <select multiple className="searchBarViewMember">
-          {
-            chosens
-              .map(chosen =>
-                <option key={chosen.id} onClick={() => {
+  const choiceOptionHandler = (member : Name) => {
+                setChosens(chosens => {
+                  if(isMulti){
+                    if (!chosens.includes(member)){
+                      chosens.unshift(member)
+                    }
+                    return chosens
+                  }
+                  return [member]
+                })
+                if(isMulti){
+                  setList(list => list.filter(m => m !== member))
+                } else {
+                  setTarget('')
+                }
+              }
+  const resultOptionHandler = (chosen : Name) => {
                   setChosens(chosens => chosens.filter(c => c.id !== chosen.id))
                   setList(list => {
                     if (!list.includes(chosen)){
@@ -92,32 +71,35 @@ export function SearchBar({
                     return list
                   })
                 }
-              } >{chosen.name}</option>
-            )
+  const choiceSelect = <select
+          multiple className="searchBarViewMember">
+          {
+            filtered
+              .map(member => <option
+                    onClick={() => choiceOptionHandler(member)}
+                    key={member.id} >{member.name}
+              </option>)
+          }
+          {!filtered.length? disabledOption(mtMessage): <></>}
+        </select>
+
+  const resultSelect = <select multiple className="searchBarViewMember">
+          {
+            chosens.map(chosen =>
+                <option key={chosen.id}
+                    onClick={() => resultOptionHandler(chosen)}
+                >{chosen.name}</option>)
           }
         {!chosens.length? disabledOption(nyMessage!) : <></>}
         </select>
 
-  const searchView = <section
-        onMouseOver={()  => setSelectViewDisplay(true)}
-        onFocus={()      => setSelectViewDisplay(true)}
-        onMouseLeave={() => {
-            if(!isSearching){
-              setInterval(() => {
-                  setSelectViewDisplay(false)
-              },theInterval)
-            }
-          }
-        }
-        className="searchBarView">
-      {isMulti  ? resultSelect : <></>}
-      {choiceSelect}
-    </section>
+  const searchView = <section className="searchBarView">
+      {isMulti  ? resultSelect : <></>} {choiceSelect} </section>
 
   return (
     <div className={"searchBarContainer"} >
       {headInput}
-      {selectViewDisplay || isSearching || target.length > 0 ? searchView : <></>}
+      {showSelectView ? searchView : <></>}
     </div>
   )
 }

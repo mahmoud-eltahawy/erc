@@ -1,14 +1,13 @@
-import { invoke } from "@tauri-apps/api"
-import { BaseSyntheticEvent, useEffect, useState } from "react"
-import { Name, ProblemDeps } from "./main"
+import { BaseSyntheticEvent, useState } from "react"
+import { ProblemDeps } from "./main"
 import { SearchBar } from "./SearchBar"
 
 export default function ProblemForm({deps} : {deps : ProblemDeps}){
     const { employees, machines,spareParts, problems,shiftBegin,shiftEnd} = deps
     const [writtenNote,setWrittenNote] = useState('')
     const [displayNote,setDisplayNote] = useState(false)
-    const [beginTime,setBeginTime]     = useState('')
-    const [endTime,setEndTime]         = useState('')
+    const [beginTime,setBeginTime]     = useState(shiftBegin)
+    const [endTime,setEndTime]         = useState(shiftEnd)
 
     const handleSubmit = (e: BaseSyntheticEvent) => { e.preventDefault() }
 
