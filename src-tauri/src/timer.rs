@@ -1,4 +1,12 @@
-use chrono::{ Local , NaiveDateTime };
+use chrono::{ Local , NaiveDateTime, NaiveTime, NaiveDate };
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize,Deserialize,Clone)]
+pub enum ShiftOrder {
+  FIRST  = 1,
+  SECOND = 2,
+  THIRD  = 3
+}
 
 const SECOND       : i64 = 1000;
 const MINUTE       : i64 = 60 * SECOND;
@@ -28,7 +36,7 @@ fn get_time_zone_value() -> i64 {
   }
 }
 
-fn get_order_begin(now : i64,order : u8) -> i64 {
+fn get_order_begin(now : i64,order : ShiftOrder) -> i64 {
   let order_one_begin = (now - (now % DAY)) + SHIFT_DELAY;
   order_one_begin + (order as i64 - 1) * SHIFT_TIME
 }
@@ -43,25 +51,48 @@ pub fn get_relative_now() -> i64{
   Local::now().timestamp_millis() + time_shifting
 }
 
-pub fn get_current_order(now : i64) -> u8{
-  for order in 1..=SHIFTS_NUMBER{
-    if now > get_order_begin(now,order as u8) && now <= get_order_begin(now,order as u8 +1){
-      return order as u8;
-    }
+pub fn get_current_order(now : i64) -> ShiftOrder{
+  let second_begin = get_order_begin(now, ShiftOrder::SECOND);
+  if now > get_order_begin(now, ShiftOrder::FIRST)  && now <=second_begin {
+    ShiftOrder::FIRST
+  } else if now > second_begin && now <= get_order_begin(now, ShiftOrder::THIRD){
+    ShiftOrder::SECOND
+  } else {
+    ShiftOrder::THIRD
   }
-  return 0;
 }
 
-pub fn get_current_date(now : i64) -> Option<String>{
+pub fn get_current_date(now : i64) -> Option<NaiveDate>{
   let date = NaiveDateTime::from_timestamp_millis(now)?.to_string();
-  Some(date[0..10].to_owned())
+
+  let year : i32 = match date[0..4].to_string().parse() {
+    Ok(result) => result,
+    Err(_)     => return None
+  };
+  let month : u32 = match date[5..7].to_string().parse() {
+    Ok(result) => result,
+    Err(_)     => return None
+  };
+  let day : u32 = match date[8..10].to_string().parse() {
+    Ok(result) => result,
+    Err(_)     => return None
+  };
+
+  NaiveDate::from_ymd_opt(year, month, day)
 }
 
-pub fn get_current_shift_borders(order : u8) -> Option<(String,String)>{
-  let now = Local::now().timestamp_millis();
-  let shift_begin = now - (now % DAY) + order as i64 * SHIFT_TIME;
-  let shift_end   = NaiveDateTime::from_timestamp_millis(shift_begin + SHIFT_TIME)?.to_string();
-  let shift_begin = NaiveDateTime::from_timestamp_millis(shift_begin)?.to_string();
+fn get_seconds_and_nanos(milis : u32) -> (u32,u32) {
+  let milis = milis as i64 % DAY;
+  let nanos = milis % SECOND;
+  (milis as u32 / 1000,nanos as u32)
+}
 
-  Some((shift_begin[11..16].to_string(),shift_end[11..16].to_string()))
+pub fn get_shift_borders(order : ShiftOrder) -> (Option<NaiveTime>,Option<NaiveTime>){
+  let shift_begin_milis = order as i64 * SHIFT_TIME;
+  let (bs,bn) = get_seconds_and_nanos(shift_begin_milis as u32);
+  let shift_begin = NaiveTime::from_num_seconds_from_midnight_opt(bs,bn);
+  let (es,en) = get_seconds_and_nanos(shift_begin_milis as u32 + SHIFT_TIME as u32);
+  let shift_end = NaiveTime::from_num_seconds_from_midnight_opt(es,en);
+
+  (shift_begin,shift_end)
 }

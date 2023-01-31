@@ -1,9 +1,10 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { BaseSyntheticEvent, useRef } from 'react';
-import { useEmployeeUpdate } from './employeeProvider';
+import { useEmployeeAndShiftIDUpdate } from './employeeProvider';
+import { Employee } from './main';
 
 export default function LoginForm(){
-  const setEmployee = useEmployeeUpdate()
+  const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
   const cardR = useRef<HTMLInputElement>(null)
   const passwordR = useRef<HTMLInputElement>(null)
 
@@ -13,9 +14,7 @@ export default function LoginForm(){
     let passwordC = passwordR.current!
     invoke('login',{cardId: +cardC.value,password: passwordC.value})
       .then(() => invoke('check_login')
-        .then(employee => {
-          setEmployee(employee as any)
-        })
+        .then(employee_and_id => setEmployeeAndShiftId(employee_and_id as [Employee,string]))
       .catch(err =>{
           alert(err);
       }))

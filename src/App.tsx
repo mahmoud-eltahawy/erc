@@ -1,23 +1,23 @@
 import LoginForm from './LoginForm'
 import ShiftIdentity from './ShiftIdentity'
-import {useEmployee, useEmployeeUpdate} from './employeeProvider'
+import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from './employeeProvider'
 import Wall from './Wall';
 import { useEffect } from 'react';
 import { invoke } from '@tauri-apps/api';
 
 function App() {
-  const employee    = useEmployee()
-  const setEmployee = useEmployeeUpdate()
+  const [employee,shiftId]    = useEmployeeAndShiftID()
+  const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
 
   useEffect(() => {
     invoke('check_login')
-      .then(emp => setEmployee(emp))
+      .then(emp => setEmployeeAndShiftId(emp))
       .catch(err => console.log(err))
   },[])
   return (
     <section>
       <ShiftIdentity/>
-      {employee ? <Wall/> : <LoginForm/>}
+      {employee && shiftId ? <Wall/> : <LoginForm/>}
     </section>
   );
 }

@@ -1,3 +1,5 @@
+use crate::timer::ShiftOrder;
+
 pub fn translate_date(date : String) -> Vec<String> {
   return date.split('-').into_iter().map(|num| {
     let mut new_num = String::from("");
@@ -9,12 +11,11 @@ pub fn translate_date(date : String) -> Vec<String> {
   }).rev().collect();
 }
 
-pub fn translate_order(order : u8) -> String{
+pub fn translate_order(order : &ShiftOrder) -> String{
   match order {
-    1 => "الاولي".to_owned(),
-    2 => "الثانية".to_owned(),
-    3 => "الثالثة".to_owned(),
-    _ => "غير معرف".to_owned(),
+    ShiftOrder::FIRST => "الاولي".to_owned(),
+    ShiftOrder::SECOND => "الثانية".to_owned(),
+    ShiftOrder::THIRD => "الثالثة".to_owned(),
   }
 }
 

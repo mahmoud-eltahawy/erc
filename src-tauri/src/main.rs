@@ -5,23 +5,25 @@
 
 use std::sync::Mutex;
 
+use chrono::NaiveTime;
 use errc::{
-  model::Employee,
-  timer::{get_relative_now, get_current_date, get_current_order, get_current_shift_borders},
+  model::{Employee, ProblemDetail},
+  timer::{get_relative_now, get_current_date, get_current_order, get_shift_borders, ShiftOrder},
   translator::{
     translate_date,
     translate_order
   },
-  api::{auth::login_req, for_selection::{all_employees, Name, all_problems, all_machines, all_spare_parts}}
+  api::{auth::login_req, for_selection::{all_employees, Name, all_problems, all_machines, all_spare_parts}, persistence}
 };
+use uuid::Uuid;
 
 #[tauri::command]
 fn update_current_shift(state : tauri::State<'_,Mutex<Option<(String,Vec<String>)>>>,
-now : tauri::State<'_,Mutex<i64>>,order : tauri::State<'_,Mutex<u8>>) -> Result<(),String> {
+now : tauri::State<'_,Mutex<i64>>,order : tauri::State<'_,Mutex<ShiftOrder>>) -> Result<(),String> {
   let now = *now.lock().unwrap();
   match get_current_date(now) {
     Some(date) => {
-      *state.lock().unwrap() = Some((translate_order(*order.lock().unwrap()),translate_date(date)));
+      *state.lock().unwrap() = Some((translate_order(&*order.lock().unwrap()),translate_date(date.to_string())));
       Ok(())
     },
     None               => Err("مشكلة داخلية في تحديث التاريخ".to_owned())
@@ -37,18 +39,19 @@ fn current_shift(state : tauri::State<'_,Mutex<Option<(String,Vec<String>)>>>) -
 }
 
 #[tauri::command]
-fn current_shift_borders(state : tauri::State<'_,Mutex<Option<(String,String)>>>) -> Result<(String, String), String> {
-  match &*state.lock().unwrap() {
-    Some((begin,end)) => Ok((begin.to_owned(),end.to_owned())),
-    None              => Err("مشكلة في تحديث الوقت".to_string())
+fn current_shift_borders(state : tauri::State<'_,Mutex<(Option<NaiveTime>,Option<NaiveTime>)>>) -> Result<(NaiveTime, NaiveTime), String> {
+  if let (Some(begin),Some(end)) = &*state.lock().unwrap() {
+      Ok((begin.to_owned(),end.to_owned()))
+  } else {
+      Err("مشكلة في تحديث الوقت".to_string())
   }
 }
 
 #[tauri::command]
-async fn login(state : tauri::State<'_,Mutex<Option<Employee>>>,card_id: i16,password: String) -> Result<(),String> {
+async fn login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,card_id: i16,password: String) -> Result<(),String> {
   match login_req(card_id, password).await {
-    Ok(employee) => {
-      *state.lock().unwrap() = Some(employee);
+    Ok((employee,id)) => {
+      *state.lock().unwrap() = Some((employee,id));
       Ok(())
     },
     Err(_)     => Err("فشلت عملية تسجيل الدخول".to_string())
@@ -56,15 +59,24 @@ async fn login(state : tauri::State<'_,Mutex<Option<Employee>>>,card_id: i16,pas
 }
 
 #[tauri::command]
-async fn check_login(state : tauri::State<'_,Mutex<Option<Employee>>>) -> Result<Employee,String> {
+async fn save_problem_detail(problem_detail : ProblemDetail) -> Result<Uuid,String> {
+  println!("{:#?}",problem_detail);
+  match persistence::save_problem_detail(problem_detail).await {
+    Ok(id) => Ok(id),
+    Err(err)     => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+async fn check_login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>) -> Result<(Employee,Uuid),String> {
   match &*state.lock().unwrap() {
-    Some(employee) => Ok(employee.clone()),
+    Some((employee,id)) => Ok((employee.clone(),id.clone())),
     None     => Err("تحتاج الي تسجيل الدخول من جديد".to_string())
   }
 }
 
 #[tauri::command]
-fn logout(state : tauri::State<'_,Mutex<Option<Employee>>>) {
+fn logout(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>) {
   *state.lock().unwrap() = None;
 }
 
@@ -143,7 +155,6 @@ async fn spare_parts_selection(state : tauri::State<'_,SpareParts>) -> Result<Ve
     None     => Err("لم يتم تحديث قطع الغيار".to_string())
   }
 }
-
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn std::error::Error>>{
   launch_tauri().await?;
@@ -160,9 +171,9 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
   let order = get_current_order(relative_now);
   tauri::Builder::default()
     .manage(Mutex::new(relative_now))
-    .manage(Mutex::new(order))
-    .manage(Mutex::new(get_current_shift_borders(order)))
-    .manage(Mutex::new(None::<Employee>))
+    .manage(Mutex::new(order.clone()))
+    .manage(Mutex::new(get_shift_borders(order)))
+    .manage(Mutex::new(None::<(Employee,Uuid)>))
     .manage(Mutex::new(None::<(String,Vec<String>)>))
     .manage(Employees(Mutex::new(None::<Vec<Name>>)))
     .manage(Problems(Mutex::new(None::<Vec<Name>>)))
@@ -182,7 +193,8 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
       problems_selection,
       machines_selection,
       employees_selection,
-      spare_parts_selection
+      spare_parts_selection,
+      save_problem_detail,
     ])
     .run(tauri::generate_context!())?;
   Ok(())

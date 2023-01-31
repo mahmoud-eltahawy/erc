@@ -1,12 +1,12 @@
 import { invoke } from "@tauri-apps/api"
 import { useEffect, useState } from "react"
-import { useEmployee, useEmployeeUpdate } from "./employeeProvider"
+import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from "./employeeProvider"
 import { Name, ProblemDeps } from "./main"
 import ProblemForm from "./ProblemForm"
 
 export default function Wall(){
-  const employee = useEmployee()
-  const setEmployee = useEmployeeUpdate()
+  const [employee,shiftId] = useEmployeeAndShiftID()
+  const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
   const [shiftBegin,setShiftBegin]   = useState('')
   const [shiftEnd,setShiftEnd]       = useState('')
   const [machines  ,setMachines]     = useState<Name[]>([])
@@ -14,17 +14,24 @@ export default function Wall(){
   const [problems  ,setProblems]     = useState<Name[]>([])
   const [spareParts,setSpareParts]   = useState<Name[]>([])
   const [problemFormDeps,setProblemFormDeps] = useState<ProblemDeps>()
+  const [toggleButtons, setToggleButtons] = useState([
+      {id : 'problemAdd'   , display : false},
+      {id : 'problemDefine', display : false},
+      {id : 'problemsShow' , display : false}
+  ])
+
+  const [emptyPlayGround,setEmptyPlayGround] = useState(true)
 
   useEffect(() => {
-      const deps : ProblemDeps = {
-          machines : machines,
-          employees: employees,
-          problems : problems,
-          spareParts : spareParts,
-          shiftBegin : shiftBegin,
-          shiftEnd : shiftEnd
-      }
-      setProblemFormDeps(deps)
+    const deps : ProblemDeps = {
+        machines : machines,
+        employees: employees,
+        problems : problems,
+        spareParts : spareParts,
+        shiftBegin : shiftBegin,
+        shiftEnd : shiftEnd
+    }
+    setProblemFormDeps(deps)
   },[shiftBegin,shiftEnd,machines,employees,problems,spareParts])
 
   useEffect(() => {
@@ -73,16 +80,10 @@ export default function Wall(){
         .catch(err => console.log(err))
     },[])
 
-  const [toggleButtons, setToggleButtons] = useState([
-      {id : 'problemAdd'   , display : false},
-      {id : 'problemDefine', display : false},
-      {id : 'problemsShow' , display : false}
-  ])
-  const [emptyPlayGround,setEmptyPlayGround] = useState(true)
 
   const logout = () => {
     invoke('logout').then(
-      setEmployee(null)
+      setEmployeeAndShiftId([null,null])
     )
   }
 
@@ -117,7 +118,12 @@ export default function Wall(){
       <p className={"NameP"}>
           {employee ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` : ''}</p>
           {theButtons}
-      {toggleButtons[0].display ? <ProblemForm deps={problemFormDeps!} /> : <></>}
+      {toggleButtons[0].display ? <ProblemForm
+                                      shiftId={shiftId!}
+                                      writerId={employee!.id}
+                                      toggle={toggle}
+                                      id="problemAdd"
+                                      deps={problemFormDeps!} /> : <></>}
     </section>
   )
 }

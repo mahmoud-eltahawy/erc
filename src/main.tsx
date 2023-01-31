@@ -1,14 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { EmployeeProvider } from "./employeeProvider";
+import { EmployeeAndShiftIDProvider } from "./employeeProvider";
 import "./style.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <EmployeeProvider>
+    <EmployeeAndShiftIDProvider>
       <App/>
-    </EmployeeProvider>
+    </EmployeeAndShiftIDProvider>
   </React.StrictMode>
 );
 
@@ -23,6 +23,8 @@ export type Employee = {
   password      : string,
   position      : string,
 }
+
+export type EmployeeAndShiftID = [Employee,string]
 
 export type Name = {
   id   : string,

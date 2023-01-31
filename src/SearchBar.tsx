@@ -7,19 +7,21 @@ export function SearchBar({
     mtMessage,
     nyMessage = null,
     isMulti,
-    optionsList
+    optionsList,
+    dispatch
 } : {
     defaultPlaceholder   : string,
     resultPlaceholder    : string,
     mtMessage            : string,
     nyMessage            : string | null,
     isMulti              : boolean,
-    optionsList          : Name[]}){
+    optionsList          : Name[],
+    dispatch : [Name[],React.Dispatch<React.SetStateAction<Name[]>>]}){
 
   const wildChar = ' '
   const [target, setTarget]                             = useState('')
   const [list,setList]                                  = useState(optionsList)
-  const [chosens,setChosens]                            = useState<Name[]>([])
+  const [chosens,setChosens]                            = dispatch
   const filtered = useMemo<Name[]>(() => {
       return list.filter(membr => membr.name.includes(target) || target === wildChar)
     }, [target,list])

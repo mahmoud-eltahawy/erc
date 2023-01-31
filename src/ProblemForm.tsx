@@ -1,15 +1,66 @@
+import { invoke } from "@tauri-apps/api"
 import { BaseSyntheticEvent, useState } from "react"
-import { ProblemDeps } from "./main"
+import { Name, ProblemDeps } from "./main"
 import { SearchBar } from "./SearchBar"
 
-export default function ProblemForm({deps} : {deps : ProblemDeps}){
+export default function ProblemForm({
+    deps,
+    toggle,
+    id,
+    writerId,
+    shiftId
+} : {
+    deps : ProblemDeps,
+    toggle : Function,
+    id : string,
+    writerId : string,
+    shiftId  : string
+}){
     const { employees, machines,spareParts, problems,shiftBegin,shiftEnd} = deps
-    const [writtenNote,setWrittenNote] = useState('')
-    const [displayNote,setDisplayNote] = useState(false)
-    const [beginTime,setBeginTime]     = useState(shiftBegin)
-    const [endTime,setEndTime]         = useState(shiftEnd)
 
-    const handleSubmit = (e: BaseSyntheticEvent) => { e.preventDefault() }
+    const [displayNote,setDisplayNote] = useState(false)
+
+    const [beginTime       ,setBeginTime        ] = useState(shiftBegin)
+    const [endTime         ,setEndTime          ] = useState(shiftEnd)
+    const [chosenEmployees ,setChosenEmployees  ] = useState<Name[]>([])
+    const [chosenMachines  ,setChosenMachines   ] = useState<Name[]>([])
+    const [chosenSpareParts,setChosenSpareParts ] = useState<Name[]>([])
+    const [chosenProblems  ,setChosenProblems   ] = useState<Name[]>([])
+    const [writtenNote     ,setWrittenNote      ] = useState('')
+
+    const handleSubmit = (e: BaseSyntheticEvent) => {
+      e.preventDefault()
+      if (!chosenMachines[0]){
+          alert("يجب تحديد الالة التي تمت عليها الصيانة")
+          return;
+      }
+      if (!chosenEmployees[0]){
+          alert("يجب تحديد الموظف الذي قام بالصيانة")
+          return;
+      }
+      if (!chosenProblems.length){
+          alert("يجب تحديد مشكلة واحدة علي الاقل")
+          return;
+      }
+      invoke("save_problem_detail",{problemDetail : {
+        shift_id             : shiftId,
+        writer_id            : writerId,
+        maintainer_id        : chosenEmployees[0].id,
+        machine_id           : chosenMachines[0].id,
+        begin_time           : beginTime,
+        end_time             : endTime,
+        problems_ids         : chosenProblems.map(problem => problem.id),
+        spare_parts_ids      : chosenSpareParts.length ? chosenSpareParts.map(part => part.id) : null,
+        note                 : writtenNote ? writtenNote : null
+      }})
+      .then(shift_id => {
+          console.log(shift_id)
+      })
+      .catch(err => {
+          console.log(err)
+      })
+      toggle(id)
+    }
 
     const toggleNote   = () => {
         if(displayNote){
@@ -33,7 +84,7 @@ export default function ProblemForm({deps} : {deps : ProblemDeps}){
                onChange={e => setEndTime(e.currentTarget.value)}
                className={"problemFormTimeInput"}
                type="time"
-               min={shiftBegin}
+               min={beginTime}
                max={shiftEnd}
                required/>
         <label className="problemFormTimeLabel"><h4>وقت النهاية</h4></label>
@@ -44,37 +95,41 @@ export default function ProblemForm({deps} : {deps : ProblemDeps}){
                className={"problemFormTimeInput"}
                type="time"
                min={shiftBegin}
-               max={shiftEnd}
+               max={endTime}
                required/>
         <label className={"problemFormTimeLabel"}><h4>وقت البداية</h4></label>
       </div>
-      <SearchBar isMulti={false}
+        <SearchBar dispatch={[chosenMachines, setChosenMachines]}
+                 isMulti={false}
                  mtMessage="لا يوجد ماكينة بهذا الاسم"
                  defaultPlaceholder="ابحث عن الماكينة التي تمت عليها الصيانة"
                  resultPlaceholder="الماكينة"
                  optionsList={machines}
                  nyMessage={null}/>
-      <SearchBar isMulti={false}
+        <SearchBar dispatch={[chosenEmployees, setChosenEmployees]}
+                 isMulti={false}
                  mtMessage="لا يوجد موظف بهذا الاسم"
                  defaultPlaceholder="ابحث عن الموظف الذي قام بالصيانة"
                  resultPlaceholder="الموظف"
                  optionsList={employees}
                  nyMessage={null}/>
-      <SearchBar isMulti={true}
+        <SearchBar dispatch={[chosenProblems, setChosenProblems]}
+                 isMulti={true}
                  mtMessage="لا يوجد مشكلة بهذا الاسم"
                  defaultPlaceholder="ابحث عن مشكلة او مشاكل"
                  resultPlaceholder="عدد المشاكل"
                  optionsList={problems}
                  nyMessage={"لم يتم اختيار اي مشكلة حتي الان <اجباري> ا"}/>
-      <SearchBar isMulti={true}
+        <SearchBar dispatch={[chosenSpareParts, setChosenSpareParts]}
+                 isMulti={true}
                  mtMessage="لا توجد قطعة غيار بهذا الاسم"
                  defaultPlaceholder="ابحث عن قطع الغيار المستخدمة في الصيانة"
                  resultPlaceholder="عدد قطع الغيار المستخدمة"
                  optionsList={spareParts}
                  nyMessage={"لم يتم تسجيل اي قطع غيار <اختياري> ا"}/>
-      <button onClick={toggleNote} className={"problemFormButton"}>اضافة ملحوظة  { writtenNote.length }</button>
-      {displayNote ? noteArea : <></>}
-      <button type="submit">حفظ</button>
+        <button type="button" onClick={toggleNote} className={"problemFormButton"}>اضافة ملحوظة  { writtenNote.length }</button>
+        {displayNote ? noteArea : <></>}
+        <button type="submit">حفظ</button>
     </form>
   </div>
   )
