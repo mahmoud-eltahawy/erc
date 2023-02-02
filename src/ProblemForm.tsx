@@ -51,7 +51,7 @@ export default function ProblemForm({
         end_time             : endTime,
         problems_ids         : chosenProblems.map(problem => problem.id),
         spare_parts_ids      : chosenSpareParts.length ? chosenSpareParts.map(part => part.id) : null,
-        note                 : writtenNote ? writtenNote : null
+        note                 : writtenNote ? { id : null,content : writtenNote }: null
       }})
       .then(shift_id => {
           console.log(shift_id)

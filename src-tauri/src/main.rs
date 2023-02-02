@@ -7,13 +7,22 @@ use std::sync::Mutex;
 
 use chrono::NaiveTime;
 use errc::{
-  model::{Employee, ProblemDetail},
+  model::{Employee, ProblemDetail, Probelm, Machine, SparePart},
   timer::{get_relative_now, get_current_date, get_current_order, get_shift_borders, ShiftOrder},
   translator::{
     translate_date,
     translate_order
   },
-  api::{auth::login_req, for_selection::{all_employees, Name, all_problems, all_machines, all_spare_parts}, persistence}
+  api::{auth::login_req,
+        for_selection::{
+          all_employees,
+          Name,
+          all_problems,
+          all_machines,
+          all_spare_parts
+        },
+        persistence, fetching::{fetch_problem_by_id, fetch_machine_by_id, fetch_spare_part_by_id, fetch_employee_by_id, fetch_current_problem_detail, WriterAndShiftIds}
+  }
 };
 use uuid::Uuid;
 
@@ -60,10 +69,49 @@ async fn login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,card_id: 
 
 #[tauri::command]
 async fn save_problem_detail(problem_detail : ProblemDetail) -> Result<Uuid,String> {
-  println!("{:#?}",problem_detail);
   match persistence::save_problem_detail(problem_detail).await {
-    Ok(id) => Ok(id),
-    Err(err)     => Err(err.to_string())
+    Ok(id)   => Ok(id),
+    Err(err) => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+async fn get_current_shift_problems(ids : WriterAndShiftIds) -> Result<Vec<ProblemDetail>,String> {
+  match fetch_current_problem_detail(ids).await {
+    Ok(problem)   => Ok(problem),
+    Err(err) => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+async fn get_problem_by_id(id : Uuid) -> Result<Probelm,String> {
+  match fetch_problem_by_id(id).await {
+    Ok(problem)   => Ok(problem),
+    Err(err) => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+async fn get_machine_by_id(id : Uuid) -> Result<Machine,String> {
+  match fetch_machine_by_id(id).await {
+    Ok(mac)   => Ok(mac),
+    Err(err) => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+async fn get_spare_part_by_id(id : Uuid) -> Result<SparePart,String> {
+  match fetch_spare_part_by_id(id).await {
+    Ok(s)   => Ok(s),
+    Err(err) => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+async fn get_employee_by_id(id : Uuid) -> Result<Employee,String> {
+  match fetch_employee_by_id(id).await {
+    Ok(e)   => Ok(e),
+    Err(err) => Err(err.to_string())
   }
 }
 
@@ -190,11 +238,16 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
       update_problems_selection,
       update_machines_selection,
       update_spare_parts_selection,
+      get_current_shift_problems,
       problems_selection,
       machines_selection,
       employees_selection,
       spare_parts_selection,
       save_problem_detail,
+      get_employee_by_id,
+      get_problem_by_id,
+      get_spare_part_by_id,
+      get_machine_by_id,
     ])
     .run(tauri::generate_context!())?;
   Ok(())

@@ -6,6 +6,9 @@
   text-align: center;
 }
 
+ul {
+  list-style-type: none;
+}
 body {
   padding: 20px;
   min-height: 100vh;
@@ -25,6 +28,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+}
+
+table {
+  border-collapse: collapse;
+  width: 99%;
+}
+
+td,th {
+  width: 9%;
+  padding-left : 7px;
+  padding-right : 7px;
+  border-right: dotted 1px;
+  border-left: dotted 1px;
+  border-bottom: dotted 1px;
 }
 
 button {
@@ -182,4 +199,28 @@ button:hover {
   font-size: x-large;
   width: 90%;
   background-color: blanchedalmond;
+}
+
+.LongListButton{
+  background : inherit;
+  display: block;
+  width: 90%;
+  margin: 10px;
+  padding: 5px;
+  font-size: 10px;
+  border-top: dotted 2px;
+  border-bottom: double 1px;
+  border-right: none;
+  border-left: none;
+  cursor: pointer;
+  border-top-right-radius: 3px;
+}
+.LongListButton:hover {
+  color: #0f0f0f;
+  font-size: 16px;
+  border-top: none;
+  border-bottom: none;
+  border-right: double 5px;
+  border-left: double 5px;
+  border-radius : 20px;
 }

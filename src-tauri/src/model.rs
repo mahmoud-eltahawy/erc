@@ -20,20 +20,20 @@ pub struct Cred{
   pub password: String
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct Probelm{
   pub id          : Uuid,
   pub title       : String,
   pub description : String
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct Machine{
   pub id          : Uuid,
   pub name        : String
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct SparePart{
   pub id         : Uuid,
   pub name       : String,
@@ -41,14 +41,20 @@ pub struct SparePart{
 
 #[derive(Serialize,Deserialize,Debug)]
 pub struct ProblemDetail{
-  id                : Option<Uuid>,
-  shift_id          : Uuid,
-  writer_id         : Uuid,
-  maintainer_id     : Uuid,
-  machine_id        : Uuid,
-  begin_time        : NaiveTime,
-  end_time          : NaiveTime,
-  problems_ids      : Vec<Uuid>,
-  spare_parts_ids   : Option<Vec<Uuid>>,
-  note              : Option<String>
+  pub id                : Option<Uuid>,
+  pub shift_id          : Uuid,
+  pub writer_id         : Uuid,
+  pub maintainer_id     : Uuid,
+  pub machine_id        : Uuid,
+  pub begin_time        : NaiveTime,
+  pub end_time          : NaiveTime,
+  pub problems_ids      : Vec<Uuid>,
+  pub spare_parts_ids   : Option<Vec<Uuid>>,
+  pub note              : Option<Note>
+}
+
+#[derive(Serialize,Deserialize,Debug)]
+pub struct Note{
+  pub id   : Option<Uuid>,
+  pub content : String
 }

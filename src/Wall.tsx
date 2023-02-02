@@ -1,8 +1,9 @@
 import { invoke } from "@tauri-apps/api"
 import { useEffect, useState } from "react"
 import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from "./employeeProvider"
-import { Name, ProblemDeps } from "./main"
+import { Name } from "./main"
 import ProblemForm from "./ProblemForm"
+import ShiftProblems from "./ShiftProblems"
 
 export default function Wall(){
   const [employee,shiftId] = useEmployeeAndShiftID()
@@ -13,7 +14,6 @@ export default function Wall(){
   const [employees ,setEmployees]    = useState<Name[]>([])
   const [problems  ,setProblems]     = useState<Name[]>([])
   const [spareParts,setSpareParts]   = useState<Name[]>([])
-  const [problemFormDeps,setProblemFormDeps] = useState<ProblemDeps>()
   const [toggleButtons, setToggleButtons] = useState([
       {id : 'problemAdd'   , display : false},
       {id : 'problemDefine', display : false},
@@ -21,18 +21,6 @@ export default function Wall(){
   ])
 
   const [emptyPlayGround,setEmptyPlayGround] = useState(true)
-
-  useEffect(() => {
-    const deps : ProblemDeps = {
-        machines : machines,
-        employees: employees,
-        problems : problems,
-        spareParts : spareParts,
-        shiftBegin : shiftBegin,
-        shiftEnd : shiftEnd
-    }
-    setProblemFormDeps(deps)
-  },[shiftBegin,shiftEnd,machines,employees,problems,spareParts])
 
   useEffect(() => {
       invoke('employees_selection')
@@ -123,7 +111,14 @@ export default function Wall(){
                                       writerId={employee!.id}
                                       toggle={toggle}
                                       id="problemAdd"
-                                      deps={problemFormDeps!} /> : <></>}
+                                      deps={{machines : machines,
+                                        employees: employees,
+                                        problems : problems,
+                                        spareParts : spareParts,
+                                        shiftBegin : shiftBegin,
+                                        shiftEnd : shiftEnd
+    }} /> : <></>}
+      {toggleButtons[2].display ? <ShiftProblems shiftId={shiftId!} writerId={employee!.id}  /> : <></>}
     </section>
   )
 }
