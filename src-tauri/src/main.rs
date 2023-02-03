@@ -3,11 +3,11 @@
     windows_subsystem = "windows"
 )]
 
-use std::sync::Mutex;
+use std::{sync::Mutex, collections::HashMap};
 
 use chrono::NaiveTime;
 use errc::{
-  model::{Employee, ProblemDetail, Probelm, Machine, SparePart},
+  model::{Employee, ProblemDetail, Probelm, Machine, SparePart, ShiftProblem, Ids},
   timer::{get_relative_now, get_current_date, get_current_order, get_shift_borders, ShiftOrder},
   translator::{
     translate_date,
@@ -21,7 +21,14 @@ use errc::{
           all_machines,
           all_spare_parts
         },
-        persistence, fetching::{fetch_problem_by_id, fetch_machine_by_id, fetch_spare_part_by_id, fetch_employee_by_id, fetch_current_problem_detail, WriterAndShiftIds}
+        persistence, fetching::{
+          fetch_problem_by_id,
+          fetch_machine_by_id,
+          fetch_spare_part_by_id,
+          fetch_employee_by_id,
+          fetch_current_problem_detail,
+          WriterAndShiftIds
+        }
   }
 };
 use uuid::Uuid;
@@ -68,17 +75,46 @@ async fn login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,card_id: 
 }
 
 #[tauri::command]
-async fn save_problem_detail(problem_detail : ProblemDetail) -> Result<Uuid,String> {
-  match persistence::save_problem_detail(problem_detail).await {
-    Ok(id)   => Ok(id),
+async fn save_problem_detail(problem_detail : ProblemDetail,department_id : Uuid,
+        state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>) -> Result<ShiftProblem,String> {
+  let shift_problem = ShiftProblem::new(problem_detail);
+  match persistence::save_problem_detail(&shift_problem).await {
+    Ok(id)   => {
+      let shift_problem = ShiftProblem {id : Some(id), ..shift_problem};
+      let s = &mut *state.lock().unwrap();
+      match s.get_mut(&department_id) {
+        Some(problems) => {problems.push(shift_problem.clone())},
+        None           => {
+          let mut problems = Vec::new();
+          problems.push(shift_problem.clone());
+          s.insert(department_id, problems);
+        }
+      }
+      Ok(shift_problem)
+    },
     Err(err) => Err(err.to_string())
   }
 }
 
 #[tauri::command]
-async fn get_current_shift_problems(ids : WriterAndShiftIds) -> Result<Vec<ProblemDetail>,String> {
-  match fetch_current_problem_detail(ids).await {
-    Ok(problem)   => Ok(problem),
+fn get_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>,
+                              department_id : Uuid) -> Result<Vec<ShiftProblem>,String> {
+  match state.lock().unwrap().get(&department_id) {
+    Some(problems)   => Ok(problems.to_vec()),
+    None => Err("empty".to_string())
+  }
+}
+
+#[tauri::command]
+async fn update_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>,
+                                       ids : Ids) -> Result<(),String> {
+  let Ids{writer_id,shift_id,department_id} = ids;
+  match fetch_current_problem_detail(WriterAndShiftIds{writer_id,shift_id}).await {
+    Ok(problems)   => {
+      let s = &mut *state.lock().unwrap();
+      s.insert(department_id, problems);
+      Ok(())
+    },
     Err(err) => Err(err.to_string())
   }
 }
@@ -217,12 +253,14 @@ struct SpareParts(Mutex<Option<Vec<Name>>>);
 async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
   let relative_now = get_relative_now();
   let order = get_current_order(relative_now);
+
   tauri::Builder::default()
     .manage(Mutex::new(relative_now))
     .manage(Mutex::new(order.clone()))
     .manage(Mutex::new(get_shift_borders(order)))
     .manage(Mutex::new(None::<(Employee,Uuid)>))
     .manage(Mutex::new(None::<(String,Vec<String>)>))
+    .manage(Mutex::new(HashMap::<Uuid,Vec<ShiftProblem>>::new()))
     .manage(Employees(Mutex::new(None::<Vec<Name>>)))
     .manage(Problems(Mutex::new(None::<Vec<Name>>)))
     .manage(Machines(Mutex::new(None::<Vec<Name>>)))
@@ -238,6 +276,7 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
       update_problems_selection,
       update_machines_selection,
       update_spare_parts_selection,
+      update_current_shift_problems,
       get_current_shift_problems,
       problems_selection,
       machines_selection,

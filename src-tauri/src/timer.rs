@@ -37,7 +37,7 @@ fn get_time_zone_value() -> i64 {
 }
 
 fn get_order_begin(now : i64,order : ShiftOrder) -> i64 {
-  let order_one_begin = (now - (now % DAY)) + SHIFT_DELAY;
+  let order_one_begin = now - (now % DAY);
   order_one_begin + (order as i64 - 1) * SHIFT_TIME
 }
 

@@ -4,17 +4,23 @@ import { Name, ProblemDeps } from "./main"
 import { SearchBar } from "./SearchBar"
 
 export default function ProblemForm({
-    deps,
     toggle,
+    convert,
+    add,
+    deps,
     id,
     writerId,
-    shiftId
+    shiftId,
+    departmentId
 } : {
-    deps : ProblemDeps,
-    toggle : Function,
-    id : string,
-    writerId : string,
-    shiftId  : string
+    toggle          : Function,
+    convert         : Function,
+    add             : Function,
+    deps            : ProblemDeps,
+    id              : string,
+    writerId        : string,
+    shiftId         : string,
+    departmentId    : string
 }){
     const { employees, machines,spareParts, problems,shiftBegin,shiftEnd} = deps
 
@@ -28,7 +34,7 @@ export default function ProblemForm({
     const [chosenProblems  ,setChosenProblems   ] = useState<Name[]>([])
     const [writtenNote     ,setWrittenNote      ] = useState('')
 
-    const handleSubmit = (e: BaseSyntheticEvent) => {
+    const handleSubmit = async (e: BaseSyntheticEvent) => {
       e.preventDefault()
       if (!chosenMachines[0]){
           alert("يجب تحديد الالة التي تمت عليها الصيانة")
@@ -42,24 +48,24 @@ export default function ProblemForm({
           alert("يجب تحديد مشكلة واحدة علي الاقل")
           return;
       }
-      invoke("save_problem_detail",{problemDetail : {
-        shift_id             : shiftId,
-        writer_id            : writerId,
-        maintainer_id        : chosenEmployees[0].id,
-        machine_id           : chosenMachines[0].id,
-        begin_time           : beginTime,
-        end_time             : endTime,
-        problems_ids         : chosenProblems.map(problem => problem.id),
-        spare_parts_ids      : chosenSpareParts.length ? chosenSpareParts.map(part => part.id) : null,
-        note                 : writtenNote ? { id : null,content : writtenNote }: null
-      }})
-      .then(shift_id => {
-          console.log(shift_id)
-      })
-      .catch(err => {
-          console.log(err)
-      })
       toggle(id)
+      try{
+        const shift_problem = await invoke("save_problem_detail",{problemDetail : {
+            shift_id             : shiftId,
+            writer_id            : writerId,
+            maintainer_id        : chosenEmployees[0].id,
+            machine_id           : chosenMachines[0].id,
+            begin_time           : beginTime,
+            end_time             : endTime,
+            problems_ids         : chosenProblems.map(problem => problem.id),
+            spare_parts_ids      : chosenSpareParts.length ? chosenSpareParts.map(part => part.id) : null,
+            note                 : writtenNote ? writtenNote : null
+        }, departmentId : departmentId})
+        const shiftProblem = await convert(shift_problem)
+        add(shiftProblem)
+      }catch(err){
+        alert(err)
+      }
     }
 
     const toggleNote   = () => {

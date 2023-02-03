@@ -10,7 +10,7 @@ export default function LoginForm(){
 
   function handleSubmit(e : BaseSyntheticEvent) {
     e.preventDefault()
-    let cardC   = cardR.current!
+    let cardC     = cardR.current!
     let passwordC = passwordR.current!
     invoke('login',{cardId: +cardC.value,password: passwordC.value})
       .then(() => invoke('check_login')

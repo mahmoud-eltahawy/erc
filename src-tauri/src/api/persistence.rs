@@ -1,11 +1,11 @@
 use uuid::Uuid;
 
-use crate::model::ProblemDetail;
+use crate::model::ShiftProblem;
 
-pub async fn save_problem_detail(problem_detail : ProblemDetail) -> Result<Uuid,Box<dyn std::error::Error>> {
+pub async fn save_problem_detail(shift_problem :&ShiftProblem) -> Result<Uuid,Box<dyn std::error::Error>> {
   let client = reqwest::Client::new();
   let result = client.post("http://127.0.0.1:8080/api/sp/save")
-      .json(&problem_detail)
+      .json(shift_problem)
       .send()
       .await?
       .json::<Option<Uuid>>()

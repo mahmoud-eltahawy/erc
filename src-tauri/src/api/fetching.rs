@@ -1,21 +1,21 @@
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use crate::model::{ProblemDetail, Employee, Machine, Probelm, SparePart};
+use crate::model::{ Employee, Machine, Probelm, SparePart, ShiftProblem};
 
 #[derive(Serialize,Deserialize)]
 pub struct WriterAndShiftIds{
-  writer_id : Uuid,
-  shift_id  : Uuid
+  pub writer_id     : Uuid,
+  pub shift_id      : Uuid,
 }
 
-pub async fn fetch_current_problem_detail(writer_shift_ids : WriterAndShiftIds) -> Result<Vec<ProblemDetail>,Box<dyn std::error::Error>> {
+pub async fn fetch_current_problem_detail(writer_shift_ids : WriterAndShiftIds) -> Result<Vec<ShiftProblem>,Box<dyn std::error::Error>> {
   let client = reqwest::Client::new();
   let result = client.get("http://127.0.0.1:8080/api/sp/cproblems")
       .json(&writer_shift_ids)
       .send()
       .await?
-      .json::<Option<Vec<ProblemDetail>>>()
+      .json::<Option<Vec<ShiftProblem>>>()
       .await?;
 
   match result {

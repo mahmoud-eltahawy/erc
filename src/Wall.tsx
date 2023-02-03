@@ -1,72 +1,95 @@
 import { invoke } from "@tauri-apps/api"
 import { useEffect, useState } from "react"
-import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from "./employeeProvider"
-import { Name } from "./main"
+import { useEmployeeAndShiftIDUpdate } from "./employeeProvider"
+import { Employee, Machine, Name, Problem, ShiftProblem, ShiftProblemMini, SparePart } from "./main"
 import ProblemForm from "./ProblemForm"
 import ShiftProblems from "./ShiftProblems"
 
-export default function Wall(){
-  const [employee,shiftId] = useEmployeeAndShiftID()
+export default function Wall({
+    shiftBegin,
+    shiftEnd  ,
+    machines  ,
+    employees ,
+    problems  ,
+    spareParts,
+    employee,
+    shiftId
+} : {
+    shiftBegin : string,
+    shiftEnd   : string,
+    machines   : Name[],
+    employees  : Name[],
+    problems   : Name[],
+    spareParts : Name[],
+    employee   : Employee,
+    shiftId    : string
+}){
+  const [shiftProblems,setShiftProblems] = useState<ShiftProblem[]>([])
+  const [emptyPlayGround,setEmptyPlayGround] = useState(true)
   const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
-  const [shiftBegin,setShiftBegin]   = useState('')
-  const [shiftEnd,setShiftEnd]       = useState('')
-  const [machines  ,setMachines]     = useState<Name[]>([])
-  const [employees ,setEmployees]    = useState<Name[]>([])
-  const [problems  ,setProblems]     = useState<Name[]>([])
-  const [spareParts,setSpareParts]   = useState<Name[]>([])
   const [toggleButtons, setToggleButtons] = useState([
       {id : 'problemAdd'   , display : false},
       {id : 'problemDefine', display : false},
       {id : 'problemsShow' , display : false}
   ])
 
-  const [emptyPlayGround,setEmptyPlayGround] = useState(true)
+
+  const shiftProblemFromMinimal = async function(mp : ShiftProblemMini) : Promise<ShiftProblem> {
+    const problems : Problem[] = []
+    for(let j =0; j < mp.problems_ids.length; j++){
+        problems.push(await invoke('get_problem_by_id',{id : mp.problems_ids[j]}) as Problem)
+    }
+
+    const spareParts : SparePart[] | null = mp.spare_parts_ids ? [] : null
+    if(mp.spare_parts_ids){
+      for(let j =0; j < mp.spare_parts_ids.length; j++){
+        spareParts!.push(await invoke('get_spare_part_by_id',{id : mp.spare_parts_ids[j]}) as SparePart)
+      }
+    }
+
+    let p : ShiftProblem = {
+        id          : mp.id,
+        shiftId     : mp.shift_id,
+        note        : mp.note,
+        writer      : await invoke('get_employee_by_id',{id : mp.writer_id}) as Employee,
+        maintainer  : await invoke('get_employee_by_id',{id : mp.maintainer_id}) as Employee,
+        machine     : await invoke('get_machine_by_id' ,{id : mp.machine_id}) as Machine,
+        beginTime   : mp.begin_time,
+        endTime     : mp.end_time,
+        problems    : problems,
+        spareParts  : spareParts
+    }
+    return p
+  }
 
   useEffect(() => {
-      invoke('employees_selection')
-        .then(result => setEmployees(result as Name[]))
-        .catch(err => {
+    const shiftProblemsFun = async function() {
+      const shotTry = async function(){
+        const miniProblems : ShiftProblemMini[] = await invoke('get_current_shift_problems',
+                                                               {departmentId : employee.department_id})
+        let result : ShiftProblem[]= []
+        for(let i = 0; i < miniProblems.length ; i++){
+          let p = await shiftProblemFromMinimal(miniProblems[i])
+          result.push(p)
+        }
+        setShiftProblems(result)
+        console.log(result)
+      }
+      try{
+        await shotTry()
+      } catch(err) {
+        try{
           console.log(err)
-          invoke('update_employees_selection')
-            .then(() => invoke('employees_selection')
-            .then(result => setEmployees(result as Name[]))
-            .catch(err => console.log(err))
-      )})
-      invoke('problems_selection')
-        .then(result => setProblems(result as Name[]))
-        .catch(err => {
+          await invoke('update_current_shift_problems',
+                {ids : {writer_id : employee!.id,shift_id : shiftId,department_id : employee.department_id}})
+          await shotTry()
+        }catch(err){
           console.log(err)
-          invoke('update_problems_selection')
-            .then(() => invoke('problems_selection')
-            .then(result => setProblems(result as Name[]))
-            .catch(err => console.log(err))
-      )})
-      invoke('machines_selection')
-        .then(result => setMachines(result as Name[]))
-        .catch(err => {
-          console.log(err)
-          invoke('update_machines_selection')
-            .then(() => invoke('machines_selection')
-            .then(result => setMachines(result as Name[]))
-            .catch(err => console.log(err))
-      )})
-      invoke('spare_parts_selection')
-        .then(result => setSpareParts(result as Name[]))
-        .catch(err => {
-          console.log(err)
-          invoke('update_spare_parts_selection')
-            .then(() => invoke('spare_parts_selection')
-            .then(result => setSpareParts(result as Name[]))
-            .catch(err => console.log(err))
-      )});
-    invoke("current_shift_borders")
-        .then(beginEnd => {
-          let [begin,end] = beginEnd as string[]
-          setShiftBegin(begin)
-          setShiftEnd(end)
-        })
-        .catch(err => console.log(err))
-    },[])
+        }
+      }
+    }
+    shiftProblemsFun()
+  },[])
 
 
   const logout = () => {
@@ -107,18 +130,21 @@ export default function Wall(){
           {employee ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` : ''}</p>
           {theButtons}
       {toggleButtons[0].display ? <ProblemForm
-                                      shiftId={shiftId!}
-                                      writerId={employee!.id}
-                                      toggle={toggle}
-                                      id="problemAdd"
-                                      deps={{machines : machines,
-                                        employees: employees,
-                                        problems : problems,
-                                        spareParts : spareParts,
-                                        shiftBegin : shiftBegin,
-                                        shiftEnd : shiftEnd
+            add={(problem : ShiftProblem) =>setShiftProblems(problems => [...problems,problem])}
+            toggle={toggle}
+            convert={shiftProblemFromMinimal}
+            shiftId={shiftId!}
+            writerId={employee!.id}
+            departmentId={employee!.department_id}
+            id="problemAdd"
+            deps={{machines : machines,
+              employees: employees,
+              problems : problems,
+              spareParts : spareParts,
+              shiftBegin : shiftBegin,
+              shiftEnd : shiftEnd
     }} /> : <></>}
-      {toggleButtons[2].display ? <ShiftProblems shiftId={shiftId!} writerId={employee!.id}  /> : <></>}
+      {toggleButtons[2].display ? <ShiftProblems shiftProblems={shiftProblems}  /> : <></>}
     </section>
   )
 }

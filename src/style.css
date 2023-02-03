@@ -217,10 +217,10 @@ button:hover {
 }
 .LongListButton:hover {
   color: #0f0f0f;
-  font-size: 16px;
+  font-size: 10px;
   border-top: none;
   border-bottom: none;
-  border-right: double 5px;
-  border-left: double 5px;
+  border-right: dotted 2px;
+  border-left: dotted 2px;
   border-radius : 20px;
 }
