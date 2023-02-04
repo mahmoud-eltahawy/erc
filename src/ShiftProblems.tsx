@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Name, Problem, ShiftProblem, Note, SparePart } from "./main"
+import { Name, Problem, ShiftProblem, Note, SparePart, Employee } from "./main"
 
 export default function ShiftProblems({shiftProblems} :{shiftProblems : ShiftProblem[]}){
   const limit = 4
@@ -14,156 +14,159 @@ export default function ShiftProblems({shiftProblems} :{shiftProblems : ShiftPro
     }
   },[tooLong])
 
-  const showButton = <button className="LongListButton" onClick={() => setTooLong(false)}>شاهد الكل</button>
-  const disapearButton = <button className="LongListButton" onClick={() =>setTooLong(true)}>اخفاء</button>;
-
-  const sparePartsList = (spareParts : SparePart[] | null) => {
-      return (
-          spareParts ? <SparePartsList parts={spareParts}/> : <li><p>لم تستخدم اي قطعة غيار</p></li>
-      )
-  }
-
-  const noteTd = (note : Note | null) => {
-      return (
-          note ? <LongNote note={note}/> : <td><p>لا يوجد ملحوظات اضافية</p></td>
-      )
-  }
-
   return (
-      <section>
-          <table>
-              <thead>
-                  <tr>
-                      <td>مسجل العطل</td>
-                      <td>ملحوظة جانبية</td>
-                      <td>وقت النهاية</td>
-                      <td>وقت البداية</td>
-                      <td>قطع الغيار</td>
-                      <td>المشاكل</td>
-                      <td>القائم باصلاح العطل</td>
-                      <td>الماكينة التي حدث عليها العطل</td>
-                  </tr>
-              </thead>
-              <tbody>
-                  {state.map(problem => <tr key={problem.id}>
-                      {(() => {
-                          const {id,first_name,middle_name,last_name} = problem.writer
-                          return (
-                              <td key={id}>
-                                  <p>{first_name}</p>
-                                  <p>{middle_name}</p>
-                                  <p>{last_name}</p>
-                              </td>
-                          )
-                      })()}
-                      {noteTd(problem.note)}
-                      <td> {problem.endTime} </td>
-                      <td> {problem.beginTime} </td>
-                      <td>
-                          <ul>
-                              {sparePartsList(problem.spareParts)}
-                          </ul>
-                      </td>
-                      <td>
-                        <ProblemsComps problems={problem.problems}/>
-                      </td>
-                      {(() => {
-                          const {id,first_name,middle_name,last_name} = problem.maintainer
-                          return (
-                              <td key={id}>
-                                  <p>{first_name}</p>
-                                  <p>{middle_name}</p>
-                                  <p>{last_name}</p>
-                              </td>
-                          )
-                      })()}
-                      <td key={problem.machine.id}>{problem.machine.name}</td>
-                  </tr>)}
-              </tbody>
-          </table>
-          { shiftProblems.length <= limit ? <></>: tooLong ? showButton : disapearButton}
-      </section>
+    <section>
+      <table>
+        {tableHead}
+        <tbody>
+          {state.map(problem => <ProblemRow key={problem.id} problem={problem}/>)}
+        </tbody>
+      </table>
+      {togglingButton({
+          showButton : shiftProblems.length > limit,
+          showMore   : tooLong,
+          doOnClick  : () =>setTooLong(!tooLong)})}
+    </section>
+  )
+}
+const tableHead = <thead><tr>
+                    <td>مسجل العطل</td>
+                    <td>ملحوظة جانبية</td>
+                    <td>وقت النهاية</td>
+                    <td>وقت البداية</td>
+                    <td>قطع الغيار</td>
+                    <td>المشاكل</td>
+                    <td>القائم باصلاح العطل</td>
+                    <td>الماكينة التي حدث عليها العطل</td>
+                </tr></thead>
+
+function ProblemRow({problem} : {problem : ShiftProblem}){
+  return (
+    <tr>
+      <td> { employeeName(problem.writer)       } </td>
+      <td> { noteTd(problem.note)               } </td>
+      <td> { problem.endTime                    } </td>
+      <td> { problem.beginTime                  } </td>
+      <td> { sparePartsList(problem.spareParts) } </td>
+      <td> { problems(problem.problems)         } </td>
+      <td> { employeeName(problem.maintainer)   } </td>
+      <td> { problem.machine.name               } </td>
+    </tr>
   )
 }
 
-function ProblemsComps({problems} : {problems : Problem[]}){
-    const [state,setState] = useState(problems)
-    const [tooLong,setTooLong] = useState(state.length > 3)
-
-    useEffect(() => {
-        if(tooLong) {
-           setState(state => state.slice(0,3))
-        } else {
-           setState(problems)
-        }
-    },[tooLong])
-
-    const showButton = <li><button className="LongListButton" onClick={() => setTooLong(false)}>شاهد الكل</button></li>
-    const disapearButton = <li><button className="LongListButton" onClick={() =>setTooLong(true)}>اخفاء</button></li>
-
+const sparePartsList = (spareParts : SparePart[] | null) => {
+    const elsing = <p>لم تستخدم اي قطعة غيار</p>
+    const core   = <SparePartsList parts={spareParts!}/>
+    const checkingNotEmpty = spareParts!.length !== 0 ? core : elsing
     return (
-        <ul>
-            {state.map(problem => <ProblemCom key={problem.id} problem={problem} />)}
-            { problems.length <= 3 ? <></>: tooLong ? showButton : disapearButton}
-        </ul>
+        spareParts ? checkingNotEmpty : elsing
     )
+}
+
+function ProblemsComps({problems} : {problems : Problem[]}){
+  const limit = 3
+  const [state,setState] = useState(problems)
+  const [tooLong,setTooLong] = useState(state.length > limit)
+
+  useEffect(() => {
+    if(tooLong) {
+       setState(state => state.slice(0,limit))
+    } else {
+       setState(problems)
+    }
+  },[tooLong])
+
+  return (
+    <ul>
+      {state.map(problem => <ProblemCom key={problem.id} problem={problem} />)}
+      {togglingButton({
+          showButton : problems.length > limit,
+          showMore   : tooLong,
+          doOnClick  : () =>setTooLong(!tooLong)})}
+    </ul>
+  )
 }
 
 function SparePartsList({parts} : {parts : Name[]}){
-    const [state,setState] = useState(parts)
-    const [tooLong,setTooLong] = useState(state.length > 3)
+  const limit = 3
+  const [state,setState] = useState(parts)
+  const [tooLong,setTooLong] = useState(state.length > limit)
 
-    useEffect(() => {
-        if(tooLong) {
-           setState(state => state.slice(0,3))
-        } else {
-           setState(parts)
-        }
-    },[tooLong])
+  useEffect(() => {
+    if(tooLong) {
+       setState(state => state.slice(0,limit))
+    } else {
+       setState(parts)
+    }
+  },[tooLong])
 
-    const showButton = <li><button className="LongListButton" onClick={() => setTooLong(false)}>شاهد الكل</button></li>
-    const disapearButton = <li><button className="LongListButton" onClick={() =>setTooLong(true)}>اخفاء</button></li>;
+  return (
+    <ul>
+      {state.map(part => <li key={part.id}>{part.name}</li>)}
+      {togglingButton({
+          showButton : parts.length > limit,
+          showMore   : tooLong,
+          doOnClick  : () =>setTooLong(!tooLong)})}
 
-    return (
-        <ul>
-            {state.map(part => <li key={part.id}>{part.name}</li>)}
-            { parts.length <= 3 ? <></>: tooLong ? showButton : disapearButton}
-        </ul>
-    )
+    </ul>
+  )
 }
 
 function LongNote({note} : {note : Note}){
-    const {id,content} = note
-    const limit = 50
-    const [state,setState] = useState(content)
-    const [tooLong,setTooLong] = useState(state.length > limit)
+  const content = note.content
+  const limit = 50
+  const [state,setState] = useState(content)
+  const [tooLong,setTooLong] = useState(state.length > limit)
 
-    useEffect(() => {
-        if(tooLong) {
-           setState(state => state.slice(0,limit))
-        } else {
-           setState(content)
-        }
-    },[tooLong])
+  useEffect(() => {
+    if(tooLong) {
+      setState(state => state.slice(0,limit))
+    } else {
+      setState(content)
+    }
+  },[tooLong])
 
-    const showButton = <button className="LongListButton" onClick={() => setTooLong(false)}>شاهد الكل</button>
-    const disapearButton = <button className="LongListButton" onClick={() =>setTooLong(true)}>اخفاء</button>;
-
-    return (
-        <td key={id}>
-            <p>{state}</p>
-            { content.length <= limit ? <></>: tooLong ? showButton : disapearButton}
-        </td>
-    )
+  return (
+    <section>
+      <p>{state}</p>
+      {togglingButton({
+          showButton : content.length > limit,
+          showMore   : tooLong,
+          doOnClick  : () =>setTooLong(!tooLong)})}
+    </section>
+  )
 }
+
+const togglingButton = (
+    {showButton
+    ,showMore,
+     doOnClick
+      } : {
+     showButton : boolean,
+     showMore   : boolean,
+     doOnClick  : Function
+      }
+) => showButton ? <button className="LongListButton"
+                         onClick={() => doOnClick()}
+                  >{showMore ? "شاهد اكثر" : "شاهد اقل"}</button> : <></>
 
 
 function ProblemCom({problem} : {problem : Problem}){
-    const {id,title,description} = problem
-    const [state, setState] = useState(title)
-    return (
-        <li onMouseOver={() => setState(description)}
-            onMouseLeave={() => setState(title)}
-            key={id}>{state}</li>
-    )
+  const {id,title,description} = problem
+  const [state, setState] = useState(title)
+  return (
+    <li onMouseOver={() => setState(description)}
+        onMouseLeave={() => setState(title)}
+        key={id}>
+        {state}
+    </li>
+  )
 }
+
+const noteTd = (note : Note | null) => note ? <LongNote note={note}/> : <p>لا يوجد ملحوظات اضافية</p>
+const problems = (problems : Problem[]) => <ProblemsComps problems={problems}/>
+const employeeName = (
+    {first_name,
+     middle_name,
+     last_name} : Employee) => <p> { `${first_name} ${middle_name} ${last_name}` } </p>

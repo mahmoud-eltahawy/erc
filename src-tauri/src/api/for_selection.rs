@@ -4,7 +4,7 @@ use std::error::Error;
 
 use crate::model::{Employee, Probelm, Machine, SparePart};
 
-#[derive(Serialize,Deserialize,Clone)]
+#[derive(Serialize,Deserialize,Clone,Debug)]
 pub struct Name{
   pub id : Option<Uuid>,
   pub name : String

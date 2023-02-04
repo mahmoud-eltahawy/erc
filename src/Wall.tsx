@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api"
 import { useEffect, useState } from "react"
+import DefineProblem from "./defineProblem"
 import { useEmployeeAndShiftIDUpdate } from "./employeeProvider"
 import { Employee, Machine, Name, Problem, ShiftProblem, ShiftProblemMini, SparePart } from "./main"
 import ProblemForm from "./ProblemForm"
@@ -11,6 +12,7 @@ export default function Wall({
     machines  ,
     employees ,
     problems  ,
+    addProblem,
     spareParts,
     employee,
     shiftId
@@ -20,6 +22,7 @@ export default function Wall({
     machines   : Name[],
     employees  : Name[],
     problems   : Name[],
+    addProblem : Function,
     spareParts : Name[],
     employee   : Employee,
     shiftId    : string
@@ -123,28 +126,35 @@ export default function Wall({
       <button id="problemsShow"  onClick={e => toggle(e.currentTarget.id)}>اظهار الاعطال</button> : <></>}
   </div>
 
-  return (
-    <section>
-      <button className={"LogoutButton"} onClick={() => logout()}>تسجيل خروج</button>
-      <p className={"NameP"}>
+  const defineProblem = <DefineProblem toggle={() => toggle("problemDefine")}
+                                       addDefinition={(name : Name) => addProblem(name)}/>
+  const problemShow   = <ShiftProblems shiftProblems={shiftProblems}/>
+  const logoutButton  = <button className={"LogoutButton"} onClick={() => logout()}>تسجيل خروج</button>
+  const employeeName  =<p className={"NameP"}>
           {employee ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` : ''}</p>
-          {theButtons}
-      {toggleButtons[0].display ? <ProblemForm
+  const problemForm   = <ProblemForm
             add={(problem : ShiftProblem) =>setShiftProblems(problems => [...problems,problem])}
-            toggle={toggle}
+            toggle={() => toggle("problemAdd")}
             convert={shiftProblemFromMinimal}
             shiftId={shiftId!}
             writerId={employee!.id}
             departmentId={employee!.department_id}
-            id="problemAdd"
             deps={{machines : machines,
               employees: employees,
               problems : problems,
               spareParts : spareParts,
               shiftBegin : shiftBegin,
               shiftEnd : shiftEnd
-    }} /> : <></>}
-      {toggleButtons[2].display ? <ShiftProblems shiftProblems={shiftProblems}  /> : <></>}
+    }} />
+
+  return (
+    <section>
+      {logoutButton}
+      {employeeName}
+      {theButtons}
+      {toggleButtons[0].display ? problemForm   : <></>}
+      {toggleButtons[1].display ? defineProblem : <></>}
+      {toggleButtons[2].display ? problemShow   : <></>}
     </section>
   )
 }

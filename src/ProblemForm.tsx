@@ -8,7 +8,6 @@ export default function ProblemForm({
     convert,
     add,
     deps,
-    id,
     writerId,
     shiftId,
     departmentId
@@ -17,7 +16,6 @@ export default function ProblemForm({
     convert         : Function,
     add             : Function,
     deps            : ProblemDeps,
-    id              : string,
     writerId        : string,
     shiftId         : string,
     departmentId    : string
@@ -48,7 +46,7 @@ export default function ProblemForm({
           alert("يجب تحديد مشكلة واحدة علي الاقل")
           return;
       }
-      toggle(id)
+      toggle()
       try{
         const shift_problem = await invoke("save_problem_detail",{problemDetail : {
             shift_id             : shiftId,

@@ -27,74 +27,38 @@ function App() {
     }
 
     const employeesFun = async function(){
-      const shotTry = async function() {
+      try{
         const names : Name[] = await invoke('employees_selection')
         setEmployees(names)
-      }
-      try{
-        await shotTry()
       } catch(err){
         console.log(err)
-        try{
-          await invoke('update_employees_selection')
-          await shotTry()
-        }catch(err){
-          console.log(err)
-        }
       }
     }
 
     const problemsFun = async function(){
-      const shotTry = async function() {
+      try{
         const names : Name[] = await invoke('problems_selection')
         setProblems(names)
-      }
-      try{
-        await shotTry()
       } catch(err){
         console.log(err)
-        try{
-          await invoke('update_problems_selection')
-          await shotTry()
-        }catch(err){
-          console.log(err)
-        }
       }
     }
 
     const machinesFun = async function(){
-      const shotTry = async function() {
+      try{
         const names : Name[] = await invoke('machines_selection')
         setMachines(names)
-      }
-      try{
-        await shotTry()
       } catch(err){
         console.log(err)
-        try{
-          await invoke('update_machines_selection')
-          await shotTry()
-        }catch(err){
-          console.log(err)
-        }
       }
     }
 
     const partsFun = async function(){
-      const shotTry = async function() {
+      try{
         const names : Name[] = await invoke('spare_parts_selection')
         setSpareParts(names)
-      }
-      try{
-        await shotTry()
       } catch(err){
         console.log(err)
-        try{
-          await invoke('update_spare_parts_selection')
-          await shotTry()
-        }catch(err){
-          console.log(err)
-        }
       }
     }
 
@@ -121,6 +85,7 @@ function App() {
           employees={employees}
           machines={machines}
           problems={problems}
+          addProblem={(name : Name) => setProblems(list => [name,...list])}
           spareParts={spareParts}
           shiftBegin={shiftBegin}
           employee={employee}

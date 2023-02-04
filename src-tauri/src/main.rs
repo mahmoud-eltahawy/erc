@@ -21,7 +21,7 @@ use errc::{
           all_machines,
           all_spare_parts
         },
-        persistence, fetching::{
+        persistence::{self, save_problem}, fetching::{
           fetch_problem_by_id,
           fetch_machine_by_id,
           fetch_spare_part_by_id,
@@ -71,6 +71,25 @@ async fn login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,card_id: 
       Ok(())
     },
     Err(_)     => Err("فشلت عملية تسجيل الدخول".to_string())
+  }
+}
+
+#[tauri::command]
+async fn define_problem(state : tauri::State<'_,Problems>,
+                        title : String,description : String) -> Result<Option<Uuid>,String> {
+  let id = Uuid::new_v4();
+  let problem = Probelm{id,title,description};
+  match save_problem(&problem).await {
+    Ok(well)   => {
+      if well {
+        let s = &mut *state.0.lock().unwrap();
+        s.push(Name {id : Some(id), name: problem.title });
+        Ok(Some(id))
+      } else {
+        Ok(None)
+      }
+    },
+    Err(err) => Err(err.to_string())
   }
 }
 
@@ -165,79 +184,27 @@ fn logout(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>) {
 }
 
 #[tauri::command]
-async fn update_employees_selection(state : tauri::State<'_,Employees>) -> Result<(),String> {
-  match all_employees().await {
-    Ok(e) => {
-      *state.0.lock().unwrap() = Some(e);
-      Ok(())
-    },
-    Err(err)=> Err(err.to_string())
-  }
+fn employees_selection(state : tauri::State<'_,Employees>) -> Vec<Name> {
+  let s = &*state.0.lock().unwrap();
+  s.to_vec()
 }
 
 #[tauri::command]
-async fn update_problems_selection(state : tauri::State<'_,Problems>) -> Result<(),String> {
-  match all_problems().await {
-    Ok(p) => {
-      *state.0.lock().unwrap() = Some(p);
-      Ok(())
-    },
-    Err(err)=> Err(err.to_string())
-  }
+fn problems_selection(state : tauri::State<'_,Problems>) -> Vec<Name> {
+  let s = &*state.0.lock().unwrap();
+  s.to_vec()
 }
 
 #[tauri::command]
-async fn update_machines_selection(state : tauri::State<'_,Machines>) -> Result<(),String> {
-  match all_machines().await {
-    Ok(m) => {
-      *state.0.lock().unwrap() = Some(m);
-      Ok(())
-    },
-    Err(err)=> Err(err.to_string())
-  }
+fn machines_selection(state : tauri::State<'_,Machines>) -> Vec<Name> {
+  let s = &*state.0.lock().unwrap();
+  s.to_vec()
 }
 
 #[tauri::command]
-async fn update_spare_parts_selection(state : tauri::State<'_,SpareParts>) -> Result<(),String> {
-  match all_spare_parts().await {
-    Ok(s) => {
-      *state.0.lock().unwrap() = Some(s);
-      Ok(())
-    },
-    Err(err)=> Err(err.to_string())
-  }
-}
-
-#[tauri::command]
-async fn employees_selection(state : tauri::State<'_,Employees>) -> Result<Vec<Name>,String> {
-  match &*state.0.lock().unwrap() {
-    Some(employees) => Ok(employees.clone()),
-    None     => Err("لم يتم تحديث الموظفين".to_string())
-  }
-}
-
-#[tauri::command]
-async fn problems_selection(state : tauri::State<'_,Problems>) -> Result<Vec<Name>,String> {
-  match &*state.0.lock().unwrap() {
-    Some(problems) => Ok(problems.clone()),
-    None     => Err("لم يتم تحديث المشاكل".to_string())
-  }
-}
-
-#[tauri::command]
-async fn machines_selection(state : tauri::State<'_,Machines>) -> Result<Vec<Name>,String> {
-  match &*state.0.lock().unwrap() {
-    Some(machines) => Ok(machines.clone()),
-    None     => Err("لم يتم تحديث الماكينات".to_string())
-  }
-}
-
-#[tauri::command]
-async fn spare_parts_selection(state : tauri::State<'_,SpareParts>) -> Result<Vec<Name>,String> {
-  match &*state.0.lock().unwrap() {
-    Some(spare_parts) => Ok(spare_parts.clone()),
-    None     => Err("لم يتم تحديث قطع الغيار".to_string())
-  }
+fn spare_parts_selection(state : tauri::State<'_,SpareParts>) -> Vec<Name> {
+  let s = &*state.0.lock().unwrap();
+  s.to_vec()
 }
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn std::error::Error>>{
@@ -245,14 +212,34 @@ async fn main() -> Result<(),Box<dyn std::error::Error>>{
   Ok(())
 }
 
-struct Employees(Mutex<Option<Vec<Name>>>);
-struct Problems(Mutex<Option<Vec<Name>>>);
-struct Machines(Mutex<Option<Vec<Name>>>);
-struct SpareParts(Mutex<Option<Vec<Name>>>);
+struct Employees(Mutex<Vec<Name>>);
+struct Problems(Mutex<Vec<Name>>);
+struct Machines(Mutex<Vec<Name>>);
+struct SpareParts(Mutex<Vec<Name>>);
 
 async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
   let relative_now = get_relative_now();
   let order = get_current_order(relative_now);
+
+  let problems = match all_problems().await {
+    Ok(p) => p,
+    Err(err)=> return Err(err.into())
+  };
+
+  let employees = match all_employees().await {
+    Ok(e) => e,
+    Err(err)=> return Err(err.into())
+  };
+
+  let machines = match all_machines().await {
+    Ok(m) => m,
+    Err(err)=> return Err(err.into())
+  };
+
+  let spare_parts = match all_spare_parts().await {
+    Ok(m) => m,
+    Err(err)=> return Err(err.into())
+  };
 
   tauri::Builder::default()
     .manage(Mutex::new(relative_now))
@@ -261,10 +248,10 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
     .manage(Mutex::new(None::<(Employee,Uuid)>))
     .manage(Mutex::new(None::<(String,Vec<String>)>))
     .manage(Mutex::new(HashMap::<Uuid,Vec<ShiftProblem>>::new()))
-    .manage(Employees(Mutex::new(None::<Vec<Name>>)))
-    .manage(Problems(Mutex::new(None::<Vec<Name>>)))
-    .manage(Machines(Mutex::new(None::<Vec<Name>>)))
-    .manage(SpareParts(Mutex::new(None::<Vec<Name>>)))
+    .manage(Employees(Mutex::new(employees)))
+    .manage(Problems(Mutex::new(problems)))
+    .manage(Machines(Mutex::new(machines)))
+    .manage(SpareParts(Mutex::new(spare_parts)))
     .invoke_handler(tauri::generate_handler![
       login,
       logout,
@@ -272,12 +259,9 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
       current_shift,
       current_shift_borders,
       update_current_shift,
-      update_employees_selection,
-      update_problems_selection,
-      update_machines_selection,
-      update_spare_parts_selection,
       update_current_shift_problems,
       get_current_shift_problems,
+      define_problem,
       problems_selection,
       machines_selection,
       employees_selection,

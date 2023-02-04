@@ -66,12 +66,7 @@ export function SearchBar({
               }
   const resultOptionHandler = (chosen : Name) => {
                   setChosens(chosens => chosens.filter(c => c.id !== chosen.id))
-                  setList(list => {
-                    if (!list.includes(chosen)){
-                      list.unshift(chosen)
-                    }
-                    return list
-                  })
+                  setList(list => [chosen,...list])
                 }
   const choiceSelect = <select
           multiple className="searchBarViewMember">

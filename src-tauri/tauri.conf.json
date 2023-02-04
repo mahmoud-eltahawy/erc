@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "elegant-rondy-client",
-    "version": "0.0.0"
+    "productName": "erc",
+    "version": "0.1.0"
   },
   "tauri": {
     "allowlist": {
@@ -54,7 +54,7 @@
     },
     "windows": [
       {
-        "fullscreen": false,
+        "fullscreen": true,
         "height": 600,
         "resizable": true,
         "title": "elegant-rondy-client",
