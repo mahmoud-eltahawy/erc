@@ -1,10 +1,11 @@
 use uuid::Uuid;
 
-use crate::model::{Cred, Employee};
+use crate::{model::{Cred, Employee}, config::AppState};
 
-pub async fn login_req(card_id: i16,password: String) -> Result<(Employee,Uuid),Box<dyn std::error::Error>> {
+pub async fn login_req(app_state : &AppState,card_id: i16,password: String) -> Result<(Employee,Uuid),Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.post("http://127.0.0.1:8080/api/emp/login")
+  let result = client.post(format!("{origin}/api/emp/login"))
       .json(&Cred{card_id,password})
       .send()
       .await?

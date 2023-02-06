@@ -1,10 +1,11 @@
 use uuid::Uuid;
 
-use crate::model::{ShiftProblem, Probelm};
+use crate::{model::{ShiftProblem, Probelm}, config::AppState};
 
-pub async fn save_problem_detail(shift_problem :&ShiftProblem) -> Result<Uuid,Box<dyn std::error::Error>> {
+pub async fn save_problem_detail(app_state : &AppState,shift_problem :&ShiftProblem) -> Result<Uuid,Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.post("http://127.0.0.1:8080/api/sp/save")
+  let result = client.post(format!("{origin}/api/sp/save"))
       .json(shift_problem)
       .send()
       .await?
@@ -17,9 +18,10 @@ pub async fn save_problem_detail(shift_problem :&ShiftProblem) -> Result<Uuid,Bo
   }
 }
 
-pub async fn save_problem(shift_problem :&Probelm) -> Result<bool,Box<dyn std::error::Error>> {
+pub async fn save_problem(app_state : &AppState,shift_problem :&Probelm) -> Result<bool,Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.post("http://127.0.0.1:8080/api/problem/save")
+  let result = client.post(format!("{origin}/api/problem/save"))
       .json(shift_problem)
       .send()
       .await?

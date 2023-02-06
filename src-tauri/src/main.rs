@@ -3,11 +3,12 @@
     windows_subsystem = "windows"
 )]
 
-use std::{sync::Mutex, collections::HashMap};
+use std::{sync::Mutex, collections::HashMap, env};
 
 use chrono::NaiveTime;
+use dotenv::dotenv;
 use errc::{
-  model::{Employee, ProblemDetail, Probelm, Machine, SparePart, ShiftProblem, Ids},
+  model::{Employee, ProblemDetail, Probelm, Machine, SparePart, ShiftProblem, Ids,Name},
   timer::{get_relative_now, get_current_date, get_current_order, get_shift_borders, ShiftOrder},
   translator::{
     translate_date,
@@ -16,7 +17,6 @@ use errc::{
   api::{auth::login_req,
         for_selection::{
           all_employees,
-          Name,
           all_problems,
           all_machines,
           all_spare_parts
@@ -29,7 +29,7 @@ use errc::{
           fetch_current_problem_detail,
           WriterAndShiftIds
         }
-  }
+  }, config::AppState
 };
 use uuid::Uuid;
 
@@ -64,10 +64,12 @@ fn current_shift_borders(state : tauri::State<'_,Mutex<(Option<NaiveTime>,Option
 }
 
 #[tauri::command]
-async fn login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,card_id: i16,password: String) -> Result<(),String> {
-  match login_req(card_id, password).await {
+async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,
+               app_state : tauri::State<'_,AppState>,
+               card_id: i16,password: String) -> Result<(),String> {
+  match login_req(&app_state,card_id, password).await {
     Ok((employee,id)) => {
-      *state.lock().unwrap() = Some((employee,id));
+      *emp_and_uuid.lock().unwrap() = Some((employee,id));
       Ok(())
     },
     Err(_)     => Err("فشلت عملية تسجيل الدخول".to_string())
@@ -76,10 +78,11 @@ async fn login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,card_id: 
 
 #[tauri::command]
 async fn define_problem(state : tauri::State<'_,Problems>,
+                        app_state : tauri::State<'_,AppState>,
                         title : String,description : String) -> Result<Option<Uuid>,String> {
   let id = Uuid::new_v4();
   let problem = Probelm{id,title,description};
-  match save_problem(&problem).await {
+  match save_problem(&app_state,&problem).await {
     Ok(well)   => {
       if well {
         let s = &mut *state.0.lock().unwrap();
@@ -95,9 +98,10 @@ async fn define_problem(state : tauri::State<'_,Problems>,
 
 #[tauri::command]
 async fn save_problem_detail(problem_detail : ProblemDetail,department_id : Uuid,
+                             app_state : tauri::State<'_,AppState>,
         state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>) -> Result<ShiftProblem,String> {
   let shift_problem = ShiftProblem::new(problem_detail);
-  match persistence::save_problem_detail(&shift_problem).await {
+  match persistence::save_problem_detail(&app_state,&shift_problem).await {
     Ok(id)   => {
       let shift_problem = ShiftProblem {id : Some(id), ..shift_problem};
       let s = &mut *state.lock().unwrap();
@@ -126,9 +130,10 @@ fn get_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<Shi
 
 #[tauri::command]
 async fn update_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>,
+                                       app_state : tauri::State<'_,AppState>,
                                        ids : Ids) -> Result<(),String> {
   let Ids{writer_id,shift_id,department_id} = ids;
-  match fetch_current_problem_detail(WriterAndShiftIds{writer_id,shift_id}).await {
+  match fetch_current_problem_detail(&app_state,WriterAndShiftIds{writer_id,shift_id}).await {
     Ok(problems)   => {
       let s = &mut *state.lock().unwrap();
       s.insert(department_id, problems);
@@ -139,32 +144,36 @@ async fn update_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uui
 }
 
 #[tauri::command]
-async fn get_problem_by_id(id : Uuid) -> Result<Probelm,String> {
-  match fetch_problem_by_id(id).await {
+async fn get_problem_by_id(app_state : tauri::State<'_,AppState>,
+  id : Uuid) -> Result<Probelm,String> {
+  match fetch_problem_by_id(&app_state,id).await {
     Ok(problem)   => Ok(problem),
     Err(err) => Err(err.to_string())
   }
 }
 
 #[tauri::command]
-async fn get_machine_by_id(id : Uuid) -> Result<Machine,String> {
-  match fetch_machine_by_id(id).await {
+async fn get_machine_by_id(app_state : tauri::State<'_,AppState>,
+  id : Uuid) -> Result<Machine,String> {
+  match fetch_machine_by_id(&app_state,id).await {
     Ok(mac)   => Ok(mac),
     Err(err) => Err(err.to_string())
   }
 }
 
 #[tauri::command]
-async fn get_spare_part_by_id(id : Uuid) -> Result<SparePart,String> {
-  match fetch_spare_part_by_id(id).await {
+async fn get_spare_part_by_id(app_state : tauri::State<'_,AppState>,
+  id : Uuid) -> Result<SparePart,String> {
+  match fetch_spare_part_by_id(&app_state,id).await {
     Ok(s)   => Ok(s),
     Err(err) => Err(err.to_string())
   }
 }
 
 #[tauri::command]
-async fn get_employee_by_id(id : Uuid) -> Result<Employee,String> {
-  match fetch_employee_by_id(id).await {
+async fn get_employee_by_id(app_state : tauri::State<'_,AppState>,
+  id : Uuid) -> Result<Employee,String> {
+  match fetch_employee_by_id(&app_state,id).await {
     Ok(e)   => Ok(e),
     Err(err) => Err(err.to_string())
   }
@@ -208,6 +217,7 @@ fn spare_parts_selection(state : tauri::State<'_,SpareParts>) -> Vec<Name> {
 }
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn std::error::Error>>{
+  dotenv().ok();
   launch_tauri().await?;
   Ok(())
 }
@@ -218,30 +228,32 @@ struct Machines(Mutex<Vec<Name>>);
 struct SpareParts(Mutex<Vec<Name>>);
 
 async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
+  let app_state = AppState::new();
   let relative_now = get_relative_now();
   let order = get_current_order(relative_now);
 
-  let problems = match all_problems().await {
+  let problems = match all_problems(&app_state).await {
     Ok(p) => p,
     Err(err)=> return Err(err.into())
   };
 
-  let employees = match all_employees().await {
+  let employees = match all_employees(&app_state).await {
     Ok(e) => e,
     Err(err)=> return Err(err.into())
   };
 
-  let machines = match all_machines().await {
+  let machines = match all_machines(&app_state).await {
     Ok(m) => m,
     Err(err)=> return Err(err.into())
   };
 
-  let spare_parts = match all_spare_parts().await {
-    Ok(m) => m,
+  let spare_parts = match all_spare_parts(&app_state).await {
+    Ok(s) => s,
     Err(err)=> return Err(err.into())
   };
 
   tauri::Builder::default()
+    .manage(app_state)
     .manage(Mutex::new(relative_now))
     .manage(Mutex::new(order.clone()))
     .manage(Mutex::new(get_shift_borders(order)))

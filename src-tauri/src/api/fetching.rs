@@ -1,7 +1,13 @@
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use crate::model::{ Employee, Machine, Probelm, SparePart, ShiftProblem};
+use crate::{model::{
+  Employee,
+  Machine,
+  Probelm,
+  SparePart,
+  ShiftProblem
+}, config::AppState};
 
 #[derive(Serialize,Deserialize)]
 pub struct WriterAndShiftIds{
@@ -9,9 +15,10 @@ pub struct WriterAndShiftIds{
   pub shift_id      : Uuid,
 }
 
-pub async fn fetch_current_problem_detail(writer_shift_ids : WriterAndShiftIds) -> Result<Vec<ShiftProblem>,Box<dyn std::error::Error>> {
+pub async fn fetch_current_problem_detail(app_state : &AppState,writer_shift_ids : WriterAndShiftIds) -> Result<Vec<ShiftProblem>,Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.get("http://127.0.0.1:8080/api/sp/cproblems")
+  let result = client.get(format!("{origin}/api/sp/cproblems"))
       .json(&writer_shift_ids)
       .send()
       .await?
@@ -24,9 +31,10 @@ pub async fn fetch_current_problem_detail(writer_shift_ids : WriterAndShiftIds) 
   }
 }
 
-pub async fn fetch_employee_by_id(id : Uuid) -> Result<Employee,Box<dyn std::error::Error>> {
+pub async fn fetch_employee_by_id(app_state : &AppState,id : Uuid) -> Result<Employee,Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.post("http://127.0.0.1:8080/api/emp/emp")
+  let result = client.post(format!("{origin}/api/emp/emp"))
       .json(&id)
       .send()
       .await?
@@ -39,9 +47,10 @@ pub async fn fetch_employee_by_id(id : Uuid) -> Result<Employee,Box<dyn std::err
   }
 }
 
-pub async fn fetch_problem_by_id(id : Uuid) -> Result<Probelm,Box<dyn std::error::Error>> {
+pub async fn fetch_problem_by_id(app_state : &AppState,id : Uuid) -> Result<Probelm,Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.post("http://127.0.0.1:8080/api/problem/problem")
+  let result = client.post(format!("{origin}/api/problem/problem"))
       .json(&id)
       .send()
       .await?
@@ -54,9 +63,10 @@ pub async fn fetch_problem_by_id(id : Uuid) -> Result<Probelm,Box<dyn std::error
   }
 }
 
-pub async fn fetch_spare_part_by_id(id : Uuid) -> Result<SparePart,Box<dyn std::error::Error>> {
+pub async fn fetch_spare_part_by_id(app_state : &AppState,id : Uuid) -> Result<SparePart,Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.post("http://127.0.0.1:8080/api/spare-part/part")
+  let result = client.post(format!("{origin}/api/spare-part/part"))
       .json(&id)
       .send()
       .await?
@@ -69,9 +79,10 @@ pub async fn fetch_spare_part_by_id(id : Uuid) -> Result<SparePart,Box<dyn std::
   }
 }
 
-pub async fn fetch_machine_by_id(id : Uuid) -> Result<Machine,Box<dyn std::error::Error>> {
+pub async fn fetch_machine_by_id(app_state : &AppState,id : Uuid) -> Result<Machine,Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.post("http://127.0.0.1:8080/api/machine/machine")
+  let result = client.post(format!("{origin}/api/machine/machine"))
       .json(&id)
       .send()
       .await?

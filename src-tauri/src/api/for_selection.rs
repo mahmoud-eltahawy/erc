@@ -1,52 +1,10 @@
-use serde::{Serialize, Deserialize};
-use uuid::Uuid;
 use std::error::Error;
+use crate::{model::{Employee, Probelm, Machine, SparePart, Name}, config::AppState};
 
-use crate::model::{Employee, Probelm, Machine, SparePart};
-
-#[derive(Serialize,Deserialize,Clone,Debug)]
-pub struct Name{
-  pub id : Option<Uuid>,
-  pub name : String
-}
-
-impl Name{
-  fn build_employee(employee : &Employee) -> Name{
-    Name {
-      id: employee.id,
-      name: format!("{} {} {}",
-              employee.first_name,
-              employee.middle_name,
-              employee.last_name
-      )
-    }
-  }
-
-  fn build_problem(problem : &Probelm) -> Name{
-    Name {
-      id: Some(problem.id),
-      name: problem.title.clone()
-    }
-  }
-
-  fn build_machine(machine : &Machine) -> Name{
-    Name {
-      id: Some(machine.id),
-      name: machine.name.clone()
-    }
-  }
-
-  fn build_spare_part(spare_part : &SparePart) -> Name{
-    Name {
-      id: Some(spare_part.id),
-      name: spare_part.name.clone()
-    }
-  }
-}
-
-pub async fn all_employees() -> Result<Vec<Name>,Box<dyn Error>> {
+pub async fn all_employees(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.get("http://127.0.0.1:8080/api/emp/all")
+  let result = client.get(format!("{origin}/api/emp/all"))
       .send()
       .await?
       .json::<Vec<Employee>>()
@@ -58,9 +16,10 @@ pub async fn all_employees() -> Result<Vec<Name>,Box<dyn Error>> {
   Ok(result)
 }
 
-pub async fn all_problems() -> Result<Vec<Name>,Box<dyn Error>> {
+pub async fn all_problems(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.get("http://127.0.0.1:8080/api/problem/all")
+  let result = client.get(format!("{origin}/api/problem/all"))
       .send()
       .await?
       .json::<Vec<Probelm>>()
@@ -72,9 +31,10 @@ pub async fn all_problems() -> Result<Vec<Name>,Box<dyn Error>> {
   Ok(result)
 }
 
-pub async fn all_machines() -> Result<Vec<Name>,Box<dyn Error>> {
+pub async fn all_machines(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.get("http://127.0.0.1:8080/api/machine/all")
+  let result = client.get(format!("{origin}/api/machine/all"))
       .send()
       .await?
       .json::<Vec<Machine>>()
@@ -86,9 +46,10 @@ pub async fn all_machines() -> Result<Vec<Name>,Box<dyn Error>> {
   Ok(result)
 }
 
-pub async fn all_spare_parts() -> Result<Vec<Name>,Box<dyn Error>> {
+pub async fn all_spare_parts(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
+  let origin = &app_state.origin;
   let client = reqwest::Client::new();
-  let result = client.get("http://127.0.0.1:8080/api/spare-part/all")
+  let result = client.get(format!("{origin}/api/spare-part/all"))
       .send()
       .await?
       .json::<Vec<SparePart>>()
