@@ -58,9 +58,9 @@ function ProblemRow({problem} : {problem : ShiftProblem}){
 const sparePartsList = (spareParts : SparePart[] | null) => {
     const elsing = <p>لم تستخدم اي قطعة غيار</p>
     const core   = <SparePartsList parts={spareParts!}/>
-    const checkingNotEmpty = spareParts!.length !== 0 ? core : elsing
+    const ifNotEmpty = (list : SparePart[]) => list.length !== 0 ? core : elsing
     return (
-        spareParts ? checkingNotEmpty : elsing
+        spareParts ? ifNotEmpty(spareParts) : elsing
     )
 }
 

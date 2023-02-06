@@ -2,9 +2,44 @@ import { invoke } from "@tauri-apps/api"
 import { useEffect, useState } from "react"
 import DefineProblem from "./defineProblem"
 import { useEmployeeAndShiftIDUpdate } from "./employeeProvider"
+import HistoryShow from "./HistoryShow"
 import { Employee, Machine, Name, Problem, ShiftProblem, ShiftProblemMini, SparePart } from "./main"
 import ProblemForm from "./ProblemForm"
 import ShiftProblems from "./ShiftProblems"
+
+const bId = {
+  problemAdd    : '0',
+  problemDefine : '1',
+  problemsShow  : '2',
+  shiftsHistory : '3'
+}
+export const shiftProblemFromMinimal = async function(mp : ShiftProblemMini) : Promise<ShiftProblem> {
+  const problems : Problem[] = []
+  for(let j =0; j < mp.problems_ids.length; j++){
+    problems.push(await invoke('get_problem_by_id',{id : mp.problems_ids[j]}) as Problem)
+  }
+
+  const spareParts : SparePart[] | null = mp.spare_parts_ids ? [] : null
+  if(mp.spare_parts_ids){
+    for(let j =0; j < mp.spare_parts_ids.length; j++){
+      spareParts!.push(await invoke('get_spare_part_by_id',{id : mp.spare_parts_ids[j]}) as SparePart)
+    }
+  }
+
+  let p : ShiftProblem = {
+      id          : mp.id,
+      shiftId     : mp.shift_id,
+      note        : mp.note,
+      writer      : await invoke('get_employee_by_id',{id : mp.writer_id}) as Employee,
+      maintainer  : await invoke('get_employee_by_id',{id : mp.maintainer_id}) as Employee,
+      machine     : await invoke('get_machine_by_id' ,{id : mp.machine_id}) as Machine,
+      beginTime   : mp.begin_time,
+      endTime     : mp.end_time,
+      problems    : problems,
+      spareParts  : spareParts
+  }
+  return p
+}
 
 export default function Wall({
     shiftBegin,
@@ -30,40 +65,7 @@ export default function Wall({
   const [shiftProblems,setShiftProblems] = useState<ShiftProblem[]>([])
   const [emptyPlayGround,setEmptyPlayGround] = useState(true)
   const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
-  const [toggleButtons, setToggleButtons] = useState([
-      {id : 'problemAdd'   , display : false},
-      {id : 'problemDefine', display : false},
-      {id : 'problemsShow' , display : false}
-  ])
-
-
-  const shiftProblemFromMinimal = async function(mp : ShiftProblemMini) : Promise<ShiftProblem> {
-    const problems : Problem[] = []
-    for(let j =0; j < mp.problems_ids.length; j++){
-        problems.push(await invoke('get_problem_by_id',{id : mp.problems_ids[j]}) as Problem)
-    }
-
-    const spareParts : SparePart[] | null = mp.spare_parts_ids ? [] : null
-    if(mp.spare_parts_ids){
-      for(let j =0; j < mp.spare_parts_ids.length; j++){
-        spareParts!.push(await invoke('get_spare_part_by_id',{id : mp.spare_parts_ids[j]}) as SparePart)
-      }
-    }
-
-    let p : ShiftProblem = {
-        id          : mp.id,
-        shiftId     : mp.shift_id,
-        note        : mp.note,
-        writer      : await invoke('get_employee_by_id',{id : mp.writer_id}) as Employee,
-        maintainer  : await invoke('get_employee_by_id',{id : mp.maintainer_id}) as Employee,
-        machine     : await invoke('get_machine_by_id' ,{id : mp.machine_id}) as Machine,
-        beginTime   : mp.begin_time,
-        endTime     : mp.end_time,
-        problems    : problems,
-        spareParts  : spareParts
-    }
-    return p
-  }
+  const [toggleButtons, setToggleButtons] = useState([false,false,false,false])
 
   useEffect(() => {
     const shiftProblemsFun = async function() {
@@ -94,7 +96,6 @@ export default function Wall({
     shiftProblemsFun()
   },[])
 
-
   const logout = () => {
     invoke('logout').then(
       setEmployeeAndShiftId([null,null])
@@ -102,40 +103,42 @@ export default function Wall({
   }
 
   const toggle = (id : string) => {
-      setToggleButtons(buttons => buttons.map(obj => {
-          if (obj.id === id) {
-            if(obj.display){
+      setToggleButtons(buttons => buttons.map((cond,condId) => {
+          if (condId === +id) {
+            if(cond){
               setEmptyPlayGround(true)
-              return { id: id, display: false }
+              return false
             }
             setEmptyPlayGround(false)
-            return { id: id, display: true }
+            return true
           } else {
-            return { ...obj, display: false }
+            return false
           }
         })
       )
   }
 
   const theButtons = <div>
-    { emptyPlayGround || toggleButtons[0].display ?
-      <button id="problemAdd" onClick={e => toggle(e.currentTarget.id)}>اضافة عطل</button> : <></> }
-    { emptyPlayGround || toggleButtons[1].display ?
-      <button id="problemDefine" onClick={e => toggle(e.currentTarget.id)}>تعريف مشكلة</button> : <></>}
-    { emptyPlayGround || toggleButtons[2].display ?
-      <button id="problemsShow"  onClick={e => toggle(e.currentTarget.id)}>اظهار الاعطال</button> : <></>}
+    { emptyPlayGround || toggleButtons[+bId.problemAdd] ?
+      <button id={bId.problemAdd} onClick={e => toggle(e.currentTarget.id)}>اضافة عطل</button> : <></> }
+    { emptyPlayGround || toggleButtons[+bId.problemDefine] ?
+      <button id={bId.problemDefine} onClick={e => toggle(e.currentTarget.id)}>تعريف مشكلة</button> : <></>}
+    { emptyPlayGround || toggleButtons[+bId.problemsShow] ?
+      <button id={bId.problemsShow}  onClick={e => toggle(e.currentTarget.id)}>اظهار الاعطال</button> : <></>}
+    { emptyPlayGround || toggleButtons[+bId.shiftsHistory] ?
+      <button id={bId.shiftsHistory}  onClick={e => toggle(e.currentTarget.id)}>سجل الورديات</button> : <></>}
   </div>
 
-  const defineProblem = <DefineProblem toggle={() => toggle("problemDefine")}
+  const historyShow   = <HistoryShow />
+  const defineProblem = <DefineProblem toggle={() => toggle(bId.problemDefine)}
                                        addDefinition={(name : Name) => addProblem(name)}/>
   const problemShow   = <ShiftProblems shiftProblems={shiftProblems}/>
   const logoutButton  = <button className={"LogoutButton"} onClick={() => logout()}>تسجيل خروج</button>
   const employeeName  =<p className={"NameP"}>
           {employee ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` : ''}</p>
   const problemForm   = <ProblemForm
-            add={(problem : ShiftProblem) =>setShiftProblems(problems => [...problems,problem])}
-            toggle={() => toggle("problemAdd")}
-            convert={shiftProblemFromMinimal}
+            add={(problem : ShiftProblem) =>setShiftProblems(problems => [problem,...problems])}
+            toggle={() => toggle(bId.problemAdd)}
             shiftId={shiftId!}
             writerId={employee!.id}
             departmentId={employee!.department_id}
@@ -152,9 +155,10 @@ export default function Wall({
       {logoutButton}
       {employeeName}
       {theButtons}
-      {toggleButtons[0].display ? problemForm   : <></>}
-      {toggleButtons[1].display ? defineProblem : <></>}
-      {toggleButtons[2].display ? problemShow   : <></>}
+      {toggleButtons[+bId.problemAdd]    ? problemForm   : null}
+      {toggleButtons[+bId.problemDefine] ? defineProblem : null}
+      {toggleButtons[+bId.problemsShow]  ? problemShow   : null}
+      {toggleButtons[+bId.shiftsHistory] ? historyShow   : null}
     </section>
   )
 }

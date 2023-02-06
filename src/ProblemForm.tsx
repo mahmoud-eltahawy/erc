@@ -1,11 +1,11 @@
 import { invoke } from "@tauri-apps/api"
 import { BaseSyntheticEvent, useState } from "react"
-import { Name, ProblemDeps } from "./main"
+import { Name, ProblemDeps, ShiftProblemMini } from "./main"
 import { SearchBar } from "./SearchBar"
+import { shiftProblemFromMinimal } from "./Wall"
 
 export default function ProblemForm({
     toggle,
-    convert,
     add,
     deps,
     writerId,
@@ -13,7 +13,6 @@ export default function ProblemForm({
     departmentId
 } : {
     toggle          : Function,
-    convert         : Function,
     add             : Function,
     deps            : ProblemDeps,
     writerId        : string,
@@ -53,13 +52,13 @@ export default function ProblemForm({
             writer_id            : writerId,
             maintainer_id        : chosenEmployees[0].id,
             machine_id           : chosenMachines[0].id,
-            begin_time           : beginTime,
-            end_time             : endTime,
+            begin_time           : beginTime.length === 8 ? beginTime : beginTime + ":00",
+            end_time             : endTime.length   === 8 ? endTime   : endTime   + ":00",
             problems_ids         : chosenProblems.map(problem => problem.id),
             spare_parts_ids      : chosenSpareParts.length ? chosenSpareParts.map(part => part.id) : null,
             note                 : writtenNote ? writtenNote : null
         }, departmentId : departmentId})
-        const shiftProblem = await convert(shift_problem)
+        const shiftProblem = await shiftProblemFromMinimal(shift_problem as ShiftProblemMini)
         add(shiftProblem)
       }catch(err){
         alert(err)
