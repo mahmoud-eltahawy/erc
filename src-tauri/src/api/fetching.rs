@@ -1,13 +1,15 @@
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
-use crate::{model::{
-  Employee,
-  Machine,
-  Probelm,
-  SparePart,
-  ShiftProblem
-}, config::AppState};
+use crate::config::AppState;
+
+use rec::model::{
+  employee::Employee,
+  problem::Probelm,
+  machine::Machine,
+  spare_part::SparePart,
+  shift_problem::MinimamlShiftProblem
+};
 
 #[derive(Serialize,Deserialize)]
 pub struct WriterAndShiftIds{
@@ -15,14 +17,15 @@ pub struct WriterAndShiftIds{
   pub shift_id      : Uuid,
 }
 
-pub async fn fetch_current_problem_detail(app_state : &AppState,writer_shift_ids : WriterAndShiftIds) -> Result<Vec<ShiftProblem>,Box<dyn std::error::Error>> {
+pub async fn fetch_current_problem_detail(app_state : &AppState,
+      writer_shift_ids : WriterAndShiftIds) -> Result<Vec<MinimamlShiftProblem>,Box<dyn std::error::Error>> {
   let origin = &app_state.origin;
   let client = reqwest::Client::new();
   let result = client.get(format!("{origin}/api/sp/cproblems"))
       .json(&writer_shift_ids)
       .send()
       .await?
-      .json::<Option<Vec<ShiftProblem>>>()
+      .json::<Option<Vec<MinimamlShiftProblem>>>()
       .await?;
 
   match result {

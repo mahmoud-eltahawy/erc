@@ -1,8 +1,12 @@
 use uuid::Uuid;
 
-use crate::{model::{ShiftProblem, Probelm}, config::AppState};
+use crate::config::AppState;
+use rec::model::{
+  problem::Probelm,
+  shift_problem::MinimamlShiftProblem
+};
 
-pub async fn save_problem_detail(app_state : &AppState,shift_problem :&ShiftProblem) -> Result<Uuid,Box<dyn std::error::Error>> {
+pub async fn save_problem_detail(app_state : &AppState,shift_problem :&MinimamlShiftProblem) -> Result<Uuid,Box<dyn std::error::Error>> {
   let origin = &app_state.origin;
   let client = reqwest::Client::new();
   let result = client.post(format!("{origin}/api/sp/save"))

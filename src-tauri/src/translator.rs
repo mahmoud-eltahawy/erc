@@ -1,4 +1,4 @@
-use crate::timer::ShiftOrder;
+use rec::timer::ShiftOrder;
 
 pub fn translate_date(date : String) -> Vec<String> {
   return date.split('-').into_iter().map(|num| {

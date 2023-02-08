@@ -7,9 +7,26 @@ use std::{sync::Mutex, collections::HashMap, env};
 
 use chrono::NaiveTime;
 use dotenv::dotenv;
+use rec::{
+  timer::{
+    get_relative_now,
+    get_current_date,
+    get_current_order,
+    get_shift_borders,
+    ShiftOrder},
+  model::{
+    employee::Employee,
+    problem::Probelm,
+    machine::Machine,
+    spare_part::SparePart,
+    name::Name,
+    shift_problem::{
+      MinimamlShiftProblem,
+      ProblemDetail
+    }
+  }
+};
 use errc::{
-  model::{Employee, ProblemDetail, Probelm, Machine, SparePart, ShiftProblem, Ids,Name},
-  timer::{get_relative_now, get_current_date, get_current_order, get_shift_borders, ShiftOrder},
   translator::{
     translate_date,
     translate_order
@@ -31,6 +48,7 @@ use errc::{
         }
   }, config::AppState
 };
+use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 #[tauri::command]
@@ -99,11 +117,12 @@ async fn define_problem(state : tauri::State<'_,Problems>,
 #[tauri::command]
 async fn save_problem_detail(problem_detail : ProblemDetail,department_id : Uuid,
                              app_state : tauri::State<'_,AppState>,
-        state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>) -> Result<ShiftProblem,String> {
-  let shift_problem = ShiftProblem::new(problem_detail);
+        state : tauri::State<'_,Mutex<HashMap<Uuid,
+                          Vec<MinimamlShiftProblem>>>>) -> Result<MinimamlShiftProblem,String> {
+  let shift_problem = MinimamlShiftProblem::new(problem_detail);
   match persistence::save_problem_detail(&app_state,&shift_problem).await {
     Ok(id)   => {
-      let shift_problem = ShiftProblem {id : Some(id), ..shift_problem};
+      let shift_problem = MinimamlShiftProblem {id : Some(id), ..shift_problem};
       let s = &mut *state.lock().unwrap();
       match s.get_mut(&department_id) {
         Some(problems) => {problems.push(shift_problem.clone())},
@@ -120,8 +139,8 @@ async fn save_problem_detail(problem_detail : ProblemDetail,department_id : Uuid
 }
 
 #[tauri::command]
-fn get_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>,
-                              department_id : Uuid) -> Result<Vec<ShiftProblem>,String> {
+fn get_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<MinimamlShiftProblem>>>>,
+                              department_id : Uuid) -> Result<Vec<MinimamlShiftProblem>,String> {
   match state.lock().unwrap().get(&department_id) {
     Some(problems)   => Ok(problems.to_vec()),
     None => Err("empty".to_string())
@@ -129,9 +148,9 @@ fn get_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<Shi
 }
 
 #[tauri::command]
-async fn update_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ShiftProblem>>>>,
-                                       app_state : tauri::State<'_,AppState>,
-                                       ids : Ids) -> Result<(),String> {
+async fn update_current_shift_problems(
+  state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<MinimamlShiftProblem>>>>,
+  app_state : tauri::State<'_,AppState>,ids : Ids) -> Result<(),String> {
   let Ids{writer_id,shift_id,department_id} = ids;
   match fetch_current_problem_detail(&app_state,WriterAndShiftIds{writer_id,shift_id}).await {
     Ok(problems)   => {
@@ -222,6 +241,13 @@ async fn main() -> Result<(),Box<dyn std::error::Error>>{
   Ok(())
 }
 
+#[derive(Serialize,Deserialize)]
+pub struct Ids{
+  pub writer_id     : Uuid,
+  pub shift_id      : Uuid,
+  pub department_id : Uuid
+}
+
 struct Employees(Mutex<Vec<Name>>);
 struct Problems(Mutex<Vec<Name>>);
 struct Machines(Mutex<Vec<Name>>);
@@ -259,7 +285,7 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
     .manage(Mutex::new(get_shift_borders(order)))
     .manage(Mutex::new(None::<(Employee,Uuid)>))
     .manage(Mutex::new(None::<(String,Vec<String>)>))
-    .manage(Mutex::new(HashMap::<Uuid,Vec<ShiftProblem>>::new()))
+    .manage(Mutex::new(HashMap::<Uuid,Vec<MinimamlShiftProblem>>::new()))
     .manage(Employees(Mutex::new(employees)))
     .manage(Problems(Mutex::new(problems)))
     .manage(Machines(Mutex::new(machines)))

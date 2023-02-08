@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
-use crate::{model::{Cred, Employee}, config::AppState};
+use crate::config::AppState;
+use rec::model::employee::{Employee,Cred};
 
 pub async fn login_req(app_state : &AppState,card_id: i16,password: String) -> Result<(Employee,Uuid),Box<dyn std::error::Error>> {
   let origin = &app_state.origin;

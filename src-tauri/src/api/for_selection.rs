@@ -1,5 +1,12 @@
 use std::error::Error;
-use crate::{model::{Employee, Probelm, Machine, SparePart, Name}, config::AppState};
+use crate::config::AppState;
+use rec::model::{
+  employee::Employee,
+  problem::Probelm,
+  machine::Machine,
+  spare_part::SparePart,
+  name::Name
+};
 
 pub async fn all_employees(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
   let origin = &app_state.origin;
