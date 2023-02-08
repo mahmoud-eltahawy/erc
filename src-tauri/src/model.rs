@@ -23,7 +23,6 @@ pub struct Cred{
 #[derive(Serialize,Deserialize,Debug)]
 pub struct Probelm{
   pub id          : Uuid,
-  pub writer_id   : Uuid,
   pub title       : String,
   pub description : String
 }
