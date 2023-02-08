@@ -78,10 +78,10 @@ async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,
 
 #[tauri::command]
 async fn define_problem(state : tauri::State<'_,Problems>,
-                        app_state : tauri::State<'_,AppState>,
+                        app_state : tauri::State<'_,AppState>,writer_id : Uuid,
                         title : String,description : String) -> Result<Option<Uuid>,String> {
   let id = Uuid::new_v4();
-  let problem = Probelm{id,title,description};
+  let problem = Probelm{id,writer_id,title,description};
   match save_problem(&app_state,&problem).await {
     Ok(well)   => {
       if well {

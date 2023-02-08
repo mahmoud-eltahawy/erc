@@ -18,11 +18,11 @@ pub async fn save_problem_detail(app_state : &AppState,shift_problem :&ShiftProb
   }
 }
 
-pub async fn save_problem(app_state : &AppState,shift_problem :&Probelm) -> Result<bool,Box<dyn std::error::Error>> {
+pub async fn save_problem(app_state : &AppState,problem :&Probelm) -> Result<bool,Box<dyn std::error::Error>> {
   let origin = &app_state.origin;
   let client = reqwest::Client::new();
   let result = client.post(format!("{origin}/api/problem/save"))
-      .json(shift_problem)
+      .json(problem)
       .send()
       .await?
       .json::<bool>()
