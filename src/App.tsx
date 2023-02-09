@@ -13,7 +13,6 @@ function App() {
   const [shiftEnd,setShiftEnd]       = useState('')
   const [machines  ,setMachines]     = useState<Name[]>([])
   const [employees ,setEmployees]    = useState<Name[]>([])
-  const [problems  ,setProblems]     = useState<Name[]>([])
   const [spareParts,setSpareParts]   = useState<Name[]>([])
 
   useEffect(() => {
@@ -30,15 +29,6 @@ function App() {
       try{
         const names : Name[] = await invoke('employees_selection')
         setEmployees(names)
-      } catch(err){
-        console.log(err)
-      }
-    }
-
-    const problemsFun = async function(){
-      try{
-        const names : Name[] = await invoke('problems_selection')
-        setProblems(names)
       } catch(err){
         console.log(err)
       }
@@ -72,7 +62,6 @@ function App() {
       }
     }
     employeesFun()
-    problemsFun()
     machinesFun()
     partsFun()
     bordersFun()
@@ -84,8 +73,6 @@ function App() {
       {employee && shiftId ? <Wall
           employees={employees}
           machines={machines}
-          problems={problems}
-          addProblem={(name : Name) => setProblems(list => [name,...list])}
           spareParts={spareParts}
           shiftBegin={shiftBegin}
           employee={employee}

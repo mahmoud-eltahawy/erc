@@ -7,6 +7,7 @@ use rec::model::{
   spare_part::SparePart,
   name::Name
 };
+use uuid::Uuid;
 
 pub async fn all_employees(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
   let origin = &app_state.origin;
@@ -23,10 +24,11 @@ pub async fn all_employees(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Er
   Ok(result)
 }
 
-pub async fn all_problems(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
+pub async fn all_problems(app_state : &AppState,department_id: Uuid) -> Result<Vec<Name>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let client = reqwest::Client::new();
   let result = client.get(format!("{origin}/api/problem/all"))
+      .json(&department_id)
       .send()
       .await?
       .json::<Vec<Probelm>>()

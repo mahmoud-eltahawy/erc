@@ -95,16 +95,16 @@ async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,
 }
 
 #[tauri::command]
-async fn define_problem(state : tauri::State<'_,Problems>,
-                        app_state : tauri::State<'_,AppState>,
-                        title : String,description : String) -> Result<Option<Uuid>,String> {
+async fn define_problem(app_state : tauri::State<'_,AppState>,
+                        writer_id : Uuid,
+                        department_id : Uuid,
+                        title : String,
+                        description : String) -> Result<Option<Uuid>,String> {
   let id = Uuid::new_v4();
-  let problem = Probelm{id,title,description};
+  let problem = Probelm{id,writer_id,department_id,title,description};
   match save_problem(&app_state,&problem).await {
     Ok(well)   => {
       if well {
-        let s = &mut *state.0.lock().unwrap();
-        s.push(Name {id : Some(id), name: problem.title });
         Ok(Some(id))
       } else {
         Ok(None)
@@ -218,9 +218,12 @@ fn employees_selection(state : tauri::State<'_,Employees>) -> Vec<Name> {
 }
 
 #[tauri::command]
-fn problems_selection(state : tauri::State<'_,Problems>) -> Vec<Name> {
-  let s = &*state.0.lock().unwrap();
-  s.to_vec()
+async fn problems_selection(app_state : tauri::State<'_,AppState>,
+                            department_id : Uuid) -> Result<Vec<Name>,String> {
+  match all_problems(&app_state,department_id).await {
+    Ok(p) => Ok(p),
+    Err(err)=> Err(err.to_string())
+  }
 }
 
 #[tauri::command]
@@ -249,7 +252,6 @@ pub struct Ids{
 }
 
 struct Employees(Mutex<Vec<Name>>);
-struct Problems(Mutex<Vec<Name>>);
 struct Machines(Mutex<Vec<Name>>);
 struct SpareParts(Mutex<Vec<Name>>);
 
@@ -257,11 +259,6 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
   let app_state = AppState::new();
   let relative_now = get_relative_now();
   let order = get_current_order(relative_now);
-
-  let problems = match all_problems(&app_state).await {
-    Ok(p) => p,
-    Err(err)=> return Err(err.into())
-  };
 
   let employees = match all_employees(&app_state).await {
     Ok(e) => e,
@@ -287,7 +284,6 @@ async fn launch_tauri() -> Result<(),Box<dyn std::error::Error>>{
     .manage(Mutex::new(None::<(String,Vec<String>)>))
     .manage(Mutex::new(HashMap::<Uuid,Vec<MinimamlShiftProblem>>::new()))
     .manage(Employees(Mutex::new(employees)))
-    .manage(Problems(Mutex::new(problems)))
     .manage(Machines(Mutex::new(machines)))
     .manage(SpareParts(Mutex::new(spare_parts)))
     .invoke_handler(tauri::generate_handler![

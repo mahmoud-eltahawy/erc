@@ -28,7 +28,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "com.rondy.elegant",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -54,11 +54,11 @@
     },
     "windows": [
       {
-        "fullscreen": true,
-        "height": 600,
+        "fullscreen": false,
+        "height": 768,
         "resizable": true,
         "title": "elegant-rondy-client",
-        "width": 800
+        "width": 1366
       }
     ]
   }

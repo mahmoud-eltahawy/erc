@@ -2441,7 +2441,7 @@ dependencies = [
 [[package]]
 name = "rec"
 version = "0.1.0"
-source = "git+https://github.com/mahmoud-eltahawy/rec.git#64ba95e4ef38c7c8d52117ea8440fc7a1ca7a483"
+source = "git+https://github.com/mahmoud-eltahawy/rec.git#59ea67f527e671ec791ca1b167cdea4ba87bd1a9"
 dependencies = [
  "chrono",
  "serde",
