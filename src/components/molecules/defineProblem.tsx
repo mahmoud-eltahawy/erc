@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api';
 import { BaseSyntheticEvent, useRef, useState } from 'react'
-import { useEmployeeAndShiftID } from './employeeProvider';
+import { useEmployeeAndShiftID } from '../providers/employeeProvider';
 
 export default function DefineProblem({
     toggle,
@@ -10,7 +10,7 @@ export default function DefineProblem({
     addDefinition :Function
 
 }){
-  const [employee,shiftId] = useEmployeeAndShiftID();
+  const [employee] = useEmployeeAndShiftID();
   const [descLength, setDescLength] = useState(0);
   const titleR = useRef<HTMLInputElement>(null)
   const descriptionR = useRef<HTMLTextAreaElement>(null)

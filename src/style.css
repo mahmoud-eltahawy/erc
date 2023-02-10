@@ -109,8 +109,8 @@ button:hover {
    display: block;
    font-size: xx-large;
    border: solid 3px;
-   margin: 5% auto;
-   padding: 5%;
+   margin: 1% auto;
+   padding: 1%;
 }
 .LoginFormInput{
    display: block;

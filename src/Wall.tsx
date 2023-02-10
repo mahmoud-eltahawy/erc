@@ -1,11 +1,12 @@
 import { invoke } from "@tauri-apps/api"
 import { useEffect, useState } from "react"
-import DefineProblem from "./defineProblem"
-import { useEmployeeAndShiftIDUpdate } from "./employeeProvider"
-import HistoryShow from "./HistoryShow"
+import DefineProblem from "./components/molecules/defineProblem"
+import { useEmployeeAndShiftIDUpdate } from "./components/providers/employeeProvider"
+import HistoryShow from "./components/organisms/HistoryShow"
 import { Employee, Machine, Name, Problem, ShiftProblem, ShiftProblemMini, SparePart } from "./main"
-import ProblemForm from "./ProblemForm"
-import ShiftProblems from "./ShiftProblems"
+import ProblemForm from "./components/organisms/ProblemForm"
+import ShiftProblems from "./components/organisms/ShiftProblems"
+import { ToggleButtons } from './components/molecules/toggleButtons'
 
 const bId = {
   problemAdd    : '0',
@@ -33,8 +34,8 @@ export default function Wall({
 }){
   const [problems  ,setProblems]     = useState<Name[]>([])
   const [shiftProblems,setShiftProblems] = useState<ShiftProblem[]>([])
-  const [emptyPlayGround,setEmptyPlayGround] = useState(true)
   const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
+  const [emptyPlayGround,setEmptyPlayGround] = useState(true)
   const [toggleButtons, setToggleButtons] = useState<Array<boolean>>(Array(4).fill(false))
 
   useEffect(() => {
@@ -84,40 +85,29 @@ export default function Wall({
   }
 
   const toggle = (id : string) => {
-      setToggleButtons(buttons => buttons.map((cond,condId) => {
-          if (condId === +id) {
-            if(cond){
-              setEmptyPlayGround(true)
-              return false
-            }
-            setEmptyPlayGround(false)
-            return true
-          } else {
-            return false
-          }
-        })
-      )
+    setToggleButtons(buttons => buttons.map((cond,condId) => {
+        if (condId !== +id) {
+          return false
+        }
+        if(cond){
+          setEmptyPlayGround(true)
+          return false
+        }
+        setEmptyPlayGround(false)
+        return true
+      })
+    )
   }
-
-
-  const theButtons = <div>
-    <ToggleButton pGround={emptyPlayGround}
-                  tButton={toggleButtons[+bId.problemAdd]}
-                  toggle={() =>  toggle(bId.problemAdd)}
-                  cont="اضافة عطل"/>
-    <ToggleButton pGround={emptyPlayGround}
-                  tButton={toggleButtons[+bId.problemDefine]}
-                  toggle={() =>  toggle(bId.problemDefine)}
-                  cont="تعريف مشكلة"/>
-    <ToggleButton pGround={emptyPlayGround}
-                  tButton={toggleButtons[+bId.problemsShow]}
-                  toggle={() => toggle(bId.problemsShow)}
-                  cont="اظهار الاعطال"/>
-    <ToggleButton pGround={emptyPlayGround}
-                  tButton={toggleButtons[+bId.shiftsHistory]}
-                  toggle={() => toggle(bId.shiftsHistory)}
-                  cont="سجل الورديات"/>
-  </div>
+  const theButtons = <ToggleButtons defaultContent="الصفحة الرئيسية"
+                                    isEmptyGround={emptyPlayGround}
+                                    idToggle={toggle}
+                                    tbuttons={toggleButtons}
+                                    idContent={[
+                                      {id : bId.problemAdd    ,content : "اضافة عطل"},
+                                      {id : bId.problemDefine ,content : "تعريف مشكلة"},
+                                      {id : bId.problemsShow  ,content : "اظهار الاعطال"},
+                                      {id : bId.shiftsHistory ,content : "السجل"}
+                                    ]}/>
   const historyShow   = <HistoryShow />
   const defineProblem = <DefineProblem toggle={() => toggle(bId.problemDefine)}
                                        addDefinition={(name : Name) => setProblems(list => [name,...list])}/>
@@ -150,33 +140,6 @@ export default function Wall({
       {toggleButtons[+bId.shiftsHistory] ? historyShow   : null}
     </section>
   )
-}
-
-function ToggleButton({
-    toggle,
-    cont,
-    pGround,
-    tButton
-    } : {
-    toggle  : Function,
-    cont    : string,
-    pGround : boolean,
-    tButton : boolean
-}){
-    const defaultContent = "الصفحة الرئيسية"
-    const [content,setContent] = useState(cont)
-    const [display,setDisplay] = useState(pGround || tButton)
-
-    useEffect(()=>{
-      setDisplay(pGround || tButton)
-      setContent(tButton ? defaultContent : cont )
-    },[pGround,tButton])
-
-    return (
-    <>
-      {display ? <button onClick={() => toggle()}>{content}</button>: null}
-    </>
-    )
 }
 
 export const shiftProblemFromMinimal = async function(mp : ShiftProblemMini) : Promise<ShiftProblem> {

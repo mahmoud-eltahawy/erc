@@ -1,6 +1,6 @@
-import LoginForm from './LoginForm'
-import ShiftIdentity from './ShiftIdentity'
-import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from './employeeProvider'
+import LoginForm from './components/organisms/LoginForm'
+import ShiftIdentity from './components/molecules/ShiftIdentity'
+import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from './components/providers/employeeProvider'
 import Wall from './Wall';
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api';

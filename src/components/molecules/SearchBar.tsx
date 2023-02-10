@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Name } from "./main"
+import { Name } from "../../main"
 
 export function SearchBar({
     defaultPlaceholder,

@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/tauri';
 import { BaseSyntheticEvent, useRef } from 'react';
-import { useEmployeeAndShiftIDUpdate } from './employeeProvider';
-import { Employee } from './main';
+import { useEmployeeAndShiftIDUpdate } from '../providers/employeeProvider';
+import { Employee } from '../../main';
 
 export default function LoginForm(){
   const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()

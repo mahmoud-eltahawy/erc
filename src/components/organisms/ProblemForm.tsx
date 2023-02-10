@@ -1,8 +1,8 @@
 import { invoke } from "@tauri-apps/api"
 import { BaseSyntheticEvent, useState } from "react"
-import { Name, ProblemDeps, ShiftProblemMini } from "./main"
-import { SearchBar } from "./SearchBar"
-import { shiftProblemFromMinimal } from "./Wall"
+import { Name, ProblemDeps, ShiftProblemMini } from "../../main"
+import { SearchBar } from "../molecules/SearchBar"
+import { shiftProblemFromMinimal } from "../../Wall"
 
 export default function ProblemForm({
     toggle,
