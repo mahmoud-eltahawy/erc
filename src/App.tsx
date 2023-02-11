@@ -4,7 +4,7 @@ import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from './components
 import Wall from './Wall';
 import { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api';
-import { Name } from './main';
+import { Employee, Name } from './main';
 
 function App() {
   const [employee,shiftId]    = useEmployeeAndShiftID()
@@ -18,8 +18,8 @@ function App() {
   useEffect(() => {
     const isLogedIn = async function(){
       try{
-        const employee = await invoke('check_login')
-        setEmployeeAndShiftId(employee)
+        const [employee,shiftId] = await invoke('check_login') as [Employee,string]
+        setEmployeeAndShiftId([employee,shiftId])
       }catch(err){
         console.log(err)
       }
@@ -75,8 +75,6 @@ function App() {
           machines={machines}
           spareParts={spareParts}
           shiftBegin={shiftBegin}
-          employee={employee}
-          shiftId={shiftId}
           shiftEnd={shiftEnd} /> : <LoginForm/>}
     </section>
   );

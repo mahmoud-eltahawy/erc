@@ -1,19 +1,12 @@
 import { invoke } from "@tauri-apps/api"
 import { useEffect, useState } from "react"
 import DefineProblem from "./components/molecules/defineProblem"
-import { useEmployeeAndShiftIDUpdate } from "./components/providers/employeeProvider"
+import { useEmployeeAndShiftID, useEmployeeAndShiftIDUpdate } from "./components/providers/employeeProvider"
 import HistoryShow from "./components/organisms/HistoryShow"
 import { Employee, Machine, Name, Problem, ShiftProblem, ShiftProblemMini, SparePart } from "./main"
 import ProblemForm from "./components/organisms/ProblemForm"
 import ShiftProblems from "./components/organisms/ShiftProblems"
-import { ToggleButtons } from './components/molecules/toggleButtons'
-
-const bId = {
-  problemAdd    : '0',
-  problemDefine : '1',
-  problemsShow  : '2',
-  shiftsHistory : '3'
-}
+import { ButtonsOrElement } from "./components/molecules/buttonsOrElement"
 
 export default function Wall({
     shiftBegin,
@@ -21,22 +14,18 @@ export default function Wall({
     machines  ,
     employees ,
     spareParts,
-    employee,
-    shiftId
 } : {
     shiftBegin : string,
     shiftEnd   : string,
     machines   : Name[],
     employees  : Name[],
     spareParts : Name[],
-    employee   : Employee,
-    shiftId    : string
 }){
   const [problems  ,setProblems]     = useState<Name[]>([])
   const [shiftProblems,setShiftProblems] = useState<ShiftProblem[]>([])
+  const [employee,shiftId] = useEmployeeAndShiftID()
   const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
-  const [emptyPlayGround,setEmptyPlayGround] = useState(true)
-  const [toggleButtons, setToggleButtons] = useState<Array<boolean>>(Array(4).fill(false))
+  const [lastElement,setLastElement] = useState(-1)
 
   useEffect(() => {
     const shiftProblemsFun = async function() {
@@ -83,33 +72,8 @@ export default function Wall({
       setEmployeeAndShiftId([null,null])
     )
   }
-
-  const toggle = (id : string) => {
-    setToggleButtons(buttons => buttons.map((cond,condId) => {
-        if (condId !== +id) {
-          return false
-        }
-        if(cond){
-          setEmptyPlayGround(true)
-          return false
-        }
-        setEmptyPlayGround(false)
-        return true
-      })
-    )
-  }
-  const theButtons = <ToggleButtons defaultContent="الصفحة الرئيسية"
-                                    isEmptyGround={emptyPlayGround}
-                                    idToggle={toggle}
-                                    tbuttons={toggleButtons}
-                                    idContent={[
-                                      {id : bId.problemAdd    ,content : "اضافة عطل"},
-                                      {id : bId.problemDefine ,content : "تعريف مشكلة"},
-                                      {id : bId.problemsShow  ,content : "اظهار الاعطال"},
-                                      {id : bId.shiftsHistory ,content : "السجل"}
-                                    ]}/>
   const historyShow   = <HistoryShow />
-  const defineProblem = <DefineProblem toggle={() => toggle(bId.problemDefine)}
+  const defineProblem = <DefineProblem toggle={() => setLastElement(1)}
                                        addDefinition={(name : Name) => setProblems(list => [name,...list])}/>
   const problemShow   = <ShiftProblems shiftProblems={shiftProblems}/>
   const logoutButton  = <button className={"LogoutButton"} onClick={() => logout()}>تسجيل خروج</button>
@@ -117,7 +81,7 @@ export default function Wall({
           {employee ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` : ''}</p>
   const problemForm   = <ProblemForm
             add={(problem : ShiftProblem) =>setShiftProblems(problems => [problem,...problems])}
-            toggle={() => toggle(bId.problemAdd)}
+            toggle={() => setLastElement(0)}
             shiftId={shiftId!}
             writerId={employee!.id}
             departmentId={employee!.department_id}
@@ -129,20 +93,23 @@ export default function Wall({
               shiftEnd : shiftEnd
     }} />
 
+  const buttonsOrElement = <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
+                                    buttonElementPairs={[
+                                      ["اضافة عطل"  ,problemForm],
+                                      ["تعريف مشكلة",defineProblem],
+                                      ["اظهار الاعطال" ,problemShow],
+                                      ["السجل"      ,historyShow]
+                                    ]} num={lastElement} fun={() => setLastElement(-1)}/>
   return (
     <section>
       {logoutButton}
       {employeeName}
-      {theButtons}
-      {toggleButtons[+bId.problemAdd]    ? problemForm   : null}
-      {toggleButtons[+bId.problemDefine] ? defineProblem : null}
-      {toggleButtons[+bId.problemsShow]  ? problemShow   : null}
-      {toggleButtons[+bId.shiftsHistory] ? historyShow   : null}
+      {buttonsOrElement}
     </section>
   )
 }
 
-export const shiftProblemFromMinimal = async function(mp : ShiftProblemMini) : Promise<ShiftProblem> {
+export async function shiftProblemFromMinimal(mp : ShiftProblemMini) : Promise<ShiftProblem> {
   const problems : Problem[] = []
   for(let j =0; j < mp.problems_ids.length; j++){
     problems.push(await invoke('get_problem_by_id',{id : mp.problems_ids[j]}) as Problem)
@@ -155,17 +122,16 @@ export const shiftProblemFromMinimal = async function(mp : ShiftProblemMini) : P
     }
   }
 
-  let p : ShiftProblem = {
+  return {
       id          : mp.id,
       shiftId     : mp.shift_id,
       note        : mp.note,
-      writer      : await invoke('get_employee_by_id',{id : mp.writer_id}) as Employee,
+      writer      : await invoke('get_employee_by_id',{id : mp.writer_id})     as Employee,
       maintainer  : await invoke('get_employee_by_id',{id : mp.maintainer_id}) as Employee,
-      machine     : await invoke('get_machine_by_id' ,{id : mp.machine_id}) as Machine,
+      machine     : await invoke('get_machine_by_id' ,{id : mp.machine_id})    as Machine,
       beginTime   : mp.begin_time,
       endTime     : mp.end_time,
       problems    : problems,
       spareParts  : spareParts
   }
-  return p
 }
