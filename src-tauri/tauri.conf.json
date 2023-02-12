@@ -55,10 +55,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 768,
+        "height": 800,
         "resizable": true,
-        "title": "elegant-rondy-client",
-        "width": 1366
+        "title": "التقرير",
+        "width": 1000
       }
     ]
   }
