@@ -41,13 +41,10 @@ pub async fn fetch_employee_by_id(app_state : &AppState,id : Uuid) -> Result<Emp
       .json(&id)
       .send()
       .await?
-      .json::<Option<Employee>>()
+      .json::<Employee>()
       .await?;
 
-  match result {
-    Some(emp) => Ok(emp),
-    None     => Err("not found".into())
-  }
+  Ok(result)
 }
 
 pub async fn fetch_problem_by_id(app_state : &AppState,id : Uuid) -> Result<Probelm,Box<dyn std::error::Error>> {

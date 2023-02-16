@@ -6,7 +6,7 @@ authors = ["mahmoud eltahawy"]
 license = ""
 repository = ""
 edition = "2021"
-rust-version = "1.66"
+rust-version = "1.67"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -24,7 +24,7 @@ uuid    = { version = "^1",   features = ["v4", "serde"] }
 dotenv  = "^0.15"
 rec = { path = "../../rec" }
 rusqlite = { version = "0.27.0", features = ["bundled","uuid"] }
-sqlx = { version = "0.6.2", features = [ "runtime-tokio-native-tls" , "sqlite" ] }
+sqlx = { version = "0.6.2", features = [ "runtime-tokio-native-tls" , "sqlite" , "migrate","uuid"] }
 
 [features]
 # by default Tauri runs in production mode

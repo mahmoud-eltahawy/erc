@@ -3,7 +3,7 @@ use uuid::Uuid;
 use crate::config::AppState;
 use rec::model::{
   problem::Probelm,
-  shift_problem::MinimamlShiftProblem
+  shift_problem::MinimamlShiftProblem, employee::Employee
 };
 
 pub async fn save_problem_detail(app_state : &AppState,shift_problem :&MinimamlShiftProblem) -> Result<Uuid,Box<dyn std::error::Error>> {
@@ -33,4 +33,15 @@ pub async fn save_problem(app_state : &AppState,shift_problem :&Probelm) -> Resu
       .await?;
 
   Ok(result)
+}
+
+pub async fn save_employee(app_state : &AppState,employee : &Employee) -> Result<(),Box<dyn std::error::Error>> {
+  let origin = &app_state.origin;
+  let client = reqwest::Client::new();
+  client.post(format!("{origin}/api/emp/save"))
+      .json(employee)
+      .send()
+      .await?;
+
+  Ok(())
 }

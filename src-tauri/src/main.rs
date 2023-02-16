@@ -8,6 +8,7 @@ use tauri_manage::app;
 
 use dotenv::dotenv;
 
+
 #[tokio::main]
 async fn main() -> Result<(),Box<dyn std::error::Error>>{
   dotenv().ok();
