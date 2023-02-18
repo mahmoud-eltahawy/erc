@@ -3,8 +3,7 @@ use std::{sync::Mutex, collections::HashMap};
 use bcrypt::BcryptResult;
 use errc::{
   api::{persistence,
-    fetching::{fetch_current_problem_detail,
-               fetch_machine_by_id},
+    fetching::fetch_current_problem_detail,
     employee::fetch_employee_by_id,
     shift::save_shift_or,
     problem::save_problem
@@ -14,14 +13,16 @@ use errc::{
     employee::find_employee_by_card,
     shift::find_shift_by,
     problem::{
-      find_problems_by_department_id, find_problem_by_id}, spare_part::find_spare_part_by_id
+      find_problems_by_department_id,
+      find_problem_by_id
+    }, spare_part::find_spare_part_by_id, machine::find_machine_by_id
 
   }, syncing::upgrade
 };
 use rec::{model::{employee::{Employee, ClientEmployee},
                  problem::{Probelm, ClientProblem},
                  shift_problem::{MinimamlShiftProblem, ProblemDetail, WriterAndShiftIds},
-                 machine::Machine,
+                 machine::ClientMachine,
                  spare_part::ClientSparePart,
                  name::Name, shift::{Shift, DateOrder}},
           timer::{get_relative_now, get_current_date, get_current_order}};
@@ -151,8 +152,8 @@ pub async fn get_problem_by_id(app_state : tauri::State<'_,AppState>,
 
 #[tauri::command]
 pub async fn get_machine_by_id(app_state : tauri::State<'_,AppState>,
-  id : Uuid) -> Result<Machine,String> {
-  match fetch_machine_by_id(&app_state,id).await {
+  id : Uuid) -> Result<ClientMachine,String> {
+  match find_machine_by_id(&app_state.pool,id.to_string()).await {
     Ok(mac)   => Ok(mac),
     Err(err) => Err(err.to_string())
   }

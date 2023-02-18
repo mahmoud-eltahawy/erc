@@ -45,7 +45,7 @@ pub async fn update_spare_part(pool : &Pool<Sqlite>,part : SparePart) -> Result<
   let ClientSparePart{id,name} = ClientSparePart::new(part);
     match sqlx::query(r#"
     UPDATE spare_part SET
-    SET name = $2
+    name = $2
     WHERE id = $1;
     "#).bind(id)
     .bind(name)

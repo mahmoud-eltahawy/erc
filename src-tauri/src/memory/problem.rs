@@ -46,7 +46,7 @@ pub async fn delete_problem_by_id(pool : &Pool<Sqlite>,id : String) -> Result<()
     }
 }
 
-pub async fn save(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
+pub async fn save_problem(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
   let ClientProblem{id,writer_id,department_id,title,description} = ClientProblem::new(problem);
   match sqlx::query(r#"
     INSERT INTO problem(id,writer_id,department_id,title,description)
@@ -62,7 +62,7 @@ pub async fn save(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
   }
 }
 
-pub async fn update(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
+pub async fn update_problem(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
   let ClientProblem{id,writer_id,department_id,title,description} = ClientProblem::new(problem);
     match sqlx::query(r#"
     UPDATE employee SET

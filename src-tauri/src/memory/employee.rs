@@ -37,7 +37,7 @@ pub async fn find_employee_by_card(pool : &Pool<Sqlite>,card_id : i16) -> Result
     }
 }
 
-pub async fn save(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error> {
+pub async fn save_employee(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error> {
   let Employee{id,card_id,department_id,first_name,last_name,middle_name,position,password} = employee;
     match sqlx::query(r#"
       INSERT INTO employee(id,card_id,department_id,first_name,last_name,middle_name,position,password)
@@ -56,7 +56,7 @@ pub async fn save(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error> 
     }
 }
 
-pub async fn update(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error> {
+pub async fn update_employee(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error> {
   let Employee{id,card_id,department_id,first_name,last_name,middle_name,position,password} = employee;
     match sqlx::query(r#"
     UPDATE employee SET
