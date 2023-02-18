@@ -6,10 +6,17 @@ use uuid::Uuid;
 use crate::{
     memory::{
     syncing::{last_version, save_version},
-    employee::{self, delete_employee_by_id}, shift::{save_shift, delete_shift_by_id}
+    employee::{self, delete_employee_by_id},
+    shift::{save_shift, delete_shift_by_id},
+    problem::{self, delete_problem_by_id}
   },
   config::AppState,
-  api::{syncing::fetch_updates, employee::fetch_employee_by_id, shift::fetch_shift_by_id},
+  api::{
+      syncing::fetch_updates,
+      employee::fetch_employee_by_id,
+      shift::fetch_shift_by_id,
+      problem::fetch_problem_by_id
+  },
 };
 
 pub async fn upgrade(app_state : &AppState) -> Result<(),Box<dyn Error>> {
@@ -39,19 +46,22 @@ async fn create(app_state : &AppState, target_id : Uuid,table : Table,_other_id 
           let employee = fetch_employee_by_id(app_state, target_id).await?;
           employee::save(&app_state.pool, employee).await?
        },
+       Table::Problem               => {
+           let problem = fetch_problem_by_id(app_state, target_id).await?;
+           problem::save(&app_state.pool, problem).await?;
+       },
+       Table::Shift                 => {
+           let shift = fetch_shift_by_id(app_state, &target_id).await?;
+           save_shift(&app_state.pool,shift).await?
+       },
        Table::Department            => {println!("unimplemented")},
        Table::Machine               => {println!("unimplemented")},
-       Table::Problem               => {println!("unimplemented")},
        Table::ShiftNote             => {println!("unimplemented")},
        Table::ShiftProblem          => {println!("unimplemented")},
        Table::ShiftProblemNote      => {println!("unimplemented")},
        Table::ShiftProblemProblem   => {println!("unimplemented")},
        Table::ShiftProblemSparePart => {println!("unimplemented")},
        Table::SparePart             => {println!("unimplemented")},
-       Table::Shift                 => {
-           let shift = fetch_shift_by_id(app_state, &target_id).await?;
-           save_shift(&app_state.pool,shift).await?
-       },
        Table::Undefined             => return Err("undefined table".into())
    }
    Ok(())
@@ -59,17 +69,17 @@ async fn create(app_state : &AppState, target_id : Uuid,table : Table,_other_id 
 
 async fn delete(app_state : &AppState, target_id : Uuid,table : Table,_other_id : Option<Uuid>) -> Result<(),Box<dyn Error>>{
    match table {
-       Table::Employee => delete_employee_by_id(&app_state.pool, target_id.to_string()).await?,
+       Table::Employee              => delete_employee_by_id(&app_state.pool, target_id.to_string()).await?,
+       Table::Problem               => delete_problem_by_id(&app_state.pool, target_id.to_string()).await?,
+       Table::Shift                 => delete_shift_by_id(&app_state.pool, target_id.to_string()).await?,
        Table::Department            => {println!("unimplemented")},
        Table::Machine               => {println!("unimplemented")},
-       Table::Problem               => {println!("unimplemented")},
        Table::ShiftNote             => {println!("unimplemented")},
        Table::ShiftProblem          => {println!("unimplemented")},
        Table::ShiftProblemNote      => {println!("unimplemented")},
        Table::ShiftProblemProblem   => {println!("unimplemented")},
        Table::ShiftProblemSparePart => {println!("unimplemented")},
        Table::SparePart             => {println!("unimplemented")},
-       Table::Shift                 => delete_shift_by_id(&app_state.pool, target_id.to_string()).await?,
        Table::Undefined             => return Err("undefined table".into())
    }
    Ok(())
@@ -78,12 +88,15 @@ async fn delete(app_state : &AppState, target_id : Uuid,table : Table,_other_id 
 async fn update(app_state : &AppState, target_id : Uuid,table : Table,_other_id : Option<Uuid>) -> Result<(),Box<dyn Error>>{
    match table {
        Table::Employee => {
-          let employee = fetch_employee_by_id(app_state, target_id).await?;
-          employee::update(&app_state.pool, employee).await?
+           let employee = fetch_employee_by_id(app_state, target_id).await?;
+           employee::update(&app_state.pool, employee).await?
+       },
+       Table::Problem               => {
+           let problem = fetch_problem_by_id(app_state, target_id).await?;
+           problem::update(&app_state.pool, problem).await?;
        },
        Table::Department            => {println!("unimplemented")},
        Table::Machine               => {println!("unimplemented")},
-       Table::Problem               => {println!("unimplemented")},
        Table::ShiftNote             => {println!("unimplemented")},
        Table::ShiftProblem          => {println!("unimplemented")},
        Table::ShiftProblemNote      => {println!("unimplemented")},

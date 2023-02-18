@@ -2,14 +2,25 @@ use std::{sync::Mutex, collections::HashMap};
 
 use bcrypt::BcryptResult;
 use errc::{
-  api::{
-    persistence::{save_problem, self},
+  api::{persistence,
     fetching::{fetch_current_problem_detail,
-               fetch_problem_by_id,
                fetch_machine_by_id,
                fetch_spare_part_by_id},
-    for_selection::all_problems, employee::fetch_employee_by_id, shift::save_shift_or}
-  , config::AppState, memory::{employee::find_employee_by_card, shift::find_shift_by}, syncing::upgrade
+    employee::fetch_employee_by_id,
+    shift::save_shift_or,
+    problem::{
+      fetch_problem_by_id,
+      save_problem
+    }
+  },
+  config::AppState,
+  memory::{
+    employee::find_employee_by_card,
+    shift::find_shift_by,
+    problem::
+      find_problems_by_department_id
+
+  }, syncing::upgrade
 };
 use rec::{model::{employee::{Employee, ClientEmployee},
                  problem::Probelm,
@@ -80,17 +91,15 @@ pub async fn define_problem(app_state : tauri::State<'_,AppState>,
                         writer_id : Uuid,
                         department_id : Uuid,
                         title : String,
-                        description : String) -> Result<Option<Uuid>,String> {
+                        description : String) -> Result<Uuid,String> {
   let id = Uuid::new_v4();
   let problem = Probelm{id,writer_id,department_id,title,description};
   match save_problem(&app_state,&problem).await {
-    Ok(well)   => {
-      if well {
-        Ok(Some(id))
-      } else {
-        Ok(None)
-      }
-    },
+    Ok(_)   =>{},
+    Err(err) => return Err(err.to_string())
+  };
+  match upgrade(&app_state).await{
+    Ok(()) => Ok(id),
     Err(err) => Err(err.to_string())
   }
 }
@@ -173,8 +182,8 @@ pub async fn get_employee_by_id(app_state : tauri::State<'_,AppState>,
 #[tauri::command]
 pub async fn problems_selection(app_state : tauri::State<'_,AppState>,
                             department_id : Uuid) -> Result<Vec<Name>,String> {
-  match all_problems(&app_state,department_id).await {
-    Ok(p) => Ok(p),
+  match find_problems_by_department_id(&app_state.pool,department_id.to_string()).await {
+    Ok(p) => Ok(p.into_iter().map(|p| Name::build_problem(p)).collect()),
     Err(err)=> Err(err.to_string())
   }
 }

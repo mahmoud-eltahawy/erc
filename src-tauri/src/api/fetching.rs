@@ -3,7 +3,6 @@ use uuid::Uuid;
 use crate::config::AppState;
 
 use rec::model::{
-  problem::Probelm,
   machine::Machine,
   spare_part::SparePart,
   shift_problem::{MinimamlShiftProblem, WriterAndShiftIds}
@@ -22,22 +21,6 @@ pub async fn fetch_current_problem_detail(app_state : &AppState,
 
   match result {
     Some(problems) => Ok(problems),
-    None     => Err("not found".into())
-  }
-}
-
-pub async fn fetch_problem_by_id(app_state : &AppState,id : Uuid) -> Result<Probelm,Box<dyn std::error::Error>> {
-  let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  let result = client.post(format!("{origin}/api/problem/problem"))
-      .json(&id)
-      .send()
-      .await?
-      .json::<Option<Probelm>>()
-      .await?;
-
-  match result {
-    Some(p) => Ok(p),
     None     => Err("not found".into())
   }
 }
