@@ -1,7 +1,7 @@
 use rec::model::employee::{ClientEmployee, Employee};
 use sqlx::{Pool, Sqlite,Error};
 
-pub async fn find_all(pool : &Pool<Sqlite>) -> Result<Vec<ClientEmployee>,Error> {
+pub async fn find_all_employees(pool : &Pool<Sqlite>) -> Result<Vec<ClientEmployee>,Error> {
     match sqlx::query_as::<_,ClientEmployee>(r#"
       select * from employee;
     "#).fetch_all(pool).await {
@@ -19,7 +19,7 @@ pub async fn find_by_id(pool : &Pool<Sqlite>,id : String) -> Result<ClientEmploy
     }
 }
 
-pub async fn delete_by_id(pool : &Pool<Sqlite>,id : String) -> Result<(),Error> {
+pub async fn delete_employee_by_id(pool : &Pool<Sqlite>,id : String) -> Result<(),Error> {
     match sqlx::query(r#"
       DELETE FROM employee WHERE id = $1;
     "#).bind(id).execute(pool).await {
@@ -28,7 +28,7 @@ pub async fn delete_by_id(pool : &Pool<Sqlite>,id : String) -> Result<(),Error> 
     }
 }
 
-pub async fn find_by_card(pool : &Pool<Sqlite>,card_id : i16) -> Result<ClientEmployee,Error> {
+pub async fn find_employee_by_card(pool : &Pool<Sqlite>,card_id : i16) -> Result<ClientEmployee,Error> {
     match sqlx::query_as::<_,ClientEmployee>(r#"
       SELECT * FROM employee WHERE card_id = $1;
     "#).bind(card_id).fetch_one(pool).await {

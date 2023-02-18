@@ -4,7 +4,7 @@ use rec::model::employee::Employee;
 use sqlx::Row;
 use uuid::Uuid;
 
-use crate::{api::persistence::save_employee, config::AppState};
+use crate::{config::AppState, api::employee::save_employee};
 
 pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>> {
   let employees : Vec<Employee> = vec![

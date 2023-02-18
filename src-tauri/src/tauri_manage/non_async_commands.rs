@@ -3,9 +3,9 @@ use chrono::NaiveTime;
 use rec::{
   timer::{
     get_current_date,
-    ShiftOrder},
-  model::{
-    employee::Employee,
+    ShiftOrder
+  },model::{
+    employee::ClientEmployee,
     name::Name,
     shift_problem::MinimamlShiftProblem
   }
@@ -18,6 +18,13 @@ use uuid::Uuid;
 
 use super::models::{Employees, Machines, SpareParts};
 
+#[tauri::command]
+pub fn check_login(state : tauri::State<'_,Mutex<Option<(ClientEmployee,Uuid)>>>) -> Result<(ClientEmployee,Uuid),String> {
+  match &*state.lock().unwrap() {
+    Some((employee,id)) => Ok((employee.clone(),id.clone())),
+    None     => Err("تحتاج الي تسجيل الدخول من جديد".to_string())
+  }
+}
 
 #[tauri::command]
 pub fn update_current_shift(state : tauri::State<'_,Mutex<Option<(String,Vec<String>)>>>,
@@ -59,7 +66,7 @@ pub fn get_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec
 }
 
 #[tauri::command]
-pub fn logout(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>) {
+pub fn logout(state : tauri::State<'_,Mutex<Option<(ClientEmployee,Uuid)>>>) {
   *state.lock().unwrap() = None;
 }
 

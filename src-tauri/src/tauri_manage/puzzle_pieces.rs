@@ -1,7 +1,7 @@
 use std::{sync::Mutex, collections::HashMap};
 use rec::{
     timer::get_shift_borders,
-    model::{employee::Employee, shift_problem::MinimamlShiftProblem}
+    model::{employee::ClientEmployee, shift_problem::MinimamlShiftProblem}
 };
 use tauri::{Builder, Wry};
 use uuid::Uuid;
@@ -19,7 +19,7 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
     .manage(Mutex::new(relative_now))
     .manage(Mutex::new(order.clone()))
     .manage(Mutex::new(get_shift_borders(order)))
-    .manage(Mutex::new(None::<(Employee,Uuid)>))
+    .manage(Mutex::new(None::<(ClientEmployee,Uuid)>))
     .manage(Mutex::new(None::<(String,Vec<String>)>))
     .manage(Mutex::new(HashMap::<Uuid,Vec<MinimamlShiftProblem>>::new()))
     .manage(Employees(Mutex::new(employees)))

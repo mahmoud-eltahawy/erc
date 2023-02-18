@@ -3,12 +3,12 @@ use std::error::Error;
 use errc::{
   config::AppState,
   api::for_selection::{
-    all_employees,
     all_machines,
     all_spare_parts
-  }, syncing::upgrade, test::insert_employees
+  }, syncing::upgrade, test::insert_employees, memory::employee::find_all_employees
 };
-use rec::timer::{get_relative_now, get_current_order};
+use rec::{timer::{get_relative_now, get_current_order}, model::name::Name};
+use uuid::Uuid;
 
 use super::models::TauriState;
 use rusqlite::Connection;
@@ -55,8 +55,9 @@ pub async fn create_tauri_state() -> Result<TauriState,Box<dyn std::error::Error
 
   test(&app_state).await?;
 
-  let employees = match all_employees(&app_state).await {
-    Ok(e) => e,
+  let employees = match find_all_employees(&app_state.pool).await {
+    Ok(e) => e.into_iter().map(|emp| Name{id : Some(Uuid::parse_str(&emp.id).unwrap()),
+                      name : format!("{} {} {}",emp.first_name,emp.middle_name,emp.last_name)}).collect(),
     Err(err)=> return Err(err.into())
   };
 

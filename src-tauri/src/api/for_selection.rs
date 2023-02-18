@@ -1,28 +1,12 @@
 use std::error::Error;
 use crate::config::AppState;
 use rec::model::{
-  employee::Employee,
   problem::Probelm,
   machine::Machine,
   spare_part::SparePart,
   name::Name
 };
 use uuid::Uuid;
-
-pub async fn all_employees(app_state : &AppState) -> Result<Vec<Name>,Box<dyn Error>> {
-  let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  let result = client.get(format!("{origin}/api/emp/all"))
-      .send()
-      .await?
-      .json::<Vec<Employee>>()
-      .await?;
-
-  let result : Vec<Name> = result
-    .iter().map(|e| Name::build_employee(e)).collect();
-
-  Ok(result)
-}
 
 pub async fn all_problems(app_state : &AppState,department_id: Uuid) -> Result<Vec<Name>,Box<dyn Error>> {
   let origin = &app_state.origin;

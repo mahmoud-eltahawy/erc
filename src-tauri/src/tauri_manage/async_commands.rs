@@ -1,37 +1,77 @@
 use std::{sync::Mutex, collections::HashMap};
 
+use bcrypt::BcryptResult;
 use errc::{
   api::{
-    auth::login_req, persistence::{save_problem, self},
+    persistence::{save_problem, self},
     fetching::{fetch_current_problem_detail,
-               WriterAndShiftIds,
                fetch_problem_by_id,
                fetch_machine_by_id,
-               fetch_spare_part_by_id,
-               fetch_employee_by_id},
-    for_selection::all_problems}
-  , config::AppState
+               fetch_spare_part_by_id},
+    for_selection::all_problems, employee::fetch_employee_by_id, shift::save_shift_or}
+  , config::AppState, memory::{employee::find_employee_by_card, shift::find_shift_by}, syncing::upgrade
 };
-use rec::model::{employee::Employee,
+use rec::{model::{employee::{Employee, ClientEmployee},
                  problem::Probelm,
-                 shift_problem::{MinimamlShiftProblem, ProblemDetail},
+                 shift_problem::{MinimamlShiftProblem, ProblemDetail, WriterAndShiftIds},
                  machine::Machine,
                  spare_part::SparePart,
-                 name::Name};
+                 name::Name, shift::{Shift, DateOrder}}, timer::{get_relative_now, get_current_date, get_current_order}};
 use uuid::Uuid;
 
 use super::models::Ids;
 
+fn  verify_password(password : String,hash : &str) -> BcryptResult<bool>{
+  bcrypt::verify(password, hash)
+}
+
+async fn get_or_save_shift(app_state : &AppState) -> Option<Shift>{
+  let now = get_relative_now();
+  let date = get_current_date(now);
+  let order = get_current_order(now);
+  if let Some(date) = date {
+    let order = order as i16;
+    match find_shift_by(&app_state.pool, DateOrder{date,order}).await {
+        Some(shift) => Shift::new(shift),
+        None        =>{
+          match save_shift_or(app_state).await{
+            Ok(shift) =>Some(shift),
+            Err(_)    => None
+          }
+        }
+      }
+    } else {
+    None
+  }
+}
+
 #[tauri::command]
-pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>,
+pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,Uuid)>>>,
                app_state : tauri::State<'_,AppState>,
                card_id: i16,password: String) -> Result<(),String> {
-  match login_req(&app_state,card_id, password).await {
-    Ok((employee,id)) => {
-      *emp_and_uuid.lock().unwrap() = Some((employee,id));
-      Ok(())
-    },
-    Err(_)     => Err("فشلت عملية تسجيل الدخول".to_string())
+  let failure = Err("فشلت عملية تسجيل الدخول".to_string());
+
+  let employee = match find_employee_by_card(&app_state.pool, card_id).await{
+    Ok(e) => e,
+    Err(_) => return failure
+  };
+
+
+  match verify_password(password, &employee.password) {
+    Ok(result) => if result {
+        if let Some(shift) = get_or_save_shift(&app_state).await {
+          *emp_and_uuid.lock().unwrap() = Some((employee,shift.id));
+          match upgrade(&app_state).await{
+            Ok(_) => Ok(()),
+            Err(_) => failure
+          }
+        } else {
+          return failure
+        }
+      } else {
+        return failure
+      },
+    Err(_)   => failure
   }
 }
 
@@ -127,14 +167,6 @@ pub async fn get_employee_by_id(app_state : tauri::State<'_,AppState>,
   match fetch_employee_by_id(&app_state,id).await {
     Ok(e)   => Ok(e),
     Err(err) => Err(err.to_string())
-  }
-}
-
-#[tauri::command]
-pub async fn check_login(state : tauri::State<'_,Mutex<Option<(Employee,Uuid)>>>) -> Result<(Employee,Uuid),String> {
-  match &*state.lock().unwrap() {
-    Some((employee,id)) => Ok((employee.clone(),id.clone())),
-    None     => Err("تحتاج الي تسجيل الدخول من جديد".to_string())
   }
 }
 

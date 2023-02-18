@@ -1,21 +1,13 @@
-use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 
 use crate::config::AppState;
 
 use rec::model::{
-  employee::Employee,
   problem::Probelm,
   machine::Machine,
   spare_part::SparePart,
-  shift_problem::MinimamlShiftProblem
+  shift_problem::{MinimamlShiftProblem, WriterAndShiftIds}
 };
-
-#[derive(Serialize,Deserialize)]
-pub struct WriterAndShiftIds{
-  pub writer_id     : Uuid,
-  pub shift_id      : Uuid,
-}
 
 pub async fn fetch_current_problem_detail(app_state : &AppState,
       writer_shift_ids : WriterAndShiftIds) -> Result<Vec<MinimamlShiftProblem>,Box<dyn std::error::Error>> {
@@ -32,19 +24,6 @@ pub async fn fetch_current_problem_detail(app_state : &AppState,
     Some(problems) => Ok(problems),
     None     => Err("not found".into())
   }
-}
-
-pub async fn fetch_employee_by_id(app_state : &AppState,id : Uuid) -> Result<Employee,Box<dyn std::error::Error>> {
-  let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  let result = client.post(format!("{origin}/api/emp/emp"))
-      .json(&id)
-      .send()
-      .await?
-      .json::<Employee>()
-      .await?;
-
-  Ok(result)
 }
 
 pub async fn fetch_problem_by_id(app_state : &AppState,id : Uuid) -> Result<Probelm,Box<dyn std::error::Error>> {
