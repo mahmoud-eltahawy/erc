@@ -1,10 +1,10 @@
 use std::error::Error;
 
-use rec::model::employee::Employee;
+use rec::model::{employee::Employee, spare_part::SparePart};
 use sqlx::Row;
 use uuid::Uuid;
 
-use crate::{config::AppState, api::employee::save_employee};
+use crate::{config::AppState, api::{employee::save_employee, spare_parts::save_spare_part}};
 
 pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>> {
   let employees : Vec<Employee> = vec![
@@ -40,6 +40,45 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
   if count < 20 {
     for e in employees {
         save_employee(app_state, &e).await?;
+    }
+  }
+
+  let spare_parts = vec![
+    SparePart{id : Uuid::new_v4(), name : "part 1".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 2".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 3".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 4".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 5".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 6".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 7".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 8".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 9".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 10".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 11".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 12".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 13".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 14".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 15".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 16".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 17".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 18".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 19".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 20".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 21".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 22".to_string()},
+    SparePart{id : Uuid::new_v4(), name : "part 23".to_string()},
+  ];
+
+
+  let q = sqlx::query(r#"
+      SELECT count(id) FROM spare_part;
+  "#).fetch_one(&app_state.pool).await?;
+
+  let count : i64 = q.get(0);
+
+  if count < 20 {
+    for s in spare_parts {
+      save_spare_part(app_state, &s).await?;
     }
   }
   Ok(())

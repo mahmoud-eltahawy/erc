@@ -2,10 +2,8 @@ use std::error::Error;
 
 use errc::{
   config::AppState,
-  api::for_selection::{
-    all_machines,
-    all_spare_parts
-  }, syncing::upgrade, test::insert_employees, memory::employee::find_all_employees
+  api::for_selection::all_machines,
+  syncing::upgrade, test::insert_employees, memory::{employee::find_all_employees, spare_part::find_all_spare_parts}
 };
 use rec::{timer::{get_relative_now, get_current_order}, model::name::Name};
 
@@ -64,8 +62,8 @@ pub async fn create_tauri_state() -> Result<TauriState,Box<dyn Error>>{
     Err(err)=> return Err(err.into())
   };
 
-  let spare_parts = match all_spare_parts(&app_state).await {
-    Ok(s) => s,
+  let spare_parts = match find_all_spare_parts(&app_state.pool).await {
+    Ok(s) => s.into_iter().map(|s| Name::build_spare_part(s)).collect(),
     Err(err)=> return Err(err.into())
   };
 

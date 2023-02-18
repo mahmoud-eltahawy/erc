@@ -4,30 +4,27 @@ use bcrypt::BcryptResult;
 use errc::{
   api::{persistence,
     fetching::{fetch_current_problem_detail,
-               fetch_machine_by_id,
-               fetch_spare_part_by_id},
+               fetch_machine_by_id},
     employee::fetch_employee_by_id,
     shift::save_shift_or,
-    problem::{
-      fetch_problem_by_id,
-      save_problem
-    }
+    problem::save_problem
   },
   config::AppState,
   memory::{
     employee::find_employee_by_card,
     shift::find_shift_by,
-    problem::
-      find_problems_by_department_id
+    problem::{
+      find_problems_by_department_id, find_problem_by_id}, spare_part::find_spare_part_by_id
 
   }, syncing::upgrade
 };
 use rec::{model::{employee::{Employee, ClientEmployee},
-                 problem::Probelm,
+                 problem::{Probelm, ClientProblem},
                  shift_problem::{MinimamlShiftProblem, ProblemDetail, WriterAndShiftIds},
                  machine::Machine,
-                 spare_part::SparePart,
-                 name::Name, shift::{Shift, DateOrder}}, timer::{get_relative_now, get_current_date, get_current_order}};
+                 spare_part::ClientSparePart,
+                 name::Name, shift::{Shift, DateOrder}},
+          timer::{get_relative_now, get_current_date, get_current_order}};
 use uuid::Uuid;
 
 use super::models::Ids;
@@ -145,8 +142,8 @@ pub async fn update_current_shift_problems(
 
 #[tauri::command]
 pub async fn get_problem_by_id(app_state : tauri::State<'_,AppState>,
-  id : Uuid) -> Result<Probelm,String> {
-  match fetch_problem_by_id(&app_state,id).await {
+  id : Uuid) -> Result<ClientProblem,String> {
+  match find_problem_by_id(&app_state.pool,id.to_string()).await {
     Ok(problem)   => Ok(problem),
     Err(err) => Err(err.to_string())
   }
@@ -163,8 +160,8 @@ pub async fn get_machine_by_id(app_state : tauri::State<'_,AppState>,
 
 #[tauri::command]
 pub async fn get_spare_part_by_id(app_state : tauri::State<'_,AppState>,
-  id : Uuid) -> Result<SparePart,String> {
-  match fetch_spare_part_by_id(&app_state,id).await {
+  id : Uuid) -> Result<ClientSparePart,String> {
+  match find_spare_part_by_id(&app_state.pool,id.to_string()).await {
     Ok(s)   => Ok(s),
     Err(err) => Err(err.to_string())
   }

@@ -4,7 +4,6 @@ use crate::config::AppState;
 
 use rec::model::{
   machine::Machine,
-  spare_part::SparePart,
   shift_problem::{MinimamlShiftProblem, WriterAndShiftIds}
 };
 
@@ -21,22 +20,6 @@ pub async fn fetch_current_problem_detail(app_state : &AppState,
 
   match result {
     Some(problems) => Ok(problems),
-    None     => Err("not found".into())
-  }
-}
-
-pub async fn fetch_spare_part_by_id(app_state : &AppState,id : Uuid) -> Result<SparePart,Box<dyn std::error::Error>> {
-  let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  let result = client.post(format!("{origin}/api/spare-part/part"))
-      .json(&id)
-      .send()
-      .await?
-      .json::<Option<SparePart>>()
-      .await?;
-
-  match result {
-    Some(emp) => Ok(emp),
     None     => Err("not found".into())
   }
 }
