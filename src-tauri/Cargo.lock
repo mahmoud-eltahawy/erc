@@ -2561,6 +2561,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "serde",
+ "serde_json",
  "sqlx",
  "uuid 1.2.2",
 ]
@@ -2694,6 +2695,7 @@ dependencies = [
  "libsqlite3-sys",
  "memchr",
  "smallvec",
+ "time 0.3.17",
  "uuid 0.8.2",
 ]
 
@@ -3117,6 +3119,7 @@ dependencies = [
  "sqlx-rt",
  "stringprep",
  "thiserror",
+ "time 0.3.17",
  "tokio-stream",
  "url",
  "uuid 1.2.2",

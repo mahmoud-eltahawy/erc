@@ -77,9 +77,6 @@ export type SparePart = {
 }
 
 export type ProblemDeps = {
-    machines  : Name[],
-    employees : Name[],
-    spareParts: Name[],
     problems  : Name[],
     shiftBegin: string,
     shiftEnd  : string

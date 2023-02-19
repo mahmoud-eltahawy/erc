@@ -8,24 +8,15 @@ import ProblemForm from "./components/organisms/ProblemForm"
 import ShiftProblems from "./components/organisms/ShiftProblems"
 import { ButtonsOrElement } from "./components/molecules/buttonsOrElement"
 
-export default function Wall({
-    shiftBegin,
-    shiftEnd  ,
-    machines  ,
-    employees ,
-    spareParts,
-} : {
-    shiftBegin : string,
-    shiftEnd   : string,
-    machines   : Name[],
-    employees  : Name[],
-    spareParts : Name[],
-}){
-  const [problems  ,setProblems]     = useState<Name[]>([])
+export default function Wall(){
   const [shiftProblems,setShiftProblems] = useState<ShiftProblem[]>([])
   const [employee,shiftId] = useEmployeeAndShiftID()
   const setEmployeeAndShiftId = useEmployeeAndShiftIDUpdate()
   const [lastElement,setLastElement] = useState(-1)
+  const [machines  ,setMachines]     = useState<Name[]>([])
+  const [employees ,setEmployees]    = useState<Name[]>([])
+  const [spareParts,setSpareParts]   = useState<Name[]>([])
+  const [problems  ,setProblems]     = useState<Name[]>([])
 
   useEffect(() => {
     const shiftProblemsFun = async function() {
@@ -52,6 +43,32 @@ export default function Wall({
         }
       }
     }
+    const employeesFun = async function(){
+      try{
+        const names : Name[] = await invoke('employees_selection')
+        setEmployees(names)
+      } catch(err){
+        console.log(err)
+      }
+    }
+
+    const machinesFun = async function(){
+      try{
+        const names : Name[] = await invoke('machines_selection')
+        setMachines(names)
+      } catch(err){
+        console.log(err)
+      }
+    }
+
+    const partsFun = async function(){
+      try{
+        const names : Name[] = await invoke('spare_parts_selection')
+        setSpareParts(names)
+      } catch(err){
+        console.log(err)
+      }
+    }
 
     const problemsFun = async function(){
       try{
@@ -63,8 +80,11 @@ export default function Wall({
       }
     }
 
-    shiftProblemsFun()
     problemsFun()
+    employeesFun()
+    machinesFun()
+    partsFun()
+    shiftProblemsFun()
   },[])
 
   const logout = () => {
@@ -73,8 +93,7 @@ export default function Wall({
     )
   }
   const historyShow   = <HistoryShow />
-  const defineProblem = <DefineProblem toggle={() => setLastElement(1)}
-                                       addDefinition={(name : Name) => setProblems(list => [name,...list])}/>
+  const defineProblem = <DefineProblem toggle={() => setLastElement(1)}/>
   const problemShow   = <ShiftProblems shiftProblems={shiftProblems}/>
   const logoutButton  = <button className={"LogoutButton"} onClick={() => logout()}>تسجيل خروج</button>
   const employeeName  =<p className={"NameP"}>
@@ -85,13 +104,11 @@ export default function Wall({
             shiftId={shiftId!}
             writerId={employee!.id}
             departmentId={employee!.department_id}
-            deps={{machines : machines,
-              employees: employees,
-              problems : problems,
-              spareParts : spareParts,
-              shiftBegin : shiftBegin,
-              shiftEnd : shiftEnd
-    }} />
+            employees={employees}
+            spareParts={spareParts}
+            problems={problems}
+            machines={machines}
+  />
 
   const buttonsOrElement = <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
                                     buttonElementPairs={[

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { Name, Problem, ShiftProblem, Note, SparePart, Employee } from "./main"
+import { Name, Problem, ShiftProblem, Note, SparePart, Employee } from "../../main"
 
 export default function ShiftProblems({shiftProblems} :{shiftProblems : ShiftProblem[]}){
   const limit = 4

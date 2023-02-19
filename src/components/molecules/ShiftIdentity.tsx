@@ -13,16 +13,6 @@ export default function ShiftIdentity(){
       setorder(order)
     }).catch(err => {
       console.log(err)
-      invoke('update_current_shift').then(() => {
-        invoke('current_shift').then(result => {
-          let [date,orde] = result as [string, [String, String, String]]
-          const order = orde.join(" / ")
-          setdate(date)
-          setorder(order)
-        }).catch(err => {
-          alert(err)
-        })
-      })
     })
   })
 

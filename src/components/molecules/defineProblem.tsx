@@ -4,11 +4,8 @@ import { useEmployeeAndShiftID } from '../providers/employeeProvider';
 
 export default function DefineProblem({
     toggle,
-    addDefinition
 } : {
     toggle : Function,
-    addDefinition :Function
-
 }){
   const [employee] = useEmployeeAndShiftID();
   const [descLength, setDescLength] = useState(0);
@@ -24,9 +21,6 @@ export default function DefineProblem({
       const id : string = await invoke('define_problem',
             {writerId : employee!.id,departmentId : employee!.department_id,title,description})
       console.log(id)
-      if(id){
-        addDefinition({id : id , name : title})
-      }
     } catch(err){
         console.log(err)
     }

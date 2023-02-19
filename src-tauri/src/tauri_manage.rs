@@ -1,6 +1,7 @@
 mod models;
 mod async_commands;
 mod non_async_commands;
+mod components_commands;
 mod state;
 mod puzzle_pieces;
 

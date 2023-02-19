@@ -5,6 +5,5 @@ pub mod relations;
 pub mod employee;
 pub mod machine;
 pub mod problem;
-pub mod syncing;
 pub mod shift;
 pub mod note;

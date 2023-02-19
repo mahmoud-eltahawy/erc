@@ -1,35 +1,57 @@
 import { invoke } from "@tauri-apps/api"
-import { BaseSyntheticEvent, useState } from "react"
-import { Name, ProblemDeps, ShiftProblemMini } from "../../main"
+import { BaseSyntheticEvent, useEffect, useState } from "react"
+import { Name, ShiftProblemMini } from "../../main"
 import { SearchBar } from "../molecules/SearchBar"
 import { shiftProblemFromMinimal } from "../../Wall"
 
 export default function ProblemForm({
     toggle,
     add,
-    deps,
     writerId,
     shiftId,
-    departmentId
+    departmentId,
+    employees,
+    problems,
+    spareParts,
+    machines
+
 } : {
     toggle          : Function,
     add             : Function,
-    deps            : ProblemDeps,
     writerId        : string,
     shiftId         : string,
-    departmentId    : string
+    departmentId    : string,
+    employees       : Name[],
+    spareParts      : Name[],
+    problems        : Name[],
+    machines        : Name[],
 }){
-    const { employees, machines,spareParts, problems,shiftBegin,shiftEnd} = deps
 
-    const [displayNote,setDisplayNote] = useState(false)
+  const [displayNote,setDisplayNote] = useState(false)
+  const [beginTime       ,setBeginTime        ] = useState("")
+  const [endTime         ,setEndTime          ] = useState("")
+  const [chosenEmployees ,setChosenEmployees  ] = useState<Name[]>([])
+  const [chosenMachines  ,setChosenMachines   ] = useState<Name[]>([])
+  const [chosenSpareParts,setChosenSpareParts ] = useState<Name[]>([])
+  const [chosenProblems  ,setChosenProblems   ] = useState<Name[]>([])
+  const [writtenNote     ,setWrittenNote      ] = useState('')
+  const [shiftBegin, setShiftBegin] = useState('')
+  const [shiftEnd,setShiftEnd]       = useState('')
 
-    const [beginTime       ,setBeginTime        ] = useState(shiftBegin)
-    const [endTime         ,setEndTime          ] = useState(shiftEnd)
-    const [chosenEmployees ,setChosenEmployees  ] = useState<Name[]>([])
-    const [chosenMachines  ,setChosenMachines   ] = useState<Name[]>([])
-    const [chosenSpareParts,setChosenSpareParts ] = useState<Name[]>([])
-    const [chosenProblems  ,setChosenProblems   ] = useState<Name[]>([])
-    const [writtenNote     ,setWrittenNote      ] = useState('')
+  useEffect(() => {
+
+    const bordersFun = async function(){
+      try{
+        const [begin,end] = await invoke("current_shift_borders") as [string,string]
+        setShiftBegin(begin)
+        setShiftEnd(end)
+      } catch(err){
+        console.log(err)
+      }
+    }
+
+    bordersFun()
+  },[])
 
     const handleSubmit = async (e: BaseSyntheticEvent) => {
       e.preventDefault()

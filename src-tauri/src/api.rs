@@ -1,9 +1,9 @@
+pub mod shift_problem;
+pub mod spare_parts;
 pub mod department;
-pub mod persistence;
-pub mod fetching;
-pub mod syncing;
+pub mod relations;
 pub mod employee;
 pub mod problem;
-pub mod shift;
-pub mod spare_parts;
 pub mod machine;
+pub mod shift;
+pub mod note;

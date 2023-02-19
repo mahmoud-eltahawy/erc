@@ -1,7 +1,7 @@
 use std::error::Error;
 
 use rec::model::{employee::Employee, spare_part::SparePart, department::Department, machine::Machine};
-use sqlx::Row;
+use sqlx::query;
 use uuid::Uuid;
 
 use crate::{
@@ -29,13 +29,13 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
     Department{id : sort_id   ,name: "الفرز".to_string()    ,boss_id: None,department_id:None},
   ];
 
-  let q = sqlx::query(r#"
-      SELECT count(id) FROM department;
+  let q = query!(r#"
+      SELECT count(id) as num FROM department;
   "#).fetch_one(&app_state.pool).await?;
 
-  let count : i64 = q.get(0);
+  let count = q.num;
 
-  if count < 20 {
+  if count < 4 {
     for d in departments {
         save_department(app_state, &d).await?;
     }
@@ -84,13 +84,13 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
         first_name : "ahmed".to_string(),middle_name: "gamal".to_string(),last_name : "mohammed".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
   ];
 
-  let q = sqlx::query(r#"
-      SELECT count(id) FROM employee;
+  let q = query!(r#"
+      SELECT count(id) as num FROM employee;
   "#).fetch_one(&app_state.pool).await?;
 
-  let count : i64 = q.get(0);
+  let count = q.num;
 
-  if count < 20 {
+  if count < 15 {
     for e in employees {
         save_employee(app_state, &e).await?;
     }
@@ -123,13 +123,13 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
   ];
 
 
-  let q = sqlx::query(r#"
-      SELECT count(id) FROM spare_part;
+  let q = query!(r#"
+      SELECT count(id) as num FROM spare_part;
   "#).fetch_one(&app_state.pool).await?;
 
-  let count : i64 = q.get(0);
+  let count = q.num;
 
-  if count < 20 {
+  if count < 15 {
     for s in spare_parts {
       save_spare_part(app_state, &s).await?;
     }
@@ -152,13 +152,13 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
     Machine{id: Uuid::new_v4(),name : "مجفف 8".to_string()},
   ];
 
-  let q = sqlx::query(r#"
-      SELECT count(id) FROM machine;
+  let q = query!(r#"
+      SELECT count(id) as num FROM machine;
   "#).fetch_one(&app_state.pool).await?;
 
-  let count : i64 = q.get(0);
+  let count = q.num;
 
-  if count < 20 {
+  if count < 10 {
     for m in machines {
       save_machine(app_state, &m).await?;
     }

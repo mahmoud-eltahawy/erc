@@ -1,33 +1,41 @@
+mod memory;
+mod api;
+
+use crate::config::AppState;
 use std::error::Error;
 
-use rec::crud_sync::{CudVersion, Cud, Table};
+use rec::{
+    crud_sync::{
+        CudVersion,
+        Cud, Table
+    },
+    model::{
+        note::Note,
+        relations::{
+            ShiftProblemProblem,
+            ShiftProblemSparePart
+        }
+    }
+};
 use uuid::Uuid;
 
-use crate::{
-  memory::{
-    syncing::{last_version, save_version},
-    shift::{save_shift, delete_shift_by_id},
-    employee::{delete_employee_by_id, update_employee, save_employee},
-    problem::{delete_problem_by_id, save_problem, update_problem},
-    spare_part::{save_spare_part, delete_spare_part_by_id, update_spare_part},
-    department::{save_department, delete_department_by_id, update_department},
-    machine::{save_machine,update_machine,delete_machine_by_id}
-  },
-  config::AppState,
-  api::{
-      syncing::fetch_updates,
-      employee::fetch_employee_by_id,
-      shift::fetch_shift_by_id,
-      problem::fetch_problem_by_id,
-      spare_parts::fetch_spare_part_by_id,
-      department::fetch_department_by_id,
-      machine::fetch_machine_by_id
-  },
+use memory::{
+    syncing,
+    shift,
+    employee,
+    problem,
+    spare_part,
+    department,
+    machine,
+    note,
+    shift_problem,
+    relations
 };
 
+
 pub async fn upgrade(app_state : &AppState) -> Result<(),Box<dyn Error>> {
-    let version = last_version(&app_state.pool).await?;
-    let updates = fetch_updates(app_state, version as u64).await?;
+    let version = syncing::last_version(&app_state.pool).await?;
+    let updates = api::updates(app_state, version as u64).await?;
     for update in updates {
         apply_update(app_state,update).await?
     }
@@ -42,59 +50,100 @@ async fn apply_update(app_state : &AppState,cud_version : CudVersion) -> Result<
         Cud::Update     => update(app_state,target_id, target_table, other_target_id).await?,
         Cud::Undefined  => return Err("undefined crud".into())
     }
-    save_version(&app_state.pool, cud_version).await?;
+    syncing::save_version(&app_state.pool, cud_version).await?;
     Ok(())
 }
 
-async fn create(app_state : &AppState, target_id : Uuid,table : Table,_other_id : Option<Uuid>) -> Result<(),Box<dyn Error>>{
+async fn create(app_state : &AppState, target_id : Uuid,table : Table,other_id : Option<Uuid>) -> Result<(),Box<dyn Error>>{
    match table {
        Table::Employee              => {
-          let employee = fetch_employee_by_id(app_state, target_id).await?;
-          save_employee(&app_state.pool, employee).await?
+           let employee = api::employee(app_state, target_id).await?;
+           employee::save(&app_state.pool, employee).await?
        },
        Table::Problem               => {
-           let problem = fetch_problem_by_id(app_state, target_id).await?;
-           save_problem(&app_state.pool, problem).await?;
+           let problem = api::problem(app_state, target_id).await?;
+           problem::save(&app_state.pool, problem).await?;
        },
        Table::Shift                 => {
-           let shift = fetch_shift_by_id(app_state, &target_id).await?;
-           save_shift(&app_state.pool,shift).await?
+           let shift = api::shift(app_state, target_id).await?;
+           shift::save(&app_state.pool,shift).await?
        },
        Table::SparePart             => {
-           let part = fetch_spare_part_by_id(app_state, target_id).await?;
-           save_spare_part(&app_state.pool, part).await?;
+           let part = api::spare_part(app_state, target_id).await?;
+           spare_part::save(&app_state.pool, part).await?;
        },
        Table::Department            => {
-           let dep = fetch_department_by_id(app_state, target_id).await?;
-           save_department(&app_state.pool, dep).await?;
+           let dep = api::department(app_state, target_id).await?;
+           department::save(&app_state.pool, dep).await?;
        },
        Table::Machine               => {
-           let mac = fetch_machine_by_id(app_state, &target_id).await?;
-           save_machine(&app_state.pool, mac).await?;
+           let mac = api::machine(app_state, target_id).await?;
+           machine::save(&app_state.pool, mac).await?;
        },
-       Table::ShiftNote             => {println!("unimplemented")},
-       Table::ShiftProblem          => {println!("unimplemented")},
-       Table::ShiftProblemNote      => {println!("unimplemented")},
-       Table::ShiftProblemProblem   => {println!("unimplemented")},
-       Table::ShiftProblemSparePart => {println!("unimplemented")},
+       Table::ShiftNote             => {
+           let note = api::note(app_state, target_id).await?;
+           note::save_to_shift(&app_state.pool, note).await?;
+       },
+       Table::ShiftProblemNote      => {
+           let note = api::note(app_state, target_id).await?;
+           note::save_to_shift_problem(&app_state.pool, note).await?;
+       },
+       Table::ShiftProblem          => {
+           let sp = api::shift_problem(app_state, target_id).await?;
+           shift_problem::save(&app_state.pool, sp).await?;
+       },
+       Table::ShiftProblemProblem   => {
+           match other_id {
+               Some(id) => {
+                  relations::shift_problems::save_problem(&app_state.pool,
+                      ShiftProblemProblem{problem_id : target_id , shift_problem_id : id}).await?;
+               },
+               None => return Err("the shift problem id is null".into())
+           }
+       },
+       Table::ShiftProblemSparePart => {
+           match other_id {
+               Some(id) => {
+                  relations::shift_problems::save_spare_part(&app_state.pool,
+                      ShiftProblemSparePart{spare_part_id : target_id , shift_problem_id : id}).await?;
+               },
+               None => return Err("the shift problem id is null".into())
+           }
+       },
        Table::Undefined             => return Err("undefined table".into())
    }
    Ok(())
 }
 
-async fn delete(app_state : &AppState, target_id : Uuid,table : Table,_other_id : Option<Uuid>) -> Result<(),Box<dyn Error>>{
+async fn delete(app_state : &AppState, target_id : Uuid,table : Table,other_id : Option<Uuid>) -> Result<(),Box<dyn Error>>{
    match table {
-       Table::Employee              => delete_employee_by_id(&app_state.pool, target_id.to_string()).await?,
-       Table::Problem               => delete_problem_by_id(&app_state.pool, target_id.to_string()).await?,
-       Table::Shift                 => delete_shift_by_id(&app_state.pool, target_id.to_string()).await?,
-       Table::SparePart             => delete_spare_part_by_id(&app_state.pool, target_id.to_string()).await?,
-       Table::Department            => delete_department_by_id(&app_state.pool, target_id.to_string()).await?,
-       Table::Machine               => delete_machine_by_id(&app_state.pool, target_id.to_string()).await?,
-       Table::ShiftNote             => {println!("unimplemented")},
-       Table::ShiftProblem          => {println!("unimplemented")},
-       Table::ShiftProblemNote      => {println!("unimplemented")},
-       Table::ShiftProblemProblem   => {println!("unimplemented")},
-       Table::ShiftProblemSparePart => {println!("unimplemented")},
+       Table::Employee              => employee::delete(&app_state.pool, target_id).await?,
+       Table::Problem               => problem::delete(&app_state.pool, target_id).await?,
+       Table::Shift                 => shift::delete(&app_state.pool, target_id).await?,
+       Table::SparePart             => spare_part::delete(&app_state.pool, target_id).await?,
+       Table::Department            => department::delete(&app_state.pool, target_id).await?,
+       Table::Machine               => machine::delete(&app_state.pool, target_id).await?,
+       Table::ShiftNote             => note::delete(&app_state.pool, target_id).await?,
+       Table::ShiftProblem          => shift_problem::delete(&app_state.pool, target_id).await?,
+       Table::ShiftProblemProblem   => {
+           match other_id {
+               Some(id) => {
+                   relations::shift_problems::delete_problem(&app_state.pool,
+                            ShiftProblemProblem{problem_id : target_id , shift_problem_id : id}).await?
+               },
+               None => return Err("the shift problem id is null".into())
+           }
+       },
+       Table::ShiftProblemSparePart => {
+           match other_id {
+               Some(id) => {
+                    relations::shift_problems::delete_spare_part(&app_state.pool,
+                            ShiftProblemSparePart{spare_part_id : target_id , shift_problem_id : id}).await?
+               },
+               None => return Err("the shift problem id is null".into())
+           }
+       },
+       Table::ShiftProblemNote      => return Err("implemented previously in ShiftNote enum varient".into()),
        Table::Undefined             => return Err("undefined table".into())
    }
    Ok(())
@@ -103,30 +152,36 @@ async fn delete(app_state : &AppState, target_id : Uuid,table : Table,_other_id 
 async fn update(app_state : &AppState, target_id : Uuid,table : Table,_other_id : Option<Uuid>) -> Result<(),Box<dyn Error>>{
    match table {
        Table::Employee              => {
-           let employee = fetch_employee_by_id(app_state, target_id).await?;
-           update_employee(&app_state.pool, employee).await?
+           let employee = api::employee(app_state, target_id).await?;
+           employee::update(&app_state.pool, employee).await?
        },
        Table::Problem               => {
-           let problem = fetch_problem_by_id(app_state, target_id).await?;
-           update_problem(&app_state.pool, problem).await?;
+           let problem = api::problem(app_state, target_id).await?;
+           problem::update(&app_state.pool, problem).await?;
        },
        Table::SparePart             => {
-           let part = fetch_spare_part_by_id(app_state, target_id).await?;
-           update_spare_part(&app_state.pool, part).await?;
+           let part = api::spare_part(app_state, target_id).await?;
+           spare_part::update(&app_state.pool, part).await?;
        },
        Table::Department            => {
-           let dep = fetch_department_by_id(app_state, target_id).await?;
-           update_department(&app_state.pool, dep).await?;
+           let dep = api::department(app_state, target_id).await?;
+           department::update(&app_state.pool, dep).await?;
        },
        Table::Machine               => {
-           let mac = fetch_machine_by_id(app_state, &target_id).await?;
-           update_machine(&app_state.pool, mac).await?;
+           let mac = api::machine(app_state, target_id).await?;
+           machine::update(&app_state.pool, mac).await?;
        },
-       Table::ShiftNote             => {println!("unimplemented")},
-       Table::ShiftProblem          => {println!("unimplemented")},
-       Table::ShiftProblemNote      => {println!("unimplemented")},
-       Table::ShiftProblemProblem   => {println!("unimplemented")},
-       Table::ShiftProblemSparePart => {println!("unimplemented")},
+       Table::ShiftNote             => {
+           let note = api::note(app_state, target_id).await?;
+           note::update(&app_state.pool, Note{id : note.id, content : note.content}).await?;
+       },
+       Table::ShiftProblem          => {
+           let sp = api::shift_problem(app_state, target_id).await?;
+           shift_problem::update(&app_state.pool, sp).await?;
+       },
+       Table::ShiftProblemProblem   => return Err("relations cant't be updated".into()),
+       Table::ShiftProblemSparePart => return Err("relations cant't be updated".into()),
+       Table::ShiftProblemNote      => return Err("implemented previously in ShiftNote enum varient".into()),
        Table::Shift                 => return Err("shift can not be updated".into()),
        Table::Undefined             => return Err("undefined table".into())
    }

@@ -4,12 +4,7 @@ use errc::{
   config::AppState,
   syncing::upgrade,
   test::insert_employees,
-  memory::{
-    employee::find_all_employees,
-    spare_part::find_all_spare_parts, machine::find_all_machines
-  }
 };
-use rec::{timer::{get_relative_now, get_current_order}, model::name::Name};
 
 use super::models::TauriState;
 use rusqlite::Connection;
@@ -51,33 +46,11 @@ pub async fn create_tauri_state() -> Result<TauriState,Box<dyn Error>>{
   let pool = get_pool().await?;
 
   let app_state = AppState::new(pool);
-  let relative_now = get_relative_now();
-  let order = get_current_order(relative_now);
 
   test(&app_state).await?;
-
-  let employees = match find_all_employees(&app_state.pool).await {
-    Ok(e) => e.into_iter().map(|emp| Name::build_employee(emp)).collect(),
-    Err(err)=> return Err(err.into())
-  };
-
-  let machines = match find_all_machines(&app_state.pool).await {
-    Ok(m) => m.into_iter().map(|emp| Name::build_machine(emp)).collect(),
-    Err(err)=> return Err(err.into())
-  };
-
-  let spare_parts = match find_all_spare_parts(&app_state.pool).await {
-    Ok(s) => s.into_iter().map(|s| Name::build_spare_part(s)).collect(),
-    Err(err)=> return Err(err.into())
-  };
 
   upgrade(&app_state).await?;
   Ok(TauriState{
     app_state,
-    relative_now,
-    order,
-    employees,
-    machines,
-    spare_parts
   })
 }
