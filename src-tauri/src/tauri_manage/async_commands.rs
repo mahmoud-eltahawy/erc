@@ -1,4 +1,4 @@
-use std::{sync::Mutex, collections::HashMap, error::Error};
+use std::{sync::Mutex, error::Error};
 
 use bcrypt::BcryptResult;
 use errc::{
@@ -10,7 +10,7 @@ use errc::{
       save_spare_part_to_shift_problem
     },
     shift_problem::save_shift_problem,
-    note::save_note_to_problem,
+    note::save_note_to_problem
   },
   config::AppState,
   memory::{
@@ -18,8 +18,13 @@ use errc::{
     shift::find_shift_by,
     problem::find_problem_by_id,
     spare_part::find_spare_part_by_id,
-    machine::find_machine_by_id, shift_problem::find_shift_shift_problems, relations::shift_problems::{fetch_shift_problem_problems, fetch_shift_problem_spare_parts}, note::fetch_shift_problem_note
-
+    machine::find_machine_by_id,
+    relations::shift_problems::{
+      fetch_shift_problem_problems,
+      fetch_shift_problem_spare_parts
+    },
+    note::fetch_shift_problem_note,
+    shift_problem::find_shift_shift_problems
   }, syncing::upgrade
 };
 use rec::{model::{employee::ClientEmployee,
@@ -32,8 +37,6 @@ use rec::{model::{employee::ClientEmployee,
                  note::{Note, DbNote}},
           timer::{get_relative_now, get_current_date, get_current_order}};
 use uuid::Uuid;
-
-use super::models::Ids;
 
 fn  verify_password(password : String,hash : &str) -> BcryptResult<bool>{
   bcrypt::verify(password, hash)
@@ -145,35 +148,24 @@ async fn save_minimal_shift_problem(app_state : &AppState,
 }
 
 #[tauri::command]
-pub async fn save_problem_detail(
-  problem_detail : ProblemDetail,
-  department_id : Uuid,
-  app_state : tauri::State<'_,AppState>,
-  state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ClientMinimamlShiftProblem>>>>
-) -> Result<ClientMinimamlShiftProblem,String> {
+pub async fn save_problem_detail(problem_detail : ProblemDetail,
+                              app_state : tauri::State<'_,AppState>) -> Result<(),String> {
   let shift_problem = MinimamlShiftProblem::new(problem_detail);
   match save_minimal_shift_problem(&app_state,shift_problem).await {
-    Ok(shift_problem)   => {
-      let shift_problem = ClientMinimamlShiftProblem::new(shift_problem.clone());
-      let s = &mut *state.lock().unwrap();
-      match s.get_mut(&department_id) {
-        Some(problems) => {problems.push(shift_problem.clone())},
-        None           => {
-          let mut problems = Vec::new();
-          problems.push(shift_problem.clone());
-          s.insert(department_id, problems);
-        }
-      }
-      Ok(shift_problem)
-    },
+    Ok(_)    => {},
+    Err(err) => return Err(err.to_string())
+  };
+  match upgrade(&app_state).await{
+    Ok(_)    => Ok(()),
     Err(err) => Err(err.to_string())
   }
 }
 
-async fn fetch_minimal_shift_problem_by_writer_and_shift_ids(app_state : &AppState,
-              writer_id : Uuid,shift_id : Uuid) -> Result<Vec<ClientMinimamlShiftProblem>,Box<dyn Error>>{
+async fn fetch_minimal_shift_problem_by_shift_id(app_state : &AppState,
+              shift_id : Uuid) -> Result<Vec<ClientMinimamlShiftProblem>,Box<dyn Error>>{
 
-  let shift_problems = find_shift_shift_problems(&app_state.pool, shift_id.to_string(), writer_id.to_string()).await?;
+  let shift_problems = find_shift_shift_problems(&app_state.pool,
+                                        shift_id.to_string()).await?;
   let mut result = Vec::new();
   for sp in shift_problems{
     let problems = fetch_shift_problem_problems(&app_state.pool, &sp.id).await?;
@@ -186,18 +178,12 @@ async fn fetch_minimal_shift_problem_by_writer_and_shift_ids(app_state : &AppSta
 }
 
 #[tauri::command]
-pub async fn update_current_shift_problems(
-  state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ClientMinimamlShiftProblem>>>>,
-  app_state : tauri::State<'_,AppState>,ids : Ids) -> Result<(),String> {
-  let Ids{writer_id,shift_id,department_id} = ids;
-  match fetch_minimal_shift_problem_by_writer_and_shift_ids(&app_state
-                                      ,writer_id,shift_id).await {
-    Ok(problems)   => {
-      let s = &mut *state.lock().unwrap();
-      s.insert(department_id, problems);
-      Ok(())
-    },
-    Err(err) => Err(err.to_string())
+pub async fn get_current_shift_problems(app_state : tauri::State<'_,AppState>,
+          shift_id : Uuid) -> Result<Vec<ClientMinimamlShiftProblem>,String> {
+  match fetch_minimal_shift_problem_by_shift_id(&app_state,
+                                      shift_id).await {
+    Ok(problems)   => Ok(problems.to_vec()),
+    Err(_) => Err("empty".to_string())
   }
 }
 

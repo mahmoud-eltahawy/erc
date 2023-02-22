@@ -1,0 +1,62 @@
+import { invoke } from "@tauri-apps/api"
+import { Setter } from "solid-js"
+import DefineProblem from "./components/molecules/defineProblem"
+import HistoryShow from "./components/organisms/HistoryShow"
+import { Employee } from "./index"
+import ProblemForm from "./components/organisms/ProblemForm"
+import ShiftProblems from "./components/organisms/ShiftProblems"
+import { ButtonsOrElement } from "./components/molecules/buttonsOrElement"
+import { createStore } from "solid-js/store"
+
+export default function Wall({
+          employee,
+          shiftId,
+          setEmployee,
+          setShiftId
+        } : {
+          employee : Employee,
+          shiftId  : string,
+          setEmployee : Setter<Employee | null>,
+          setShiftId  : Setter<string | null>
+        }){
+  const [last,setLast]                        = createStore([-1])
+  const [problems,setProblems]                = createStore([0])
+  const [shiftProblems,setShiftProblems]      = createStore([0])
+
+  const logout = () => {
+    invoke('logout')
+      .then(() => {
+        setEmployee(null)
+        setShiftId(null)
+      }
+    ).catch(err => console.log(err))
+  }
+
+  return (
+    <section>
+      <button class={"LogoutButton"} onClick={() => logout()}>تسجيل خروج</button>
+      <p class={"NameP"}>
+          {employee ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` : ''}</p>
+      <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
+            buttonElementPairs={[
+              ["اضافة عطل"          ,<ProblemForm
+                                         problemsNumber={problems}
+                                         setShiftProblems={setShiftProblems}
+                                         toggle={() => setLast([0])}
+                                         shiftId={shiftId}
+                                         writerId={employee.id}
+                                         departmentId={employee.department_id}/>],
+              ["تعريف مشكلة"        ,<DefineProblem
+                                         setProblems={setProblems}
+                                         employee={employee}
+                                         toggle={() => setLast([1])}/>],
+              ["اظهار الاعطال"         ,<ShiftProblems
+                                         shiftId={shiftId}
+                                         shiftProblemsNumber={shiftProblems}/>],
+              ["السجل"              ,<HistoryShow />]
+            ]}
+            num={last}
+            fun={() => setLast([-1])}/>
+    </section>
+  )
+}

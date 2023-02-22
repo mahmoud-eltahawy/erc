@@ -7,7 +7,7 @@ pub fn translate_date(date : String) -> Vec<String> {
     if &new_num[0..2] == "٠"{
       new_num = new_num[2..].to_owned();
     }
-    return new_num;
+    new_num
   }).rev().collect();
 }
 

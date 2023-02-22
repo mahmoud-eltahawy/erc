@@ -9,9 +9,10 @@ pub async fn save_to_shift_problem(pool : &Pool<Sqlite>,
                               note : DbNote) -> Result<(),Box<dyn Error>> {
   let DbNote{shift_id:_,id,shift_problem_id,content} = note;
   let shift_problem_id = match shift_problem_id {
-    Some(id) => id,
+    Some(id) => id.to_string(),
     None     => return Err("not qualified params".to_owned().into())
   };
+  let id = id.to_string();
   let row = query!("
     INSERT INTO note(
         id,
@@ -30,9 +31,10 @@ pub async fn save_to_shift(pool : &Pool<Sqlite>,
                               note : DbNote) -> Result<(),Box<dyn Error>> {
   let DbNote{id,shift_id,shift_problem_id : _,content} = note;
   let shift_id = match shift_id {
-    Some(id) => id,
+    Some(id) => id.to_string(),
     None     => return Err("not qualified params".to_owned().into())
   };
+  let id = id.to_string();
   let row = query!("
     INSERT INTO note(
         id,

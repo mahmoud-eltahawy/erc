@@ -2,14 +2,12 @@ use rec::model::shift_problem::ClientShiftProblem;
 use sqlx::{Pool, Sqlite,Error, query_as};
 
 pub async fn find_shift_shift_problems(pool : &Pool<Sqlite>,
-                    shift_id : String,writer_id : String) -> Result<Vec<ClientShiftProblem>,Error> {
+                    shift_id : String) -> Result<Vec<ClientShiftProblem>,Error> {
 
     match query_as!(ClientShiftProblem,r#"
         select * from shift_problem
-        WHERE shift_id = $1 AND
-        writer_id IN (SELECT id FROM employee
-        WHERE department_id = (select department_id from employee where id = $2))
-    "#,shift_id,writer_id)
+        WHERE shift_id = $1;
+    "#,shift_id)
     .fetch_all(pool).await {
       Ok(parts) => Ok(parts),
       Err(err) => Err(err)

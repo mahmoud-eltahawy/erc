@@ -13,10 +13,7 @@ pub async fn last_version(pool : &Pool<Sqlite>) -> Result<i64,Error> {
 
 pub async fn save_version(pool : &Pool<Sqlite>,version : CudVersion) -> Result<(),Error> {
   let CudVersion{version_number,target_table,target_id,cud,other_target_id} = version;
-  let other_target_id = match other_target_id {
-    Some(id) => Some(id.to_string()),
-    None     => None
-  };
+  let other_target_id = other_target_id.map(|id| id.to_string());
     match sqlx::query(r#"
       INSERT INTO cud_version(version_number,target_table,target_id,cud,other_target_id)
       VALUES($1,$2,$3,$4,$5);

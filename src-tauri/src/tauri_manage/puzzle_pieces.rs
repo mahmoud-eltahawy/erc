@@ -1,5 +1,4 @@
-use std::{sync::Mutex, collections::HashMap};
-use rec::model::shift_problem::ClientMinimamlShiftProblem;
+use std::sync::Mutex;
 use rec::model::employee::ClientEmployee;
 use tauri::{Builder, Wry};
 use uuid::Uuid;
@@ -17,14 +16,12 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
     .manage(app_state)
     .manage(Mutex::new(None::<(ClientEmployee,Uuid)>))
     .manage(Mutex::new(None::<(String,Vec<String>)>))
-    .manage(Mutex::new(HashMap::<Uuid,Vec<ClientMinimamlShiftProblem>>::new()))
     .invoke_handler(tauri::generate_handler![
       login,
       logout,
       check_login,
       current_shift,
       current_shift_borders,
-      update_current_shift_problems,
       get_current_shift_problems,
       define_problem,
       problems_selection,

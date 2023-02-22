@@ -1,12 +1,10 @@
-use std::{sync::Mutex, collections::HashMap};
+use std::sync::Mutex;
 use rec::{
   timer::{
     get_current_date,
     get_relative_now, get_current_order
-  },model::{
-    employee::ClientEmployee,
-    shift_problem::ClientMinimamlShiftProblem
-  }
+  },
+  model::employee::ClientEmployee
 };
 use errc::translator::{
   translate_date,
@@ -29,15 +27,6 @@ pub fn current_shift() -> Result<(String,Vec<String>),String> {
   match get_current_date(now) {
     Some(date) => Ok((translate_order(&order),translate_date(date.to_string()))),
     None       => Err("مشكلة داخلية في تحديث التاريخ".to_owned())
-  }
-}
-
-#[tauri::command]
-pub fn get_current_shift_problems(state : tauri::State<'_,Mutex<HashMap<Uuid,Vec<ClientMinimamlShiftProblem>>>>,
-                              department_id : Uuid) -> Result<Vec<ClientMinimamlShiftProblem>,String> {
-  match state.lock().unwrap().get(&department_id) {
-    Some(problems)   => Ok(problems.to_vec()),
-    None => Err("empty".to_string())
   }
 }
 
