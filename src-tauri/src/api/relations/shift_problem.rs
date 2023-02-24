@@ -1,53 +1,62 @@
 use std::error::Error;
 
-use rec::model::relations::{ShiftProblemProblem, ShiftProblemSparePart};
+use reqwest::StatusCode;
+use uuid::Uuid;
 
 use crate::config::AppState;
 
 pub async fn save_problem_to_shift_problem(app_state : &AppState
-                              ,sp : &ShiftProblemProblem) -> Result<(),Box<dyn Error>> {
+                              ,pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/relation/sp/p-save"))
-      .json(sp)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .get(format!("{}/api/sp/problem/{}/{}",origin,pid,spid))
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
 
 pub async fn delete_problem_from_shift_problem(app_state : &AppState,
-                                sp : &ShiftProblemProblem) -> Result<(),Box<dyn Error>> {
+                                pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/relation/sp/p-delete"))
-      .json(sp)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .delete(format!("{}/api/sp/problem/{}/{}",origin,pid,spid))
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
 
 pub async fn save_spare_part_to_shift_problem(app_state : &AppState,
-                              sp : &ShiftProblemSparePart) -> Result<(),Box<dyn Error>> {
+                              pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/relation/sp/s-save"))
-      .json(sp)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .get(format!("{}/api/sp/part/{}/{}",origin,pid,spid))
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
 
 pub async fn delete_spare_part_from_shift_problem(app_state : &AppState,
-                                  sp : &ShiftProblemSparePart) -> Result<(),Box<dyn Error>> {
+                                  pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/relation/sp/s-delete"))
-      .json(sp)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .delete(format!("{}/api/sp/part/{}/{}",origin,pid,spid))
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }

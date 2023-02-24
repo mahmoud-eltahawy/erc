@@ -32,7 +32,6 @@ use rec::model::{employee::ClientEmployee,
                  shift_problem::{MinimamlShiftProblem, ProblemDetail, ClientMinimamlShiftProblem},
                  machine::ClientMachine,
                  spare_part::ClientSparePart,
-                 relations::{ShiftProblemProblem, ShiftProblemSparePart},
                  note::{Note, DbNote}};
 use uuid::Uuid;
 
@@ -113,21 +112,19 @@ async fn save_minimal_shift_problem(app_state : &AppState,
   let (shift_problem,problems,parts,note) = minimal_shift_problem.destruct();
   save_shift_problem(app_state, &shift_problem).await?;
   let shift_problem_id = shift_problem.id;
-  for problem_id in problems.clone() {
+  for problem_id in &problems {
     save_problem_to_shift_problem(app_state,
-              &ShiftProblemProblem{
                 problem_id,
-                shift_problem_id
-              }).await?;
+                &shift_problem_id
+              ).await?;
   }
 
-  if let Some(parts_ids) = parts.clone(){
+  if let Some(parts_ids) = &parts{
     for spare_part_id in parts_ids {
       save_spare_part_to_shift_problem(app_state,
-              &ShiftProblemSparePart{
                 spare_part_id,
-                shift_problem_id
-              }).await?;
+                &shift_problem_id
+              ).await?;
     }
   }
 

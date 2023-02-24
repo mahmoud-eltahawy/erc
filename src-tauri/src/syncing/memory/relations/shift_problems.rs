@@ -1,17 +1,13 @@
 use sqlx::{Pool, Sqlite};
+use uuid::Uuid;
 use std::error::Error;
 
-use rec::model::relations::{
-    ShiftProblemProblem,
-    ShiftProblemSparePart
-};
 use sqlx::query;
 
 pub async fn save_problem(pool : &Pool<Sqlite>,
-                sp : ShiftProblemProblem) -> Result<(),Box<dyn Error>> {
-  let ShiftProblemProblem{problem_id,shift_problem_id} = sp;
-  let problem_id = problem_id.to_string();
-  let shift_problem_id = shift_problem_id.to_string();
+                pid : Uuid,spid : Uuid) -> Result<(),Box<dyn Error>> {
+  let problem_id = pid.to_string();
+  let shift_problem_id = spid.to_string();
 
   let row = query!("
     INSERT INTO shift_problem_problem(
@@ -27,10 +23,9 @@ pub async fn save_problem(pool : &Pool<Sqlite>,
 }
 
 pub async fn delete_problem(pool : &Pool<Sqlite>,
-            sp : ShiftProblemProblem) -> Result<(),Box<dyn Error>> {
-  let ShiftProblemProblem{problem_id,shift_problem_id} = sp;
-  let problem_id = problem_id.to_string();
-  let shift_problem_id = shift_problem_id.to_string();
+            pid : Uuid,spid : Uuid) -> Result<(),Box<dyn Error>> {
+  let problem_id = pid.to_string();
+  let shift_problem_id = spid.to_string();
 
   let row = query!("
     DELETE FROM shift_problem_problem
@@ -44,10 +39,9 @@ pub async fn delete_problem(pool : &Pool<Sqlite>,
 }
 
 pub async fn save_spare_part(pool : &Pool<Sqlite>,
-            ss : ShiftProblemSparePart) -> Result<(),Box<dyn Error>> {
-  let ShiftProblemSparePart{shift_problem_id,spare_part_id} = ss;
-  let spare_part_id = spare_part_id.to_string();
-  let shift_problem_id = shift_problem_id.to_string();
+            pid : Uuid,spid : Uuid) -> Result<(),Box<dyn Error>> {
+  let spare_part_id = pid.to_string();
+  let shift_problem_id = spid.to_string();
 
   let row = query!("
     INSERT INTO shift_problem_spare_part(
@@ -63,10 +57,9 @@ pub async fn save_spare_part(pool : &Pool<Sqlite>,
 }
 
 pub async fn delete_spare_part(pool : &Pool<Sqlite>,
-            ss : ShiftProblemSparePart) -> Result<(),Box<dyn Error>> {
-  let ShiftProblemSparePart{shift_problem_id,spare_part_id} = ss;
-  let spare_part_id = spare_part_id.to_string();
-  let shift_problem_id = shift_problem_id.to_string();
+            pid : Uuid,spid : Uuid) -> Result<(),Box<dyn Error>> {
+  let spare_part_id    = pid.to_string();
+  let shift_problem_id = spid.to_string();
 
   let row = query!("
     DELETE FROM shift_problem_spare_part

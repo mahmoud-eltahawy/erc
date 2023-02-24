@@ -9,13 +9,7 @@ use rec::{
         CudVersion,
         Cud, Table
     },
-    model::{
-        note::Note,
-        relations::{
-            ShiftProblemProblem,
-            ShiftProblemSparePart
-        }
-    }
+    model::note::Note,
 };
 use uuid::Uuid;
 
@@ -99,8 +93,7 @@ async fn create(app_state : &AppState, target_id : Uuid,table : Table,other_id :
        Table::ShiftProblemProblem   => {
            match other_id {
                Some(id) => {
-                  relations::shift_problems::save_problem(&app_state.pool,
-                      ShiftProblemProblem{problem_id : target_id , shift_problem_id : id}).await?;
+                  relations::shift_problems::save_problem(&app_state.pool,target_id,id).await?;
                },
                None => return Err("the shift problem id is null".into())
            }
@@ -108,8 +101,7 @@ async fn create(app_state : &AppState, target_id : Uuid,table : Table,other_id :
        Table::ShiftProblemSparePart => {
            match other_id {
                Some(id) => {
-                  relations::shift_problems::save_spare_part(&app_state.pool,
-                      ShiftProblemSparePart{spare_part_id : target_id , shift_problem_id : id}).await?;
+                  relations::shift_problems::save_spare_part(&app_state.pool,target_id,id).await?;
                },
                None => return Err("the shift problem id is null".into())
            }
@@ -132,8 +124,7 @@ async fn delete(app_state : &AppState, target_id : Uuid,table : Table,other_id :
        Table::ShiftProblemProblem   => {
            match other_id {
                Some(id) => {
-                   relations::shift_problems::delete_problem(&app_state.pool,
-                            ShiftProblemProblem{problem_id : target_id , shift_problem_id : id}).await?
+                   relations::shift_problems::delete_problem(&app_state.pool,target_id , id).await?
                },
                None => return Err("the shift problem id is null".into())
            }
@@ -141,8 +132,7 @@ async fn delete(app_state : &AppState, target_id : Uuid,table : Table,other_id :
        Table::ShiftProblemSparePart => {
            match other_id {
                Some(id) => {
-                    relations::shift_problems::delete_spare_part(&app_state.pool,
-                            ShiftProblemSparePart{spare_part_id : target_id , shift_problem_id : id}).await?
+                    relations::shift_problems::delete_spare_part(&app_state.pool,target_id,id).await?
                },
                None => return Err("the shift problem id is null".into())
            }

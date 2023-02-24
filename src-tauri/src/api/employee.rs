@@ -1,4 +1,5 @@
 use rec::model::employee::Employee;
+use reqwest::StatusCode;
 use uuid::Uuid;
 use std::error::Error;
 
@@ -6,33 +7,42 @@ use crate::config::AppState;
 
 pub async fn save_employee(app_state : &AppState,employee : &Employee) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/emp/save"))
-      .json(employee)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .post(format!("{}/api/emp/",origin))
+    .json(employee)
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
 
 pub async fn update_employee(app_state : &AppState,employee : &Employee) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/emp/update"))
-      .json(employee)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .put(format!("{}/api/emp/",origin))
+    .json(employee)
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
 
 pub async fn delete_employee(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/emp/delete"))
-      .json(id)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .post(format!("{}/api/emp/{}",origin,id))
+    .json(id)
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }

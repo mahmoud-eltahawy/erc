@@ -1,39 +1,48 @@
 use std::error::Error;
 
 use rec::model::spare_part::SparePart;
+use reqwest::StatusCode;
 use uuid::Uuid;
 
 use crate::config::AppState;
 
 pub async fn save_spare_part(app_state : &AppState,spare_part : &SparePart) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/spare-part/save"))
-      .json(spare_part)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .post(format!("{}/api/part/",origin))
+    .json(spare_part)
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
 
 pub async fn update_spare_part(app_state : &AppState,spare_part : &SparePart) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/spare-part/update"))
-      .json(spare_part)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .put(format!("{origin}/api/part/"))
+    .json(spare_part)
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
 
 pub async fn delete_spare_part(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
-  let client = reqwest::Client::new();
-  client.post(format!("{origin}/api/spare-part/delete"))
-      .json(id)
-      .send()
-      .await?;
+  let req = reqwest::Client::new()
+    .delete(format!("{}/api/part/{}",origin,id))
+    .send()
+    .await?;
 
-  Ok(())
+  match req.status() {
+    StatusCode::OK => Ok(()),
+    _              => Err("server Error".into())
+  }
 }
