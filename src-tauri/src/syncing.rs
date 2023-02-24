@@ -92,6 +92,10 @@ async fn create(app_state : &AppState, target_id : Uuid,table : Table,other_id :
            let sp = api::shift_problem(app_state, target_id).await?;
            shift_problem::save(&app_state.pool, sp).await?;
        },
+       Table::DepartmentShift       => {
+           let ds = api::shift_department(app_state, target_id).await?;
+           shift::save_department_shift(&app_state.pool, ds).await?;
+       },
        Table::ShiftProblemProblem   => {
            match other_id {
                Some(id) => {
@@ -119,12 +123,12 @@ async fn delete(app_state : &AppState, target_id : Uuid,table : Table,other_id :
    match table {
        Table::Employee              => employee::delete(&app_state.pool, target_id).await?,
        Table::Problem               => problem::delete(&app_state.pool, target_id).await?,
-       Table::Shift                 => shift::delete(&app_state.pool, target_id).await?,
        Table::SparePart             => spare_part::delete(&app_state.pool, target_id).await?,
        Table::Department            => department::delete(&app_state.pool, target_id).await?,
        Table::Machine               => machine::delete(&app_state.pool, target_id).await?,
        Table::ShiftNote             => note::delete(&app_state.pool, target_id).await?,
        Table::ShiftProblem          => shift_problem::delete(&app_state.pool, target_id).await?,
+       Table::DepartmentShift       => shift::delete_department_shift(&app_state.pool, target_id).await?,
        Table::ShiftProblemProblem   => {
            match other_id {
                Some(id) => {
@@ -143,6 +147,7 @@ async fn delete(app_state : &AppState, target_id : Uuid,table : Table,other_id :
                None => return Err("the shift problem id is null".into())
            }
        },
+       Table::Shift                 => return Err("shift is undeletable table".into()),
        Table::ShiftProblemNote      => return Err("implemented previously in ShiftNote enum varient".into()),
        Table::Undefined             => return Err("undefined table".into())
    }
@@ -179,6 +184,7 @@ async fn update(app_state : &AppState, target_id : Uuid,table : Table,_other_id 
            let sp = api::shift_problem(app_state, target_id).await?;
            shift_problem::update(&app_state.pool, sp).await?;
        },
+       Table::DepartmentShift       => return Err("department shift cant't be updated".into()),
        Table::ShiftProblemProblem   => return Err("relations cant't be updated".into()),
        Table::ShiftProblemSparePart => return Err("relations cant't be updated".into()),
        Table::ShiftProblemNote      => return Err("implemented previously in ShiftNote enum varient".into()),

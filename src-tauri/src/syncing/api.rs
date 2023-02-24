@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use rec::{crud_sync::CudVersion, model::{employee::Employee, problem::Probelm, shift::Shift, spare_part::SparePart, department::Department, machine::Machine, note::DbNote, shift_problem::ShiftProblem}};
+use rec::{crud_sync::CudVersion, model::{employee::Employee, problem::Probelm, shift::{Shift, DepartmentShift}, spare_part::SparePart, department::Department, machine::Machine, note::DbNote, shift_problem::ShiftProblem}};
 use uuid::Uuid;
 
 use crate::config::AppState;
@@ -27,6 +27,19 @@ pub async fn shift(app_state : &AppState,id : Uuid) -> Result<Shift,Box<dyn Erro
       .send()
       .await?
       .json::<Shift>()
+      .await?;
+
+  Ok(result)
+}
+
+pub async fn shift_department(app_state : &AppState,id : Uuid) -> Result<DepartmentShift,Box<dyn Error>> {
+  let origin = &app_state.origin;
+  let client = reqwest::Client::new();
+  let result = client.post(format!("{origin}/api/shift/dep-shift"))
+      .json(&id)
+      .send()
+      .await?
+      .json::<DepartmentShift>()
       .await?;
 
   Ok(result)

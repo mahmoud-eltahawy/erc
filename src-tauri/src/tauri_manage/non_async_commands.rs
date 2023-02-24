@@ -10,10 +10,9 @@ use errc::translator::{
   translate_date,
   translate_order
 };
-use uuid::Uuid;
 
 #[tauri::command]
-pub fn check_login(state : tauri::State<'_,Mutex<Option<(ClientEmployee,Uuid)>>>) -> Result<(ClientEmployee,Uuid),String> {
+pub fn check_login(state : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>) -> Result<(ClientEmployee,String),String> {
   match &*state.lock().unwrap() {
     Some((employee,id)) => Ok((employee.clone(),id.clone())),
     None     => Err("تحتاج الي تسجيل الدخول من جديد".to_string())
@@ -31,6 +30,6 @@ pub fn current_shift() -> Result<(String,Vec<String>),String> {
 }
 
 #[tauri::command]
-pub fn logout(state : tauri::State<'_,Mutex<Option<(ClientEmployee,Uuid)>>>) {
+pub fn logout(state : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>) {
   *state.lock().unwrap() = None;
 }

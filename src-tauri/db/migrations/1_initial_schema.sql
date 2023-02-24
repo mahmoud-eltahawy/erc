@@ -73,6 +73,16 @@ CREATE INDEX IF NOT EXISTS idx_sft_id            ON shift(id);
 CREATE INDEX IF NOT EXISTS idx_sft_so            ON shift(shift_order);
 CREATE INDEX IF NOT EXISTS idx_sft_sd            ON shift(shift_date);
 
+CREATE TABLE IF NOT EXISTS department_shift (
+       id                  VARCHAR(80)                               NOT NULL,
+       shift_id            VARCHAR(80)                               NOT NULL,
+       department_id       VARCHAR(80)                               NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_dep_sft_id       ON department_shift(id);
+CREATE INDEX IF NOT EXISTS idx_dep_sft_sft_id   ON department_shift(shift_id);
+CREATE INDEX IF NOT EXISTS idx_dep_sft_dep_id   ON department_shift(department_id);
+
 CREATE TABLE IF NOT EXISTS shift_problem(
        id                   VARCHAR(80)                               NOT NULL,
        shift_id             VARCHAR(80)                               NOT NULL,

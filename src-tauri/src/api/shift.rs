@@ -1,23 +1,19 @@
 use std::error::Error;
 
-use rec::model::shift::Shift;
 use uuid::Uuid;
 
 use crate::config::AppState;
 
-pub async fn save_shift_or(app_state : &AppState) -> Result<Shift,Box<dyn Error>> {
+pub async fn save_shift(app_state : &AppState,department_id : &String) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
+  let department_id = Uuid::parse_str(department_id)?;
   let client = reqwest::Client::new();
-  let result = client.post(format!("{origin}/api/shift/save-or"))
+  client.post(format!("{origin}/api/shift/save"))
+    .json(&department_id)
     .send()
-    .await?
-    .json::<Option<Shift>>()
     .await?;
 
-  match result {
-      Some(shift) => Ok(shift),
-      None        => Err("shift create error".to_owned().into())
-  }
+    Ok(())
 }
 
 pub async fn delete_shift(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {

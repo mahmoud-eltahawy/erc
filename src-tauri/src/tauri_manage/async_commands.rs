@@ -3,7 +3,7 @@ use std::{sync::Mutex, error::Error};
 use bcrypt::BcryptResult;
 use errc::{
   api::{
-    shift::save_shift_or,
+    shift::save_shift,
     problem::save_problem,
     relations::shift_problem::{
       save_problem_to_shift_problem,
@@ -15,7 +15,7 @@ use errc::{
   config::AppState,
   memory::{
     employee::{find_employee_by_card, find_employee_by_id},
-    shift::find_shift_by,
+    shift::find_current_department_shift_by_id,
     problem::find_problem_by_id,
     spare_part::find_spare_part_by_id,
     machine::find_machine_by_id,
@@ -27,69 +27,67 @@ use errc::{
     shift_problem::find_shift_shift_problems
   }, syncing::upgrade
 };
-use rec::{model::{employee::ClientEmployee,
+use rec::model::{employee::ClientEmployee,
                  problem::{Probelm, ClientProblem},
                  shift_problem::{MinimamlShiftProblem, ProblemDetail, ClientMinimamlShiftProblem},
                  machine::ClientMachine,
                  spare_part::ClientSparePart,
-                 shift::{Shift, DateOrder},
                  relations::{ShiftProblemProblem, ShiftProblemSparePart},
-                 note::{Note, DbNote}},
-          timer::{get_relative_now, get_current_date, get_current_order}};
+                 note::{Note, DbNote}};
 use uuid::Uuid;
 
 fn  verify_password(password : String,hash : &str) -> BcryptResult<bool>{
   bcrypt::verify(password, hash)
 }
 
-async fn get_or_save_shift(app_state : &AppState) -> Option<Shift>{
-  let now = get_relative_now();
-  let date = get_current_date(now);
-  let order = get_current_order(now);
-  if let Some(date) = date {
-    let order = order as i16;
-    match find_shift_by(&app_state.pool, DateOrder{date,order}).await {
-        Some(shift) => Shift::get(shift),
-        None        =>{
-          match save_shift_or(app_state).await{
-            Ok(shift) =>Some(shift),
-            Err(_)    => None
-          }
-        }
-      }
-    } else {
-    None
+async fn get_or_save_shift_id(app_state : &AppState,department_id : &String) -> Result<String,Box<dyn Error>>{
+  let id_f = find_current_department_shift_by_id(&app_state.pool, department_id);
+
+  if let Ok(id) = id_f.await{
+    return Ok(id);
   }
+
+  save_shift(app_state, department_id).await?;
+
+  upgrade(app_state).await?;
+
+  let id = find_current_department_shift_by_id(&app_state.pool, department_id).await?;
+
+  Ok(id)
+}
+
+async fn helper(app_state : &AppState,
+               card_id: i64,password: String) -> Result<(ClientEmployee,String),Box<dyn Error>> {
+
+  let employee = find_employee_by_card(&app_state.pool, card_id).await?;
+
+  let verified = match verify_password(password, &employee.password) {
+    Ok(result) => result,
+    Err(err)     => return Err(err.into())
+  };
+
+  if verified {
+    let id = get_or_save_shift_id(&app_state,&employee.department_id).await?;
+    return Ok((employee,id))
+  }
+  Err("".into())
 }
 
 #[tauri::command]
-pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,Uuid)>>>,
+pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>,
                app_state : tauri::State<'_,AppState>,
                card_id: i64,password: String) -> Result<(),String> {
   let failure = Err("فشلت عملية تسجيل الدخول".to_string());
 
-  let employee = match find_employee_by_card(&app_state.pool, card_id).await{
-    Ok(e) => e,
-    Err(_) => return failure
+  match helper(&app_state, card_id, password).await {
+    Ok(result) => *emp_and_uuid.lock().unwrap() = Some(result),
+    Err(_)     => return failure
   };
 
-
-  match verify_password(password, &employee.password) {
-    Ok(result) => if result {
-        if let Some(shift) = get_or_save_shift(&app_state).await {
-          *emp_and_uuid.lock().unwrap() = Some((employee,shift.id));
-          match upgrade(&app_state).await{
-            Ok(_) => Ok(()),
-            Err(_) => failure
-          }
-        } else {
-          return failure
-        }
-      } else {
-        return failure
-      },
-    Err(_)   => failure
-  }
+  match upgrade(&app_state).await{
+    Ok(_)  => return Ok(()),
+    Err(_) => return failure
+  };
 }
 
 #[tauri::command]

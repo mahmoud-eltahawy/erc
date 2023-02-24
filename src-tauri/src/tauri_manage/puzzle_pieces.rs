@@ -1,7 +1,6 @@
 use std::sync::Mutex;
 use rec::model::employee::ClientEmployee;
 use tauri::{Builder, Wry};
-use uuid::Uuid;
 
 use super::{
     async_commands::*,
@@ -14,7 +13,7 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
   let TauriState{app_state} = state;
   tauri::Builder::default()
     .manage(app_state)
-    .manage(Mutex::new(None::<(ClientEmployee,Uuid)>))
+    .manage(Mutex::new(None::<(ClientEmployee,String)>))
     .manage(Mutex::new(None::<(String,Vec<String>)>))
     .invoke_handler(tauri::generate_handler![
       login,
