@@ -8,7 +8,7 @@ use crate::config::AppState;
 pub async fn save_department(app_state : &AppState,dep : &Department) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/dep/",origin))
+    .post(format!("{origin}/dep/"))
     .json(dep)
     .send()
     .await?;
@@ -22,7 +22,7 @@ pub async fn save_department(app_state : &AppState,dep : &Department) -> Result<
 pub async fn update_department(app_state : &AppState,dep : &Department) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .put(format!("{}/api/dep/",origin))
+    .put(format!("{origin}/dep/"))
     .json(dep)
     .send()
     .await?;
@@ -36,8 +36,7 @@ pub async fn update_department(app_state : &AppState,dep : &Department) -> Resul
 pub async fn delete_department(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/dep/{}",origin,id))
-    .json(id)
+    .delete(format!("{origin}/dep/{id}"))
     .send()
     .await?;
 

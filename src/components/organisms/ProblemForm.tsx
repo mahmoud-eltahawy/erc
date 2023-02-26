@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api"
 import { createResource, createSignal} from "solid-js"
-import { createStore, SetStoreFunction} from "solid-js/store"
+import { createStore } from "solid-js/store"
 import { Name} from "../../index"
 import { SearchBar } from "../molecules/SearchBar"
 
@@ -18,15 +18,11 @@ export default function ProblemForm({
     writerId,
     shiftId,
     departmentId,
-    problemsNumber,
-    setShiftProblems
 } : {
     toggle          : Function,
     writerId        : string,
     shiftId         : string,
     departmentId    : string,
-    problemsNumber  : number[],
-    setShiftProblems: SetStoreFunction<number[]>
 }){
   const [shiftBorders] = createResource(borders_fetcher)
 
@@ -39,7 +35,6 @@ export default function ProblemForm({
   const [note           ,setNote         ] = createSignal("")
   const [displayNote    ,setDisplayNote  ] = createSignal(false)
 
-
   const restore = () => {
       setBeginTime("")
       setEndTime("")
@@ -50,7 +45,6 @@ export default function ProblemForm({
       setNote("")
       setDisplayNote(false)
   }
-
 
   const handleSubmit = async (e : any) => {
     e.preventDefault()
@@ -80,7 +74,6 @@ export default function ProblemForm({
           note                 : note() ? note() : null
       }
       await invoke("save_problem_detail",{problemDetail})
-      setShiftProblems(sp => [sp[0] + 1])
       restore()
     }catch(err){
       alert(err)
@@ -127,7 +120,6 @@ export default function ProblemForm({
         <SearchBar
                  chosens={machines}
                  setChosens={setMachines}
-                 elementsNumber={[0]}
                  isMulti={false}
                  mtMessage="لا يوجد ماكينة بهذا الاسم"
                  defaultPlaceholder="ابحث عن الماكينة التي تمت عليها الصيانة"
@@ -137,7 +129,6 @@ export default function ProblemForm({
         <SearchBar
                  chosens={employees}
                  setChosens={setEmployees}
-                 elementsNumber={[0]}
                  isMulti={false}
                  mtMessage="لا يوجد موظف بهذا الاسم"
                  defaultPlaceholder="ابحث عن الموظف الذي قام بالصيانة"
@@ -147,7 +138,6 @@ export default function ProblemForm({
         <SearchBar
                  chosens={problems}
                  setChosens={setProblems}
-                 elementsNumber={problemsNumber}
                  isMulti={true}
                  mtMessage="لا يوجد مشكلة بهذا الاسم"
                  defaultPlaceholder="ابحث عن مشكلة او مشاكل"
@@ -157,7 +147,6 @@ export default function ProblemForm({
         <SearchBar
                  chosens={spareParts}
                  setChosens={setSpareParts}
-                 elementsNumber={[0]}
                  isMulti={true}
                  mtMessage="لا توجد قطعة غيار بهذا الاسم"
                  defaultPlaceholder="ابحث عن قطع الغيار المستخدمة في الصيانة"

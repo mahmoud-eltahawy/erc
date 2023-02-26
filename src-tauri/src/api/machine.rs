@@ -9,7 +9,7 @@ use crate::config::AppState;
 pub async fn save_machine(app_state : &AppState,machine : &Machine) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/machine/",origin))
+    .post(format!("{origin}/machine/"))
     .json(machine)
     .send()
     .await?;
@@ -23,7 +23,7 @@ pub async fn save_machine(app_state : &AppState,machine : &Machine) -> Result<()
 pub async fn update_machine(app_state : &AppState,machine : &Machine) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .put(format!("{}/api/machine/",origin))
+    .put(format!("{origin}/machine/"))
     .json(machine)
     .send()
     .await?;
@@ -37,7 +37,7 @@ pub async fn update_machine(app_state : &AppState,machine : &Machine) -> Result<
 pub async fn delete_machine(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/machine/{}",origin,id))
+    .delete(format!("{origin}/machine/{id}"))
     .send()
     .await?;
 

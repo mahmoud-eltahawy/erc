@@ -48,7 +48,7 @@ async fn get_or_save_shift_id(app_state : &AppState,department_id : &String) -> 
 
   save_shift(app_state, department_id).await?;
 
-  upgrade(app_state).await?;
+  upgrade(&app_state).await?;
 
   let id = find_current_department_shift_by_id(&app_state.pool, department_id).await?;
 
@@ -79,14 +79,40 @@ pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,S
   let failure = Err("فشلت عملية تسجيل الدخول".to_string());
 
   match helper(&app_state, card_id, password).await {
-    Ok(result) => *emp_and_uuid.lock().unwrap() = Some(result),
+    Ok(result) =>{
+      *emp_and_uuid.lock().unwrap() = Some(result);
+      Ok(())
+    },
     Err(_)     => return failure
-  };
+  }
+}
 
-  match upgrade(&app_state).await{
-    Ok(_)  => return Ok(()),
+#[tauri::command]
+pub async fn check_shift_time(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>,
+               app_state : tauri::State<'_,AppState>,
+               department_id : Uuid) -> Result<(),String> {
+  let failure = Err("فشلت عملية تسجيل الدخول".to_string());
+
+  let nid = &mut get_or_save_shift_id(&app_state, &department_id.to_string()).await;
+
+  let nid = match nid {
+    Ok(v)  => v,
     Err(_) => return failure
   };
+
+  let mut l = &mut *emp_and_uuid.lock().unwrap();
+
+  let (_,cid) = match l {
+    Some(v) => v,
+    None    => return failure
+  };
+
+  if cid == nid {
+    Ok(())
+  } else {
+    l = &mut None;
+    Ok(())
+  }
 }
 
 #[tauri::command]
@@ -94,21 +120,30 @@ pub async fn define_problem(app_state : tauri::State<'_,AppState>,
                         writer_id : Uuid,
                         department_id : Uuid,
                         title : String,
-                        description : String) -> Result<Uuid,String> {
+                        description : String) -> Result<(),String> {
   let id = Uuid::new_v4();
   let problem = Probelm{id,writer_id,department_id,title,description};
   match save_problem(&app_state,&problem).await {
-    Ok(_)   =>{},
+    Ok(_)   => (),
     Err(err) => return Err(err.to_string())
   };
-  match upgrade(&app_state).await{
-    Ok(()) => Ok(id),
-    Err(err) => Err(err.to_string())
+
+  match upgrade(&app_state).await {
+    Ok(_) => Ok(()),
+    Err(err) => return Err(err.to_string())
   }
 }
 
+#[tauri::command]
+pub async fn update(app_state : tauri::State<'_,AppState>) -> Result<(),String> {
+   match upgrade(&app_state).await {
+     Ok(_) => Ok(()),
+     Err(err) => Err(err.to_string())
+   }
+}
+
 async fn save_minimal_shift_problem(app_state : &AppState,
-              minimal_shift_problem : MinimamlShiftProblem) -> Result<MinimamlShiftProblem,Box<dyn Error>>{
+              minimal_shift_problem : MinimamlShiftProblem) -> Result<(),Box<dyn Error>>{
   let (shift_problem,problems,parts,note) = minimal_shift_problem.destruct();
   save_shift_problem(app_state, &shift_problem).await?;
   let shift_problem_id = shift_problem.id;
@@ -139,7 +174,9 @@ async fn save_minimal_shift_problem(app_state : &AppState,
           }).await?;
   }
 
-  Ok(MinimamlShiftProblem::construct((shift_problem,problems,parts,note)))
+  upgrade(app_state).await?;
+
+  Ok(())
 }
 
 #[tauri::command]
@@ -147,12 +184,8 @@ pub async fn save_problem_detail(problem_detail : ProblemDetail,
                               app_state : tauri::State<'_,AppState>) -> Result<(),String> {
   let shift_problem = MinimamlShiftProblem::new(problem_detail);
   match save_minimal_shift_problem(&app_state,shift_problem).await {
-    Ok(_)    => {},
-    Err(err) => return Err(err.to_string())
-  };
-  match upgrade(&app_state).await{
     Ok(_)    => Ok(()),
-    Err(err) => Err(err.to_string())
+    Err(err) => return Err(err.to_string())
   }
 }
 

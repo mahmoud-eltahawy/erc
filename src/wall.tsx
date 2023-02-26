@@ -19,9 +19,7 @@ export default function Wall({
           setEmployee : Setter<Employee | null>,
           setShiftId  : Setter<string | null>
         }){
-  const [last,setLast]                        = createStore([-1])
-  const [problems,setProblems]                = createStore([0])
-  const [shiftProblems,setShiftProblems]      = createStore([0])
+  const [last,setLast]                       = createStore([-1])
 
   const logout = () => {
     invoke('logout')
@@ -32,6 +30,12 @@ export default function Wall({
     ).catch(err => console.log(err))
   }
 
+  setInterval(() => {
+    invoke('check_shift_time',{departmentId : employee.department_id})
+      .then(() => console.log("employee checked"))
+      .catch(err => console.log(err))
+  },60000)
+
   return (
     <section>
       <button class={"LogoutButton"} onClick={() => logout()}>تسجيل خروج</button>
@@ -40,19 +44,15 @@ export default function Wall({
       <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
             buttonElementPairs={[
               ["اضافة عطل"          ,<ProblemForm
-                                         problemsNumber={problems}
-                                         setShiftProblems={setShiftProblems}
                                          toggle={() => setLast([0])}
                                          shiftId={shiftId}
                                          writerId={employee.id}
                                          departmentId={employee.department_id}/>],
               ["تعريف مشكلة"        ,<DefineProblem
-                                         setProblems={setProblems}
                                          employee={employee}
                                          toggle={() => setLast([1])}/>],
               ["اظهار الاعطال"         ,<ShiftProblems
-                                         shiftId={shiftId}
-                                         shiftProblemsNumber={shiftProblems}/>],
+                                         shiftId={shiftId}/>],
               ["السجل"              ,<HistoryShow />]
             ]}
             num={last}

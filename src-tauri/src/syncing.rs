@@ -26,7 +26,6 @@ use memory::{
     relations
 };
 
-
 pub async fn upgrade(app_state : &AppState) -> Result<(),Box<dyn Error>> {
     let version = syncing::last_version(&app_state.pool).await?;
     let updates = api::updates(app_state, version as u64).await?;

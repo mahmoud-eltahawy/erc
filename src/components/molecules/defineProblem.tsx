@@ -1,14 +1,11 @@
 import { invoke } from '@tauri-apps/api';
 import { createSignal } from 'solid-js'
-import { SetStoreFunction } from 'solid-js/store';
 import { Employee } from '../../index';
 
 export default function DefineProblem({
     toggle,
     employee,
-    setProblems
 } : {
-    setProblems : SetStoreFunction<number[]>
     toggle : Function,
     employee : Employee
 }){
@@ -24,7 +21,8 @@ export default function DefineProblem({
       const description = descriptionR!.value
       await invoke('define_problem',
             {writerId : employee.id,departmentId : employee.department_id,title,description})
-      setProblems(p => [p[0] + 1])
+        titleR!.value = ""
+        descriptionR!.value = ""
     } catch(err){
       alert(err)
     }

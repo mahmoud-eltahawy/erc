@@ -13,16 +13,15 @@ const fetcher = async (shiftId : string) => {
 }
 export default function ShiftProblems({
     shiftId,
-    shiftProblemsNumber
     } : {
     shiftId         : string,
-    shiftProblemsNumber  : number[],
 }){
   const limit = 4
   const [shiftProblems,{refetch}] = createResource(shiftId,fetcher)
-  const [state,setState]  = createSignal(shiftProblems())
+  const [state,setState]  = createSignal<ShiftProblem[]>([])
   const [tooLong,setTooLong] = createSignal(state.length > limit)
 
+  setInterval(() => refetch(), 3000)
 
   createEffect(() => {
     if(tooLong()) {
@@ -30,12 +29,6 @@ export default function ShiftProblems({
     } else {
       setState(shiftProblems() || [])
     }
-  })
-
-  createEffect(() => {
-      if(shiftProblemsNumber[0] !== 0){
-          refetch()
-      }
   })
 
   return (

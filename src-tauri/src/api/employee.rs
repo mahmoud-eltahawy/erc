@@ -8,7 +8,7 @@ use crate::config::AppState;
 pub async fn save_employee(app_state : &AppState,employee : &Employee) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/emp/",origin))
+    .post(format!("{origin}/emp/"))
     .json(employee)
     .send()
     .await?;
@@ -22,7 +22,7 @@ pub async fn save_employee(app_state : &AppState,employee : &Employee) -> Result
 pub async fn update_employee(app_state : &AppState,employee : &Employee) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .put(format!("{}/api/emp/",origin))
+    .put(format!("{origin}/emp/"))
     .json(employee)
     .send()
     .await?;
@@ -36,8 +36,7 @@ pub async fn update_employee(app_state : &AppState,employee : &Employee) -> Resu
 pub async fn delete_employee(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/emp/{}",origin,id))
-    .json(id)
+    .post(format!("{origin}/emp/{id}"))
     .send()
     .await?;
 

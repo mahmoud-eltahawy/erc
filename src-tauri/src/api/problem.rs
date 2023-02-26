@@ -9,7 +9,7 @@ use crate::config::AppState;
 pub async fn save_problem(app_state : &AppState,problem :&Probelm) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/problem/",origin))
+    .post(format!("{origin}/problem/"))
     .json(problem)
     .send()
     .await?;
@@ -23,7 +23,7 @@ pub async fn save_problem(app_state : &AppState,problem :&Probelm) -> Result<(),
 pub async fn update_problem(app_state : &AppState,problem : &Probelm) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .put(format!("{}/api/problem/",origin))
+    .put(format!("{origin}/problem/"))
     .json(problem)
     .send()
     .await?;
@@ -37,7 +37,7 @@ pub async fn update_problem(app_state : &AppState,problem : &Probelm) -> Result<
 pub async fn delete_problem(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/problem/{}",origin,id))
+    .delete(format!("{origin}/problem/{id}"))
     .send()
     .await?;
 

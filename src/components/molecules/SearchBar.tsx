@@ -1,4 +1,4 @@
-import { createSignal,createResource, Show,For, createEffect } from "solid-js"
+import { createSignal,createResource, Show,For } from "solid-js"
 import { SetStoreFunction } from "solid-js/store"
 import { Name } from "../../index"
 
@@ -11,7 +11,6 @@ export function SearchBar({
     chosens,
     setChosens,
     selection_fetcher,
-    elementsNumber
 } : {
     defaultPlaceholder   : string,
     resultPlaceholder    : string,
@@ -21,25 +20,25 @@ export function SearchBar({
     selection_fetcher    : () => Promise<Name[]>,
     chosens              : Name[],
     setChosens           : SetStoreFunction<Name[]>,
-    elementsNumber       : number[]
 }){
 
   const wildChar = ' '
+
   const [optionsList,{refetch}] = createResource(selection_fetcher)
 
   const [target, setTarget]                             = createSignal('')
   const [list,setList]                                  = createSignal<Name[]>([])
+
+  setInterval(() => refetch(),3000);
+
   const filter = () => {
-    setList((optionsList() || []).filter(membr => membr.name.includes(target()) || target() === wildChar))
+    setList((optionsList() || [])
+        .filter(membr => membr.name.includes(target()) || target() === wildChar
+                   && chosens.map(c => c.id).includes(membr.id)))
   }
 
   const showSelectView = () => target().length > 0 || target() === wildChar
 
-  createEffect(() => {
-      if (elementsNumber[0] != 0) {
-          refetch()
-      }
-  })
   const getChosenOne = () => {
     if (chosens.at(0)){
         return resultPlaceholder + " : " + chosens.at(0)!.name
@@ -63,7 +62,6 @@ export function SearchBar({
       setTarget(e.currentTarget.value)
     }} />
 
-
   const choiceOptionHandler = (member : Name) => {
                 setChosens(prev => {
                   if(isMulti){
@@ -82,7 +80,9 @@ export function SearchBar({
               }
   const resultOptionHandler = (chosen : Name) => {
                   setChosens(prev => prev.filter(c => c.id !== chosen.id))
-                  setList(list => [chosen,...list])
+                  if (!list().map(x => x.id).includes(chosen.id)){
+                        setList(list => [chosen,...list])
+                      }
                 }
   const choiceSelect = <select multiple class="searchBarViewMember">
           {

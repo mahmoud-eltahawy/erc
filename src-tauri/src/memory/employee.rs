@@ -15,7 +15,7 @@ pub async fn find_all_employees_names(pool : &Pool<Sqlite>) -> Result<Vec<Name>,
       select id,first_name,middle_name,last_name from employee;
     "#).fetch_all(pool).await {
       Ok(records) => Ok(records.into_iter()
-                  .map(|r| Name{id:r.id,name: format!("{} {} {}",r.last_name,r.middle_name,r.first_name)}).collect()),
+                  .map(|r| Name{id:r.id,name: format!("{} {} {}",r.first_name,r.middle_name,r.last_name)}).collect()),
       Err(err) => Err(err)
     }
 }

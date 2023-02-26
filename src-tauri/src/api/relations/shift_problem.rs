@@ -9,7 +9,7 @@ pub async fn save_problem_to_shift_problem(app_state : &AppState
                               ,pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .get(format!("{}/api/sp/problem/{}/{}",origin,pid,spid))
+    .get(format!("{origin}/sp/problem/{pid}/{spid}"))
     .send()
     .await?;
 
@@ -23,7 +23,7 @@ pub async fn delete_problem_from_shift_problem(app_state : &AppState,
                                 pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/sp/problem/{}/{}",origin,pid,spid))
+    .delete(format!("{origin}/sp/problem/{pid}/{spid}"))
     .send()
     .await?;
 
@@ -37,7 +37,7 @@ pub async fn save_spare_part_to_shift_problem(app_state : &AppState,
                               pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .get(format!("{}/api/sp/part/{}/{}",origin,pid,spid))
+    .get(format!("{origin}/sp/part/{pid}/{spid}"))
     .send()
     .await?;
 
@@ -51,7 +51,7 @@ pub async fn delete_spare_part_from_shift_problem(app_state : &AppState,
                                   pid : &Uuid,spid : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/sp/part/{}/{}",origin,pid,spid))
+    .delete(format!("{origin}/sp/part/{pid}/{spid}"))
     .send()
     .await?;
 

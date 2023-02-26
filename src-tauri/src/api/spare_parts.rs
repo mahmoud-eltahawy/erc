@@ -9,7 +9,7 @@ use crate::config::AppState;
 pub async fn save_spare_part(app_state : &AppState,spare_part : &SparePart) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/part/",origin))
+    .post(format!("{origin}/part/"))
     .json(spare_part)
     .send()
     .await?;
@@ -23,7 +23,7 @@ pub async fn save_spare_part(app_state : &AppState,spare_part : &SparePart) -> R
 pub async fn update_spare_part(app_state : &AppState,spare_part : &SparePart) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .put(format!("{origin}/api/part/"))
+    .put(format!("{origin}/part/"))
     .json(spare_part)
     .send()
     .await?;
@@ -37,7 +37,7 @@ pub async fn update_spare_part(app_state : &AppState,spare_part : &SparePart) ->
 pub async fn delete_spare_part(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/part/{}",origin,id))
+    .delete(format!("{origin}/part/{id}"))
     .send()
     .await?;
 

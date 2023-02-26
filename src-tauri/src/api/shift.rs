@@ -9,7 +9,7 @@ pub async fn save_shift(app_state : &AppState,id : &String) -> Result<(),Box<dyn
   let origin = &app_state.origin;
   let id = Uuid::parse_str(id)?;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/shift/{}",origin,id))
+    .post(format!("{origin}/shift/{id}"))
     .send()
     .await?;
 
@@ -22,7 +22,7 @@ pub async fn save_shift(app_state : &AppState,id : &String) -> Result<(),Box<dyn
 pub async fn delete_shift(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/shift/{}",origin,id))
+    .delete(format!("{origin}/shift/{id}"))
     .send()
     .await?;
 

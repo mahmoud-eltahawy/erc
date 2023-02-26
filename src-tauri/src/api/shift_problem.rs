@@ -9,7 +9,7 @@ use crate::config::AppState;
 pub async fn save_shift_problem(app_state : &AppState,problem : &ShiftProblem) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .post(format!("{}/api/sp/",origin))
+    .post(format!("{origin}/sp/"))
     .json(problem)
     .send()
     .await?;
@@ -23,7 +23,7 @@ pub async fn save_shift_problem(app_state : &AppState,problem : &ShiftProblem) -
 pub async fn update_shift_problem(app_state : &AppState,problem : &ShiftProblem) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .put(format!("{}/api/sp/",origin))
+    .put(format!("{origin}/sp/"))
     .json(problem)
     .send()
     .await?;
@@ -37,7 +37,7 @@ pub async fn update_shift_problem(app_state : &AppState,problem : &ShiftProblem)
 pub async fn delete_shift_problem(app_state : &AppState, id : &Uuid) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
-    .delete(format!("{}/api/sp/{}",origin,id))
+    .delete(format!("{origin}/sp/{id}"))
     .send()
     .await?;
 

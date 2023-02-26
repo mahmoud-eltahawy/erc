@@ -9,18 +9,28 @@ function App() {
   const [employee,setEmployee] = createSignal<Employee | null>(null)
   const [shiftId,setShiftId]   = createSignal<string | null>(null)
 
-  onMount(() => {
-    const isLogedIn = async function(){
-      try{
-        const [employee,shiftId] = await invoke('check_login') as [Employee,string]
-        setEmployee(employee)
-        setShiftId(shiftId)
-      }catch(err){
-        console.log(err)
-      }
+  const isLogedIn = async function(){
+    try{
+      const [employee,shiftId] = await invoke('check_login') as [Employee,string]
+      setEmployee(employee)
+      setShiftId(shiftId)
+    }catch(err){
+      console.log(err)
     }
+  }
+
+  onMount(() => {
     isLogedIn()
   })
+
+  setInterval(async () => {
+    try{
+      isLogedIn()
+      await invoke("update")
+    }catch(err){
+      console.log(err)
+    }
+  },60000)
 
   return (
     <section>

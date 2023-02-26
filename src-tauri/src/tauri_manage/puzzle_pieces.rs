@@ -14,12 +14,13 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
   tauri::Builder::default()
     .manage(app_state)
     .manage(Mutex::new(None::<(ClientEmployee,String)>))
-    .manage(Mutex::new(None::<(String,Vec<String>)>))
     .invoke_handler(tauri::generate_handler![
+      update,
       login,
       logout,
       check_login,
       current_shift,
+      check_shift_time,
       current_shift_borders,
       get_current_shift_problems,
       define_problem,
