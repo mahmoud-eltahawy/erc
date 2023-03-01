@@ -8,11 +8,11 @@ export function ButtonsOrElement({
   fun
   } : {
   returnButtonText   : string,
-  buttonElementPairs : [string,JSXElement][],
+  buttonElementPairs :() => [string,JSXElement][],
   num : number[],
   fun : Function}){
   const [emptyPlayGround, setEmptyPlayGround] = createSignal<boolean>(true)
-  const [toggleButtons, setToggleButtons] = createSignal<boolean[]>(Array(buttonElementPairs.length).fill(false))
+  const [toggleButtons, setToggleButtons] = createSignal<boolean[]>(Array(buttonElementPairs().length).fill(false))
 
   const toggle = (id : number) => {
     setToggleButtons(buttons => buttons.map((cond,index) => {
@@ -40,7 +40,7 @@ export function ButtonsOrElement({
 
   return (
     <>
-      {buttonElementPairs.map((idc, index) => <>
+      {buttonElementPairs().map((idc, index) => <>
         <Show when={emptyPlayGround() || tbutton(index)}>
           <ToggleButton
                       tButton={() => tbutton(index)!}

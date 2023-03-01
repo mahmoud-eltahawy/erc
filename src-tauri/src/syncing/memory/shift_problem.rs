@@ -16,7 +16,7 @@ pub async fn save(pool : &Pool<Sqlite>,problem : ShiftProblem) -> Result<(),Erro
   let ClientShiftProblem{id,shift_id,writer_id,maintainer_id,machine_id,begin_time,end_time} = ClientShiftProblem::new(problem);
   match sqlx::query!(r#"
     INSERT INTO shift_problem(id,shift_id,writer_id,maintainer_id,machine_id,begin_time,end_time)
-    VALUES($1,$2,$3,$4,$5,$6,$7);
+    VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING;
   "#,id,shift_id,writer_id,maintainer_id,machine_id,begin_time,end_time)
   .execute(pool).await {
     Ok(_) => Ok(()),

@@ -6,6 +6,7 @@ use super::{
     async_commands::*,
     non_async_commands::*,
     components_commands::shift_problem_form::*,
+    components_commands::history::*,
 };
 use super::models::TauriState;
 
@@ -33,5 +34,6 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
       get_problem_by_id,
       get_spare_part_by_id,
       get_machine_by_id,
+      search_shifts,
     ])
 }

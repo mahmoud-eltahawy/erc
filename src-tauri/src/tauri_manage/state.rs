@@ -2,7 +2,7 @@ use std::error::Error;
 
 use errc::{
   config::AppState,
-  test::insert_employees, syncing::upgrade
+  test::insert_employees, syncing::upgrade,
 };
 
 use super::models::TauriState;
@@ -41,7 +41,6 @@ async fn get_pool() -> Result<Pool<Sqlite>,Box<dyn Error>>{
 
 async fn test(app_state : &AppState) -> Result<(),Box<dyn Error>>{
   insert_employees(app_state).await?;
-  upgrade(app_state).await?;
   Ok(())
 }
 
@@ -51,6 +50,8 @@ pub async fn create_tauri_state() -> Result<TauriState,Box<dyn Error>>{
   let app_state = AppState::new(pool);
 
   test(&app_state).await?;
+
+  upgrade(&app_state, None).await?;
 
   Ok(TauriState{
     app_state,

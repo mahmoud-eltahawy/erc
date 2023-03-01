@@ -16,7 +16,7 @@ pub async fn save_version(pool : &Pool<Sqlite>,version : CudVersion) -> Result<(
   let other_target_id = other_target_id.map(|id| id.to_string());
     match sqlx::query(r#"
       INSERT INTO cud_version(version_number,target_table,target_id,cud,other_target_id)
-      VALUES($1,$2,$3,$4,$5);
+      VALUES($1,$2,$3,$4,$5) ON CONFLICT (version_number) DO NOTHING;
     "#)
      .bind(version_number as i64)
      .bind(target_table as i16)

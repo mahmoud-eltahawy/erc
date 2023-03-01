@@ -16,7 +16,7 @@ pub async fn save(pool : &Pool<Sqlite>,part : SparePart) -> Result<(),Error> {
   let ClientSparePart{id,name} = ClientSparePart::new(part);
   match query!(r#"
     INSERT INTO spare_part(id,name)
-    VALUES($1,$2);
+    VALUES($1,$2) ON CONFLICT (id) DO NOTHING;
   "#,id,name)
   .execute(pool).await {
     Ok(_) => Ok(()),

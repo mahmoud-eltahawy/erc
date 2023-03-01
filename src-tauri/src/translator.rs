@@ -1,14 +1,27 @@
 use rec::timer::ShiftOrder;
 
 pub fn translate_date(date : String) -> Vec<String> {
-  return date.split('-').into_iter().map(|num| {
-    let mut new_num = String::from("");
-    num.chars().for_each(|c| new_num.push(translate_num(c)));
-    if &new_num[0..2] == "٠"{
-      new_num = new_num[2..].to_owned();
-    }
-    new_num
-  }).rev().collect();
+  let date = validate_date(date);
+  return date.split('-').into_iter().map(|num|{
+          let elm = num.chars()
+          .map(|c| translate_num(c))
+          .collect::<String>();
+          if &elm[0..2] == "٠" {
+            return elm[2..].to_string();
+          } else {
+            return elm;
+          }
+        }).rev().collect();
+}
+
+fn validate_date(date : String) -> String{
+  if date.len() == 10{
+    return date;
+  } else if date.len() == 12 {
+    return date[1..11].to_string();
+  } else {
+    return "date-translate-error".to_string();
+  }
 }
 
 pub fn translate_order(order : &ShiftOrder) -> String{

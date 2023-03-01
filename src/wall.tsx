@@ -42,7 +42,7 @@ export default function Wall({
       <p class={"NameP"}>
           {employee ? `${employee.first_name} ${employee.middle_name} ${employee.last_name}` : ''}</p>
       <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
-            buttonElementPairs={[
+            buttonElementPairs={() => [
               ["اضافة عطل"          ,<ProblemForm
                                          toggle={() => setLast([0])}
                                          shiftId={shiftId}
@@ -53,7 +53,8 @@ export default function Wall({
                                          toggle={() => setLast([1])}/>],
               ["اظهار الاعطال"         ,<ShiftProblems
                                          shiftId={shiftId}/>],
-              ["السجل"              ,<HistoryShow />]
+              ["السجل"              ,<HistoryShow
+                                         department_id={employee.department_id} />]
             ]}
             num={last}
             fun={() => setLast([-1])}/>

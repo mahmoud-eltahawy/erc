@@ -2,6 +2,7 @@ use std::env;
 
 use sqlx::{Sqlite, Pool};
 
+#[derive(Clone)]
 pub struct AppState{
   pub origin : String,
   pub pool   : Pool<Sqlite>

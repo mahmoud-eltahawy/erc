@@ -749,6 +749,7 @@ dependencies = [
  "bcrypt",
  "chrono",
  "dotenv",
+ "itertools",
  "rec",
  "reqwest",
  "rusqlite",

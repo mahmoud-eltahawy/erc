@@ -106,3 +106,12 @@ export async function shiftProblemFromMinimal(mp : ShiftProblemMini) : Promise<S
       spareParts  : spareParts
   }
 }
+
+export async function problemsFetcher(shiftId : string){
+  const sp = await invoke('get_current_shift_problems',{shiftId}) as ShiftProblemMini[]
+  let arr : ShiftProblem[] = []
+  for(let i = 0 ; i < sp.length ; i++){
+      arr.push(await shiftProblemFromMinimal(sp[i]))
+  }
+  return arr
+}

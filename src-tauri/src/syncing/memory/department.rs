@@ -16,7 +16,7 @@ pub async fn save(pool : &Pool<Sqlite>,dep : Department) -> Result<(),Error> {
   let ClientDepartment{id,boss_id,department_id,name} = ClientDepartment::new(dep);
   match query!(r#"
     INSERT INTO department(id,boss_id,department_id,name)
-    VALUES($1,$2,$3,$4);
+    VALUES($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING;
   "#,id,boss_id,department_id,name)
   .execute(pool).await {
     Ok(_) => Ok(()),

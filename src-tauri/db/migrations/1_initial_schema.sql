@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS cud_version(
-       version_number              BIGINT                             NOT NULL,
+       version_number              BIGINT                             NOT NULL        UNIQUE,
        target_id                   VARCHAR(80)                        NOT NULL,
        other_target_id             VARCHAR(80),
        target_table                SMALLINT                           NOT NULL,
@@ -11,7 +11,7 @@ CREATE INDEX IF NOT EXISTS idx_cv_tid  ON cud_version (target_id);
 CREATE INDEX IF NOT EXISTS idx_cv_otid ON cud_version (other_target_id);
 
 CREATE TABLE IF NOT EXISTS department(
-       id                 VARCHAR(80)                                 NOT NULL,
+       id                 VARCHAR(80)                                 NOT NULL        UNIQUE,
        boss_id            VARCHAR(80),
        department_id      VARCHAR(80),
        name               VARCHAR(20)                                 NOT NULL
@@ -22,7 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_dep_bid     ON department (boss_id);
 CREATE INDEX IF NOT EXISTS idx_dep_depid   ON department (department_id);
 
 CREATE TABLE IF NOT EXISTS employee(
-       id                 VARCHAR(80)                                 NOT NULL,
+       id                 VARCHAR(80)                                 NOT NULL        UNIQUE,
        department_id      VARCHAR(80)                                 NOT NULL,
        position           VARCHAR(12)                                 NOT NULL,
        first_name         VARCHAR(40)                                 NOT NULL,
@@ -37,21 +37,21 @@ CREATE INDEX IF NOT EXISTS idx_emp_cid       ON employee(card_id);
 CREATE INDEX IF NOT EXISTS idx_emp_depid     ON employee(department_id);
 
 CREATE TABLE IF NOT EXISTS machine(
-       id                   VARCHAR(80)                               NOT NULL,
+       id                   VARCHAR(80)                               NOT NULL        UNIQUE,
        name                 VARCHAR(100)                              NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_mac_id        ON machine(id);
 
 CREATE TABLE IF NOT EXISTS spare_part(
-       id                   VARCHAR(80)                               NOT NULL,
+       id                   VARCHAR(80)                               NOT NULL        UNIQUE,
        name                 VARCHAR(100)                              NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_sp_id         ON spare_part(id);
 
 CREATE TABLE IF NOT EXISTS problem(
-       id                         VARCHAR(80)                         NOT NULL,
+       id                         VARCHAR(80)                         NOT NULL        UNIQUE,
        writer_id                  VARCHAR(80)                         NOT NULL,
        department_id              VARCHAR(80)                         NOT NULL,
        title                      VARCHAR(70)                         NOT NULL,
@@ -64,7 +64,7 @@ CREATE INDEX IF NOT EXISTS idx_pro_depid         ON problem(department_id);
 CREATE INDEX IF NOT EXISTS idx_pro_tid           ON problem(title);
 
 CREATE TABLE IF NOT EXISTS shift (
-       id                   VARCHAR(80)                               NOT NULL,
+       id                   VARCHAR(80)                               NOT NULL        UNIQUE,
        shift_order          VARCHAR(10)                               NOT NULL,
        shift_date           VARCHAR(50)                               NOT NULL
 );
@@ -74,7 +74,7 @@ CREATE INDEX IF NOT EXISTS idx_sft_so            ON shift(shift_order);
 CREATE INDEX IF NOT EXISTS idx_sft_sd            ON shift(shift_date);
 
 CREATE TABLE IF NOT EXISTS department_shift (
-       id                  VARCHAR(80)                               NOT NULL,
+       id                  VARCHAR(80)                               NOT NULL        UNIQUE,
        shift_id            VARCHAR(80)                               NOT NULL,
        department_id       VARCHAR(80)                               NOT NULL
 );
@@ -84,7 +84,7 @@ CREATE INDEX IF NOT EXISTS idx_dep_sft_sft_id   ON department_shift(shift_id);
 CREATE INDEX IF NOT EXISTS idx_dep_sft_dep_id   ON department_shift(department_id);
 
 CREATE TABLE IF NOT EXISTS shift_problem(
-       id                   VARCHAR(80)                               NOT NULL,
+       id                   VARCHAR(80)                               NOT NULL        UNIQUE,
        shift_id             VARCHAR(80)                               NOT NULL,
        writer_id            VARCHAR(80)                               NOT NULL,
        maintainer_id        VARCHAR(80)                               NOT NULL,
@@ -102,7 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_sftpro_bt             ON shift_problem(begin_time
 CREATE INDEX IF NOT EXISTS idx_sftpro_et             ON shift_problem(end_time);
 
 CREATE TABLE IF NOT EXISTS note(
-       id                   VARCHAR(80)                               NOT NULL,
+       id                   VARCHAR(80)                               NOT NULL        UNIQUE,
        shift_id             VARCHAR(80),
        shift_problem_id     VARCHAR(80),
        content              varchar(500)                              NOT NULL
@@ -114,7 +114,8 @@ CREATE INDEX IF NOT EXISTS idx_nte_id                  ON note(shift_problem_id)
 
 CREATE TABLE IF NOT EXISTS shift_problem_problem(
        shift_problem_id     VARCHAR(80)                               NOT NULL,
-       problem_id           VARCHAR(80)                               NOT NULL
+       problem_id           VARCHAR(80)                               NOT NULL,
+       UNIQUE(shift_problem_id,problem_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_spp_spid                  ON shift_problem_problem(shift_problem_id);
@@ -122,7 +123,8 @@ CREATE INDEX IF NOT EXISTS idx_spp_pid                   ON shift_problem_proble
 
 CREATE TABLE IF NOT EXISTS shift_problem_spare_part(
        shift_problem_id     VARCHAR(80)                               NOT NULL,
-       spare_part_id        VARCHAR(80)                               NOT NULL
+       spare_part_id        VARCHAR(80)                               NOT NULL,
+       UNIQUE(shift_problem_id,spare_part_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_spsp_spid                  ON shift_problem_spare_part(shift_problem_id);

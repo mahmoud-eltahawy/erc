@@ -16,7 +16,7 @@ pub async fn save(pool : &Pool<Sqlite>,machine : Machine) -> Result<(),Error> {
   let ClientMachine{id,name} = ClientMachine::new(machine);
   match query!(r#"
     INSERT INTO machine(id,name)
-    VALUES($1,$2);
+    VALUES($1,$2) ON CONFLICT (id) DO NOTHING;
   "#,id,name)
   .execute(pool).await {
     Ok(_) => Ok(()),

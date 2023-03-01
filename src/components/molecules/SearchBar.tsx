@@ -1,4 +1,4 @@
-import { createSignal,createResource, Show,For } from "solid-js"
+import { createSignal,createResource, Show,For, createEffect } from "solid-js"
 import { SetStoreFunction } from "solid-js/store"
 import { Name } from "../../index"
 
@@ -11,7 +11,11 @@ export function SearchBar({
     chosens,
     setChosens,
     selection_fetcher,
+    subject,
+    updates
 } : {
+    subject              : string,
+    updates              : [string]
     defaultPlaceholder   : string,
     resultPlaceholder    : string,
     mtMessage            : string,
@@ -29,7 +33,11 @@ export function SearchBar({
   const [target, setTarget]                             = createSignal('')
   const [list,setList]                                  = createSignal<Name[]>([])
 
-  setInterval(() => refetch(),3000);
+  createEffect(() => {
+      if(updates[0] === subject){
+          refetch()
+      }
+  })
 
   const filter = () => {
     setList((optionsList() || [])

@@ -17,7 +17,7 @@ pub async fn save_department_shift(pool : &Pool<Sqlite>,shift : DepartmentShift)
   let ClientDepartmentShift{id,department_id,shift_id} = ClientDepartmentShift::new(shift);
   match query!(r#"
     INSERT INTO department_shift(id,department_id,shift_id)
-    VALUES($1,$2,$3);
+    VALUES($1,$2,$3) ON CONFLICT (id) DO NOTHING;
   "#,id,department_id,shift_id)
   .execute(pool).await {
     Ok(_) => Ok(()),
@@ -29,7 +29,7 @@ pub async fn save(pool : &Pool<Sqlite>,shift : Shift) -> Result<(),Error> {
   let ClientDbShift{id,shift_date,shift_order} = ClientDbShift::new(shift);
   match query!(r#"
     INSERT INTO shift(id,shift_date,shift_order)
-    VALUES($1,$2,$3);
+    VALUES($1,$2,$3) ON CONFLICT (id) DO NOTHING;
   "#,id,shift_date,shift_order)
   .execute(pool).await {
     Ok(_) => Ok(()),

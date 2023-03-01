@@ -18,7 +18,7 @@ pub async fn save_to_shift_problem(pool : &Pool<Sqlite>,
         id,
         shift_problem_id,
         content)
-    VALUES($1,$2,$3);",
+    VALUES($1,$2,$3) ON CONFLICT (id) DO NOTHING;",
     id,shift_problem_id,content)
     .execute(pool);
   match row.await {
@@ -40,7 +40,7 @@ pub async fn save_to_shift(pool : &Pool<Sqlite>,
         id,
         shift_id,
         content)
-    VALUES($1,$2,$3);",
+    VALUES($1,$2,$3) ON CONFLICT (id) DO NOTHING;",
     id,shift_id,content)
     .execute(pool);
   match row.await {

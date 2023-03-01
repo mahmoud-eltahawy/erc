@@ -10,7 +10,7 @@ pub async fn save_problem(pool : &Pool<Sqlite>,
   let shift_problem_id = spid.to_string();
 
   let row = query!("
-    INSERT INTO shift_problem_problem(
+    INSERT OR IGNORE INTO shift_problem_problem(
         shift_problem_id,
         problem_id)
     VALUES($1,$2);",
@@ -44,7 +44,7 @@ pub async fn save_spare_part(pool : &Pool<Sqlite>,
   let shift_problem_id = spid.to_string();
 
   let row = query!("
-    INSERT INTO shift_problem_spare_part(
+    INSERT OR IGNORE INTO shift_problem_spare_part(
         shift_problem_id,
         spare_part_id)
     VALUES($1,$2);",

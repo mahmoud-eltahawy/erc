@@ -3,6 +3,7 @@ import { createResource, createSignal} from "solid-js"
 import { createStore } from "solid-js/store"
 import { Name} from "../../index"
 import { SearchBar } from "../molecules/SearchBar"
+import { listen } from '@tauri-apps/api/event'
 
 const borders_fetcher = async () => {
     return (await invoke("current_shift_borders")) as [string,string]
@@ -13,6 +14,9 @@ const fetcher = async (selection : string) => {
 const department_fetcher = async (selection : string,departmentId : string) => {
     return (await invoke(selection,{departmentId})) as Name[]
 }
+
+export type Updates = ["Problem"] | ["SparePart"] | ["Machine"] | ["Employee"] | ["None"]
+
 export default function ProblemForm({
     toggle,
     writerId,
@@ -34,6 +38,24 @@ export default function ProblemForm({
   const [problems       ,setProblems     ] = createStore<Name[]>([])
   const [note           ,setNote         ] = createSignal("")
   const [displayNote    ,setDisplayNote  ] = createSignal(false)
+
+  const [updates , setUpdates] = createStore<Updates>(["None"])
+
+  listen("update_problem",() => {
+      setUpdates(["Problem"])
+  })
+
+  listen("update_employee",() => {
+      setUpdates(["Employee"])
+  })
+
+  listen("update_machine",() => {
+      setUpdates(["Machine"])
+  })
+
+  listen("update_spare_part",() => {
+      setUpdates(["SparePart"])
+  })
 
   const restore = () => {
       setBeginTime("")
@@ -118,6 +140,8 @@ export default function ProblemForm({
         <label class={"problemFormTimeLabel"}><h4>وقت البداية</h4></label>
       </div>
         <SearchBar
+                 subject="Machine"
+                 updates={updates}
                  chosens={machines}
                  setChosens={setMachines}
                  isMulti={false}
@@ -127,6 +151,8 @@ export default function ProblemForm({
                  selection_fetcher={() => fetcher("machines_selection")}
                  nyMessage={null}/>
         <SearchBar
+                 subject="Employee"
+                 updates={updates}
                  chosens={employees}
                  setChosens={setEmployees}
                  isMulti={false}
@@ -136,6 +162,8 @@ export default function ProblemForm({
                  selection_fetcher={() => fetcher("employees_selection")}
                  nyMessage={null}/>
         <SearchBar
+                 subject="Problem"
+                 updates={updates}
                  chosens={problems}
                  setChosens={setProblems}
                  isMulti={true}
@@ -145,6 +173,8 @@ export default function ProblemForm({
                  selection_fetcher={() => department_fetcher("problems_selection",departmentId)}
                  nyMessage={"لم يتم اختيار اي مشكلة حتي الان <اجباري> ا"}/>
         <SearchBar
+                 subject="SparePart"
+                 updates={updates}
                  chosens={spareParts}
                  setChosens={setSpareParts}
                  isMulti={true}

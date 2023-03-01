@@ -30,7 +30,7 @@ function App() {
     }catch(err){
       console.log(err)
     }
-  },60000)
+  },1000)
 
   return (
     <section>

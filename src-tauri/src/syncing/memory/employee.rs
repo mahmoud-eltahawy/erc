@@ -17,7 +17,7 @@ pub async fn save(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error> 
                      last_name,middle_name,position,password} = ClientEmployee::new(employee);
     match query!(r#"
       INSERT INTO employee(id,card_id,department_id,first_name,last_name,middle_name,position,password)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8);
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING;
     "#,id,card_id,department_id,first_name,last_name,middle_name,position,password).bind(id.to_string())
     .execute(pool).await {
       Ok(_) => Ok(()),
