@@ -4,8 +4,7 @@ export default function TableHead(){
           <tr>
             <td>مسجل العطل</td>
             <td>ملحوظة جانبية</td>
-            <td>وقت النهاية</td>
-            <td>وقت البداية</td>
+            <td>(24)التوقيت</td>
             <td>قطع الغيار</td>
             <td>المشاكل</td>
             <td>القائم باصلاح العطل</td>

@@ -8,11 +8,25 @@ import { listen } from '@tauri-apps/api/event'
 const borders_fetcher = async () => {
     return (await invoke("current_shift_borders")) as [string,string]
 }
-const fetcher = async (selection : string) => {
-    return (await invoke(selection)) as Name[]
+const fetcher = async (selection : string,the_name : string | null,canceled :() => string[]) => {
+    let name = null;
+    if ( the_name ) {
+        if ( the_name !== ' ' ){
+          name = the_name
+        }
+    }
+    return (await invoke(selection,{name,canceled :canceled()})) as Name[]
 }
-const department_fetcher = async (selection : string,departmentId : string) => {
-    return (await invoke(selection,{departmentId})) as Name[]
+const department_fetcher = async (selection : string,
+                departmentId : string,name : string | null,canceled : () => string[]) => {
+    let the_name = null;
+    if ( name ) {
+        if ( name !== ' ' ){
+          the_name = name
+        }
+    }
+    console.log("the name is"+the_name)
+    return (await invoke(selection,{departmentId,name : the_name,canceled :canceled()})) as Name[]
 }
 
 export type Updates = ["Problem"] | ["SparePart"] | ["Machine"] | ["Employee"] | ["None"]
@@ -148,7 +162,10 @@ export default function ProblemForm({
                  mtMessage="لا يوجد ماكينة بهذا الاسم"
                  defaultPlaceholder="ابحث عن الماكينة التي تمت عليها الصيانة"
                  resultPlaceholder="الماكينة"
-                 selection_fetcher={() => fetcher("machines_selection")}
+                 selection_fetcher={(name : () => string | null) =>
+                     fetcher("machines_selection",
+                                 name(),
+                                 () => machines.map(m => m.name))}
                  nyMessage={null}/>
         <SearchBar
                  subject="Employee"
@@ -159,7 +176,11 @@ export default function ProblemForm({
                  mtMessage="لا يوجد موظف بهذا الاسم"
                  defaultPlaceholder="ابحث عن الموظف الذي قام بالصيانة"
                  resultPlaceholder="الموظف"
-                 selection_fetcher={() => fetcher("employees_selection")}
+                 selection_fetcher={(name : () => string | null) =>
+                     fetcher("employees_selection",
+                                 name(),
+                                 () => employees.map(e => e.id))
+                 }
                  nyMessage={null}/>
         <SearchBar
                  subject="Problem"
@@ -170,7 +191,10 @@ export default function ProblemForm({
                  mtMessage="لا يوجد مشكلة بهذا الاسم"
                  defaultPlaceholder="ابحث عن مشكلة او مشاكل"
                  resultPlaceholder="عدد المشاكل"
-                 selection_fetcher={() => department_fetcher("problems_selection",departmentId)}
+                 selection_fetcher={(name : () => string | null) =>
+                     department_fetcher("problems_selection",
+                                        departmentId, name(),
+                                        () => problems.map(p => p.name))}
                  nyMessage={"لم يتم اختيار اي مشكلة حتي الان <اجباري> ا"}/>
         <SearchBar
                  subject="SparePart"
@@ -181,7 +205,10 @@ export default function ProblemForm({
                  mtMessage="لا توجد قطعة غيار بهذا الاسم"
                  defaultPlaceholder="ابحث عن قطع الغيار المستخدمة في الصيانة"
                  resultPlaceholder="عدد قطع الغيار المستخدمة"
-                 selection_fetcher={() => fetcher("spare_parts_selection")}
+                 selection_fetcher={(name : () => string | null) =>
+                     fetcher("spare_parts_selection",
+                                 name(),
+                                () => spareParts.map(s => s.name))}
                  nyMessage={"لم يتم تسجيل اي قطع غيار <اختياري> ا"}/>
         <button
             type="button"

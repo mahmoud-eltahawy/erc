@@ -26,7 +26,7 @@ export default function ProblemsComps({problems} : {problems : Problem[]}){
   )
 }
 
-function ProblemCom({problem} : {problem : Problem}){
+export function ProblemCom({problem} : {problem : Problem}){
   const {title,description} = problem
   const [state, setState] = createSignal(title)
   return (

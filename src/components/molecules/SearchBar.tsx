@@ -21,31 +21,21 @@ export function SearchBar({
     mtMessage            : string,
     nyMessage            : string | null,
     isMulti              : boolean,
-    selection_fetcher    : () => Promise<Name[]>,
+    selection_fetcher    : (name : () => string | null) => Promise<Name[]>,
     chosens              : Name[],
     setChosens           : SetStoreFunction<Name[]>,
 }){
 
-  const wildChar = ' '
-
-  const [optionsList,{refetch}] = createResource(selection_fetcher)
-
-  const [target, setTarget]                             = createSignal('')
-  const [list,setList]                                  = createSignal<Name[]>([])
+  const [target, setTarget]     = createSignal<string | null>(null)
+  const [optionsList,{refetch}] = createResource(() => target,selection_fetcher)
 
   createEffect(() => {
-      if(updates[0] === subject){
+      if(updates[0] === subject || target()){
           refetch()
       }
   })
 
-  const filter = () => {
-    setList((optionsList() || [])
-        .filter(membr => membr.name.includes(target()) || target() === wildChar
-                   && chosens.map(c => c.id).includes(membr.id)))
-  }
-
-  const showSelectView = () => target().length > 0 || target() === wildChar
+  const showSelectView = () => (target() || '').length > 0
 
   const getChosenOne = () => {
     if (chosens.at(0)){
@@ -64,9 +54,9 @@ export function SearchBar({
     placeholder={isMulti ? `${resultPlaceholder} : ${chosens.length}` :  getChosenOne()}
     class={"insertField"}
     type="text"
-    value={target()}
+    value={target()!}
     onInput={e => {
-      filter()
+      refetch()
       setTarget(e.currentTarget.value)
     }} />
 
@@ -80,21 +70,18 @@ export function SearchBar({
                   }
                   return [member]
                 })
-                if(isMulti){
-                  setList(list => list.filter(m => m !== member))
-                } else {
+                if(!isMulti){
                   setTarget('')
                 }
+                refetch()
               }
   const resultOptionHandler = (chosen : Name) => {
-                  setChosens(prev => prev.filter(c => c.id !== chosen.id))
-                  if (!list().map(x => x.id).includes(chosen.id)){
-                        setList(list => [chosen,...list])
-                      }
-                }
+      setChosens(prev => prev.filter(c => c.id !== chosen.id))
+      refetch()
+  }
   const choiceSelect = <select multiple class="searchBarViewMember">
           {
-              <For each={list()}>
+              <For each={optionsList()}>
                   {
                       (item) => (
                         <option onClick={() => choiceOptionHandler(item)}>{item.name}</option>
@@ -102,7 +89,7 @@ export function SearchBar({
                   }
               </For>
           }
-          {!list().length? disabledOption(mtMessage): <></>}
+        {!(optionsList() || []).length? disabledOption(mtMessage): <></>}
         </select>
 
   const resultSelect = <select multiple class="searchBarViewMember">

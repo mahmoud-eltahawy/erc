@@ -1,8 +1,19 @@
 use std::error::Error;
 
 use chrono::NaiveDate;
-use errc::{config::AppState, memory::shift::{find_shifts_between, find_department_shift_id, find_last_21_shifts}, translator::{translate_order, translate_date}};
-use rec::{model::shift::ClientDbShift, timer::ShiftOrder};
+use errc::{
+  config::AppState,
+  memory::{shift::{
+    find_shifts_between,
+    find_department_shift_id,
+    find_last_21_shifts
+  }, problem::{find_department_full_problems_by_name, find_problems_by_department_id, find_department_all_problems}},
+  translator::{
+    translate_order,
+    translate_date
+  }
+};
+use rec::{model::{shift::ClientDbShift, problem::ClientProblem}, timer::ShiftOrder};
 
 use itertools::Itertools;
 use serde::{Serialize, Deserialize};
@@ -56,4 +67,26 @@ pub async fn search_shifts(app_state : tauri::State<'_,AppState>,
       Ok(days) => Ok(days),
       Err(err) => Err(err.to_string())
     }
+}
+
+#[tauri::command]
+pub async fn search_problem(app_state : tauri::State<'_,AppState>,
+                  department_id : Uuid,name : Option<String>) -> Result<Vec<ClientProblem>,String> {
+  if let Some(name) = name {
+    if name == "*" {
+      return match find_department_all_problems(&app_state.pool, department_id.to_string()).await {
+        Ok(days) => Ok(days),
+        Err(err) => Err(err.to_string())
+      };
+    }
+    match find_department_full_problems_by_name(&app_state.pool, department_id.to_string(),&name ).await {
+      Ok(days) => Ok(days),
+      Err(err) => Err(err.to_string())
+    }
+  } else {
+    match find_problems_by_department_id(&app_state.pool, department_id.to_string()).await {
+      Ok(days) => Ok(days),
+      Err(err) => Err(err.to_string())
+    }
+  }
 }

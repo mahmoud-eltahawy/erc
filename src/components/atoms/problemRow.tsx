@@ -4,16 +4,17 @@ import ProblemsComps from "./problemsComponents";
 import SparePartsList from "./sparePartsList";
 
 export default function ProblemRow({problem} : {problem : ShiftProblem}){
+  const begin : string = JSON.parse(problem.beginTime)
+  const end   : string = JSON.parse(problem.endTime)
   return (
     <tr>
-      <td> { employeeName(problem.writer)       } </td>
-      <td> { noteTd(problem.note)               } </td>
-      <td> { problem.endTime                    } </td>
-      <td> { problem.beginTime                  } </td>
-      <td> { sparePartsList(problem.spareParts) } </td>
-      <td> { problems(problem.problems)         } </td>
-      <td> { employeeName(problem.maintainer)   } </td>
-      <td> { problem.machine.name               } </td>
+      <td> { employeeName(problem.writer)                     } </td>
+      <td> { noteTd(problem.note)                             } </td>
+      <td> {`من ${begin.slice(0, 5) } الي ${end.slice(0, 5)}`  } </td>
+      <td> { sparePartsList(problem.spareParts)               } </td>
+      <td> { problems(problem.problems)                       } </td>
+      <td> { employeeName(problem.maintainer)                 } </td>
+      <td> { problem.machine.name                             } </td>
     </tr>
   )
 }
