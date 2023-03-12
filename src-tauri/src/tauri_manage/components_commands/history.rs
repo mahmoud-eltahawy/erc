@@ -3,17 +3,27 @@ use std::error::Error;
 use chrono::NaiveDate;
 use errc::{
   config::AppState,
-  memory::{shift::{
-    find_shifts_between,
-    find_department_shift_id,
-    find_last_21_shifts
-  }, problem::{find_department_full_problems_by_name, find_problems_by_department_id, find_department_all_problems}},
   translator::{
     translate_order,
-    translate_date
+    translate_date,
+  },
+  memory::{shift::{
+      find_shifts_between,
+      find_department_shift_id,
+      find_last_21_shifts
+    }, problem::{
+      find_department_full_problems_by_name,
+      find_problems_by_department_id,
+      find_department_all_problems
+    },
+    spare_part::{
+      find_all_spare_parts,
+      find_spare_parts_by_name,
+      find_4_spare_parts,
+    }, machine::{find_all_machines, find_4_machines, find_machines_by_name},
   }
 };
-use rec::{model::{shift::ClientDbShift, problem::ClientProblem}, timer::ShiftOrder};
+use rec::{model::{shift::ClientDbShift, problem::ClientProblem, name::Name}, timer::ShiftOrder};
 
 use itertools::Itertools;
 use serde::{Serialize, Deserialize};
@@ -85,6 +95,48 @@ pub async fn search_problem(app_state : tauri::State<'_,AppState>,
     }
   } else {
     match find_problems_by_department_id(&app_state.pool, department_id.to_string()).await {
+      Ok(days) => Ok(days),
+      Err(err) => Err(err.to_string())
+    }
+  }
+}
+
+#[tauri::command]
+pub async fn search_parts(app_state : tauri::State<'_,AppState>,name : Option<String>) -> Result<Vec<Name>,String> {
+  if let Some(name) = name {
+    if name == "*" {
+      return match find_all_spare_parts(&app_state.pool).await {
+        Ok(days) => Ok(days),
+        Err(err) => Err(err.to_string())
+      };
+    }
+    match find_spare_parts_by_name(&app_state.pool,&name,vec![]).await {
+      Ok(days) => Ok(days),
+      Err(err) => Err(err.to_string())
+    }
+  } else {
+    match find_4_spare_parts(&app_state.pool,vec![]).await {
+      Ok(days) => Ok(days),
+      Err(err) => Err(err.to_string())
+    }
+  }
+}
+
+#[tauri::command]
+pub async fn search_machines(app_state : tauri::State<'_,AppState>,name : Option<String>) -> Result<Vec<Name>,String> {
+  if let Some(name) = name {
+    if name == "*" {
+      return match find_all_machines(&app_state.pool).await {
+        Ok(days) => Ok(days),
+        Err(err) => Err(err.to_string())
+      };
+    }
+    match find_machines_by_name(&app_state.pool,&name,vec![]).await {
+      Ok(days) => Ok(days),
+      Err(err) => Err(err.to_string())
+    }
+  } else {
+    match find_4_machines(&app_state.pool,vec![]).await {
       Ok(days) => Ok(days),
       Err(err) => Err(err.to_string())
     }

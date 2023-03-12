@@ -1,8 +1,8 @@
 use rec::model::{machine::ClientMachine, name::Name};
 use sqlx::{Pool, Sqlite,Error, query_as};
 
-pub async fn find_all_machines(pool : &Pool<Sqlite>) -> Result<Vec<ClientMachine>,Error> {
-    match query_as!(ClientMachine,r#"
+pub async fn find_all_machines(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
+    match query_as!(Name,r#"
       select * from machine;
     "#).fetch_all(pool).await {
       Ok(machines) => Ok(machines),

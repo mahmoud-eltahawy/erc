@@ -36,5 +36,7 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
       get_machine_by_id,
       search_shifts,
       search_problem,
+      search_parts,
+      search_machines,
     ])
 }

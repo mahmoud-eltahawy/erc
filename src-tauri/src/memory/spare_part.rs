@@ -1,8 +1,8 @@
 use rec::model::{spare_part::ClientSparePart, name::Name};
 use sqlx::{Pool, Sqlite,Error, query_as};
 
-pub async fn find_all_spare_parts(pool : &Pool<Sqlite>) -> Result<Vec<ClientSparePart>,Error> {
-    match query_as!(ClientSparePart,r#"
+pub async fn find_all_spare_parts(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
+    match query_as!(Name,r#"
       select * from spare_part;
     "#).fetch_all(pool).await {
       Ok(parts) => Ok(parts),
