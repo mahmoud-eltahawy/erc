@@ -230,3 +230,8 @@ button:hover {
 .ghost {
   display: None;
 }
+
+.profileTable{
+  width: 95%;
+  margin: 5px auto;
+}

@@ -10,9 +10,10 @@ pub async fn find_all_problems(pool : &Pool<Sqlite>) -> Result<Vec<ClientProblem
   }
 }
 
-pub async fn find_department_all_problems(pool : &Pool<Sqlite>,department_id : String) -> Result<Vec<ClientProblem>,Error> {
-  match query_as!(ClientProblem,r#"
-    select * from problem WHERE department_id = $1;
+pub async fn find_department_all_problems(pool : &Pool<Sqlite>,
+                                  department_id : String) -> Result<Vec<Name>,Error> {
+  match query_as!(Name,r#"
+    select id,title as name from problem WHERE department_id = $1;
   "#,department_id).fetch_all(pool).await {
     Ok(problems) => Ok(problems),
     Err(err) => Err(err)
@@ -28,9 +29,9 @@ pub async fn find_problem_by_id(pool : &Pool<Sqlite>,id : String) -> Result<Clie
   }
 }
 
-pub async fn find_problems_by_department_id(pool : &Pool<Sqlite>,id : String) -> Result<Vec<ClientProblem>,Error> {
-  match query_as!(ClientProblem,r#"
-    SELECT * FROM problem WHERE department_id = $1 LIMIT 7;
+pub async fn find_problems_by_department_id(pool : &Pool<Sqlite>,id : String) -> Result<Vec<Name>,Error> {
+  match query_as!(Name,r#"
+    SELECT id , title as name FROM problem WHERE department_id = $1 LIMIT 7;
   "#,id).fetch_all(pool).await {
     Ok(problems) => Ok(problems),
     Err(err) => Err(err)
@@ -64,10 +65,10 @@ pub async fn find_department_problems_by_name(pool : &Pool<Sqlite>,
 }
 
 pub async fn find_department_full_problems_by_name(pool : &Pool<Sqlite>,
-                        department_id : String,target : &String) -> Result<Vec<ClientProblem>,Error> {
+                        department_id : String,target : &String) -> Result<Vec<Name>,Error> {
   let target = format!("%{target}%");
-  match query_as!(ClientProblem,r#"
-    SELECT * FROM problem
+  match query_as!(Name,r#"
+    SELECT id ,title as name FROM problem
     WHERE department_id = $1
     AND title LIKE $2
     LIMIT 8;"#,department_id,target).fetch_all(pool).await {

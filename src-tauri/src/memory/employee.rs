@@ -1,5 +1,5 @@
 use rec::model::{employee::ClientEmployee, name::Name};
-use sqlx::{Pool, Sqlite,Error, query_as};
+use sqlx::{Pool, Sqlite,Error, query_as, query};
 
 pub async fn find_all_employees(pool : &Pool<Sqlite>) -> Result<Vec<ClientEmployee>,Error> {
     match query_as!(ClientEmployee,r#"
@@ -15,6 +15,16 @@ pub async fn find_all_employees_names(pool : &Pool<Sqlite>) -> Result<Vec<Name>,
       SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name FROM employee;
     "#).fetch_all(pool).await {
       Ok(names) => Ok(names),
+      Err(err) => Err(err)
+    }
+}
+
+pub async fn find_employee_name_by_id(pool : &Pool<Sqlite>,id : String) -> Result<String,Error> {
+    match query!(r#"
+      SELECT first_name || ' ' || middle_name || ' ' ||last_name AS name
+      FROM employee WHERE id = $1;
+    "#,id).fetch_one(pool).await {
+      Ok(record) => Ok(record.name),
       Err(err) => Err(err)
     }
 }

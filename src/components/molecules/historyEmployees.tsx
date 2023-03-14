@@ -4,7 +4,7 @@ import { createStore } from "solid-js/store"
 import { Name } from '../..'
 import { ButtonsOrElement } from "./buttonsOrElement"
 
-export default function HistoryMachines() {
+export default function HistoryEmployees() {
   const [target,setTarget] = createStore<[string | null]>([null])
 
   const toggle = () => {
@@ -23,7 +23,7 @@ export default function HistoryMachines() {
                onInput={e => setTarget([e.currentTarget.value])}
                class={"problemFormTimeInput"}
                type="text"
-               placeholder="ادخل اسم الماكينة"
+               placeholder="ادخل اسم الموظف"
                required/>
       </div>
       <button onClick={toggle}>{target[0] === '*' ? "شاهد اقل" : "شاهد الكل"}</button>
@@ -33,11 +33,11 @@ export default function HistoryMachines() {
 }
 
 const fetcher = async ({name} : {name : () => string | null}) => {
-  return (await invoke("search_machines",{name : name() !== ' ' ? name() : null})) as Name[]
+  return (await invoke("search_employees",{name : name() !== ' ' ? name() : null})) as Name[]
 }
 
 function ShowHistory({target} :{target : [string | null]}){
-  const [machines,{refetch}] = createResource({name :() => target[0]},fetcher)
+  const [employees,{refetch}] = createResource({name :() => target[0]},fetcher)
 
   createEffect(() => {
     if (target[0]) {
@@ -47,9 +47,9 @@ function ShowHistory({target} :{target : [string | null]}){
 
   return (
     <section>
-        <Show when={!machines.loading} fallback={<h1>جاري التحميل ...</h1>}>
+        <Show when={!employees.loading} fallback={<h1>جاري التحميل ...</h1>}>
           <ButtonsOrElement
-            buttonElementPairs={() => (machines() || []).map(x => [x.name, () => <h1> machine profile </h1>])}
+            buttonElementPairs={() => (employees() || []).map(x => [x.name, () => <h1> employee profile </h1>])}
             num={[-1]}
             fun={() => console.log("fun")}
             returnButtonText="العودة لنتائج البحث"/>

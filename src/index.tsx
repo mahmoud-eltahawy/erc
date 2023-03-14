@@ -22,7 +22,7 @@ export type ShiftProblem = {
 
 export type ShiftProblemMini = {
   id                     : string,
-  shift_id                : string,
+  shift_id               : string,
   writer_id              : string,
   maintainer_id          : string,
   machine_id             : string,
