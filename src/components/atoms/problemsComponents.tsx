@@ -27,12 +27,9 @@ export default function ProblemsComps({problems} : {problems : Problem[]}){
 }
 
 export function ProblemCom({problem} : {problem : Problem}){
-  const {title,description} = problem
-  const [state, setState] = createSignal(title)
   return (
-    <li onMouseOver={() => setState(description)}
-        onMouseLeave={() => setState(title)}>
-        {state}
+    <li>
+        {problem.title}
     </li>
   )
 }

@@ -33,7 +33,7 @@ export default function HistoryShiftProblems({
         {togglingButton({
           showButton : () => (shiftProblems() || []).length > limit,
           showMore   : () => tooLong(),
-          doOnClick  : () =>setTooLong(!tooLong)})}
+          doOnClick  : () =>setTooLong(!tooLong())})}
     </section>
   )
 }

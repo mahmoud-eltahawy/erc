@@ -1,9 +1,10 @@
 import { invoke } from "@tauri-apps/api"
-import { createResource, createSignal} from "solid-js"
+import { createResource, createSignal, Setter, Show} from "solid-js"
 import { createStore } from "solid-js/store"
 import { Name} from "../../index"
 import { SearchBar } from "../molecules/SearchBar"
 import { listen } from '@tauri-apps/api/event'
+import { css } from "solid-styled-components"
 
 const borders_fetcher = async () => {
     return (await invoke("current_shift_borders")) as [string,string]
@@ -51,7 +52,6 @@ export default function ProblemForm({
   const [spareParts     ,setSpareParts   ] = createStore<Name[]>([])
   const [problems       ,setProblems     ] = createStore<Name[]>([])
   const [note           ,setNote         ] = createSignal("")
-  const [displayNote    ,setDisplayNote  ] = createSignal(false)
 
   const [updates , setUpdates] = createStore<Updates>(["None"])
 
@@ -79,7 +79,6 @@ export default function ProblemForm({
       setSpareParts([])
       setProblems([])
       setNote("")
-      setDisplayNote(false)
   }
 
   const handleSubmit = async (e : any) => {
@@ -107,7 +106,7 @@ export default function ProblemForm({
           end_time             : endTime().length   === 8 ? endTime()   : endTime()   + ":00",
           problems_ids         : problems.map(problem => problem.id),
           spare_parts_ids      : spareParts.length ? spareParts.map(part => part.id) : null,
-          note                 : note() ? note() : null
+          note                 : note() ? note().trim() : null
       }
       await invoke("save_problem_detail",{problemDetail})
       restore()
@@ -116,43 +115,64 @@ export default function ProblemForm({
     }
   }
 
-  const toggleNote   = () => {
-      if(displayNote()){
-          setDisplayNote(false)
-      } else {
-          setDisplayNote(true)
-      }
-  }
+  const container = css({
+    display: "block",
+    fontSize: "x-large",
+    borderTop: "solid 2px",
+    borderBottom: "solid 9px",
+    margin: "1% auto",
+    padding: "1%",
+  })
 
-  const noteArea = <textarea value={note()}
-              onInput={e => setNote(e.currentTarget.value)}
-              class={"problemFormText"}
-              cols={30} rows={4}
-              maxLength={499}
-              placeholder="اكتب ما لا يتجاوز 500 حرف"></textarea>
+  const timeContainer = css({
+    display: "inline-block",
+    width: "40%",
+    paddingLeft: "10px",
+    paddingRight: "10px",
+    marginTop: "20px",
+    marginRight: "3%",
+    marginLeft: "3%",
+  })
+
+  const timeInput = css({
+    display: "inline-block",
+    fontSize: "20px",
+    margin: ".1em auto",
+    width: "60%",
+    backgroundColor:"lightyellow",
+    borderRadius: "20px",
+  })
+
+  const timeLabel = css({
+  display: "inline-block",
+  width: "35%",
+  padding: ".1em",
+  margin: ".1em auto",
+  })
+
   return (
-    <div class={"problemFormContainer"}>
-    <form onSubmit={handleSubmit}>
-      <div class={"problemFormTimeBlock"}>
-        <input value={endTime()}
-               onChange={e => setEndTime(e.currentTarget.value)}
-               class={"problemFormTimeInput"}
-               type="time"
-               min={beginTime()}
-               max={(shiftBorders() || ["", ""]).at(1)}
-               required/>
-        <label class="problemFormTimeLabel"><h4>وقت النهاية</h4></label>
-      </div>
-      <div class={"problemFormTimeBlock"}>
-        <input value={beginTime()}
-               onChange={e => setBeginTime(e.currentTarget.value)}
-               class={"problemFormTimeInput"}
-               type="time"
-               min={(shiftBorders() || ["", ""]).at(0)}
-               max={endTime()}
-               required/>
-        <label class={"problemFormTimeLabel"}><h4>وقت البداية</h4></label>
-      </div>
+    <div class={container}>
+        <form onSubmit={handleSubmit}>
+        <div class={timeContainer}>
+            <input value={endTime()}
+                onChange={e => setEndTime(e.currentTarget.value)}
+                class={timeInput}
+                type="time"
+                min={beginTime()}
+                max={(shiftBorders() || ["", ""]).at(1)}
+                required/>
+            <label class={timeLabel}><h4>وقت النهاية</h4></label>
+        </div>
+        <div class={timeContainer}>
+            <input value={beginTime()}
+                onChange={e => setBeginTime(e.currentTarget.value)}
+                class={timeInput}
+                type="time"
+                min={(shiftBorders() || ["", ""]).at(0)}
+                max={endTime()}
+                required/>
+            <label class={timeLabel}><h4>وقت البداية</h4></label>
+        </div>
         <SearchBar
                  subject="Machine"
                  updates={updates}
@@ -210,14 +230,97 @@ export default function ProblemForm({
                                  name(),
                                 () => spareParts.map(s => s.name))}
                  nyMessage={"لم يتم تسجيل اي قطع غيار <اختياري> ا"}/>
-        <button
-            type="button"
-            onClick={toggleNote}
-            class={"problemFormButton"}
-        >اضافة ملحوظة  { note().length }</button>
-        {displayNote() ? noteArea : <></>}
-        <button type="submit">حفظ</button>
+        <ExtraNote note={() => note()} setNote={setNote} />
+        <SubmitButton/>
     </form>
   </div>
+  )
+}
+
+function ExtraNote({note,setNote} : {note : () => string,setNote : Setter<string>}){
+  const [displayNote    ,setDisplayNote  ] = createSignal(false)
+
+  const toggleNote   = () => {
+      if(displayNote()){
+          setDisplayNote(false)
+      } else {
+          setDisplayNote(true)
+      }
+  }
+
+  return (
+    <section>
+      <NoteButton
+          length={() => note().length}
+          toggleNote={toggleNote}/>
+      <Show when={displayNote()}>
+        <NoteText
+            note={() => note()}
+            setNote={setNote}/>
+      </Show>
+    </section>
+  )
+}
+
+function NoteText({note,setNote} : {note : () => string,setNote : Setter<string>}){
+  const style = css({
+    fontSize: "x-large",
+    width: "90%",
+    backgroundColor: "blanchedalmond",
+  })
+
+  return (
+      <textarea value={note()}
+        onInput={e => setNote(e.currentTarget.value)}
+        class={style}
+        cols={30} rows={4}
+        maxLength={499}
+        placeholder="اكتب ما لا يتجاوز 500 حرف"></textarea>
+  )
+}
+
+function NoteButton({length,toggleNote} : {length : () => number,toggleNote : Function}){
+  const [hover,setHover] = createSignal(false)
+
+  const style = () => css({
+   display: "block",
+   width: "15%",
+   borderRadius: hover() ? "5px" : "20px",
+   fontSize: hover() ? "22px" : "16px",
+   border: "solid 1px",
+   margin: "2px auto",
+   padding: "2px",
+  })
+
+  return (
+      <button
+          type="button"
+          onClick={() => toggleNote()}
+          class={style()}
+          onMouseOver={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+      >اضافة ملحوظة  { length() }</button>
+  )
+}
+
+function SubmitButton(){
+  const [hover,setHover] = createSignal(false)
+
+  const style = () => css({
+   display: "block",
+   width: "25%",
+   borderRadius: hover() ? "5px" : "20px",
+   fontSize: hover() ? "24px" : "18px",
+   border: "solid 3px",
+   margin: "2px auto",
+   padding: "2px",
+  })
+
+  return (
+    <button
+        class={style()}
+        onMouseOver={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        type="submit">حفظ</button>
   )
 }

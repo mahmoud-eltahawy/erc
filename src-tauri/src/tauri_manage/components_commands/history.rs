@@ -89,7 +89,7 @@ pub async fn search_problem(app_state : tauri::State<'_,AppState>,
         Err(err) => Err(err.to_string())
       };
     }
-    match find_department_full_problems_by_name(&app_state.pool, department_id.to_string(),&name ).await {
+    match find_department_full_problems_by_name(&app_state.pool, department_id.to_string(),&name.trim() ).await {
       Ok(days) => Ok(days),
       Err(err) => Err(err.to_string())
     }
@@ -135,7 +135,7 @@ pub async fn search_parts(app_state : tauri::State<'_,AppState>,
         Err(err) => Err(err.to_string())
       };
     }
-    match find_spare_parts_by_name(&app_state.pool,&name,vec![]).await {
+    match find_spare_parts_by_name(&app_state.pool,&name.trim(),vec![]).await {
       Ok(days) => Ok(days),
       Err(err) => Err(err.to_string())
     }
@@ -156,7 +156,7 @@ pub async fn search_machines(app_state : tauri::State<'_,AppState>,name : Option
         Err(err) => Err(err.to_string())
       };
     }
-    match find_machines_by_name(&app_state.pool,&name,vec![]).await {
+    match find_machines_by_name(&app_state.pool,&name.trim(),vec![]).await {
       Ok(days) => Ok(days),
       Err(err) => Err(err.to_string())
     }
@@ -177,7 +177,7 @@ pub async fn search_employees(app_state : tauri::State<'_,AppState>,name : Optio
         Err(err) => Err(err.to_string())
       };
     }
-    match find_employees_by_name(&app_state.pool,&name,vec![]).await {
+    match find_employees_by_name(&app_state.pool,&name.trim(),vec![]).await {
       Ok(days) => Ok(days),
       Err(err) => Err(err.to_string())
     }

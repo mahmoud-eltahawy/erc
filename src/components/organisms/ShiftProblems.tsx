@@ -4,6 +4,7 @@ import ProblemRow from "../atoms/problemRow"
 import TableHead from "../atoms/problemTableHead"
 import togglingButton from "../atoms/problemTogglingButton"
 import { listen } from '@tauri-apps/api/event'
+import { css } from "solid-styled-components"
 
 export default function ShiftProblems({
     shiftId,
@@ -31,9 +32,14 @@ export default function ShiftProblems({
     }
   })
 
+  const style = css({
+    borderCollapse: "collapse",
+    width: "99%"
+  })
+
   return (
     <section>
-      <table>
+      <table class={style}>
         <TableHead/>
         <Show when={state()} fallback={<h1>جاري التحميل ...</h1>}>
           <tbody>

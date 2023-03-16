@@ -123,7 +123,7 @@ pub async fn define_problem(app_state : tauri::State<'_,AppState>,window : Windo
                         title : String,
                         description : String) -> Result<(),String> {
   let id = Uuid::new_v4();
-  let problem = Probelm{id,writer_id,department_id,title,description};
+  let problem = Probelm{id,writer_id,department_id,title : title.trim().to_string(),description};
   match save_problem(&app_state,&problem).await {
     Ok(_)   => (),
     Err(err) => return Err(err.to_string())

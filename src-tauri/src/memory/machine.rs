@@ -11,7 +11,7 @@ pub async fn find_all_machines(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> 
 }
 
 pub async fn find_machines_by_name(pool : &Pool<Sqlite>,
-                        target : &String,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
+                        target : &str,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
   let canceled = canceled
     .into_iter()
     .map(|x| format!("'{x}'"))

@@ -30,7 +30,7 @@ pub async fn find_employee_name_by_id(pool : &Pool<Sqlite>,id : String) -> Resul
 }
 
 pub async fn find_employees_by_name(pool : &Pool<Sqlite>,
-                        target : &String,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
+                        target : &str,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
   let canceled = canceled
     .into_iter()
     .map(|x| format!("'{x}'"))

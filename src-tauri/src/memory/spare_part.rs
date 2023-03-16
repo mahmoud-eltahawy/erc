@@ -11,7 +11,7 @@ pub async fn find_all_spare_parts(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Erro
 }
 
 pub async fn find_spare_parts_by_name(pool : &Pool<Sqlite>,
-                        target : &String,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
+                        target : &str,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
   let canceled = canceled
     .into_iter()
     .map(|x| format!("'{x}'"))

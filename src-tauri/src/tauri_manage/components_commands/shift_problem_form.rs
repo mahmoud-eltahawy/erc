@@ -13,9 +13,9 @@ use uuid::Uuid;
 
 #[tauri::command]
 pub async fn problems_selection(app_state : tauri::State<'_,AppState>,
-                            department_id : Uuid,name : Option<String>,canceled : Vec<String>) -> Result<Vec<Name>,String> {
-  if let Some(name) = &name {
-    match find_department_problems_by_name(&app_state.pool,department_id.to_string(),name,canceled).await {
+                      department_id : Uuid,name : Option<String>,canceled : Vec<String>) -> Result<Vec<Name>,String> {
+  if let Some(name) = name {
+    match find_department_problems_by_name(&app_state.pool,department_id.to_string(),&name.trim(),canceled).await {
       Ok(p) => Ok(p),
       Err(err) => Err(err.to_string())
     }
@@ -31,7 +31,7 @@ pub async fn problems_selection(app_state : tauri::State<'_,AppState>,
 pub async fn employees_selection(app_state : tauri::State<'_,AppState>,
                             name : Option<String>,canceled : Vec<String>) -> Result<Vec<Name>,String> {
   if let Some(name) = name {
-    match find_employees_by_name(&app_state.pool,&name,canceled).await {
+    match find_employees_by_name(&app_state.pool,&name.trim(),canceled).await {
       Ok(e) => Ok(e),
       Err(err)=> Err(err.to_string())
     }
@@ -47,7 +47,7 @@ pub async fn employees_selection(app_state : tauri::State<'_,AppState>,
 pub async fn machines_selection(app_state : tauri::State<'_,AppState>,
                             name : Option<String>,canceled : Vec<String>) -> Result<Vec<Name>,String> {
   if let Some(name) = name {
-    match find_machines_by_name(&app_state.pool,&name,canceled).await {
+    match find_machines_by_name(&app_state.pool,&name.trim(),canceled).await {
       Ok(e) => Ok(e),
       Err(err)=> Err(err.to_string())
     }
@@ -63,7 +63,7 @@ pub async fn machines_selection(app_state : tauri::State<'_,AppState>,
 pub async fn spare_parts_selection(app_state : tauri::State<'_,AppState>,
                             name : Option<String>,canceled : Vec<String>) -> Result<Vec<Name>,String> {
   if let Some(name) = name {
-    match find_spare_parts_by_name(&app_state.pool,&name,canceled).await {
+    match find_spare_parts_by_name(&app_state.pool,&name.trim(),canceled).await {
       Ok(e) => Ok(e),
       Err(err)=> Err(err.to_string())
     }

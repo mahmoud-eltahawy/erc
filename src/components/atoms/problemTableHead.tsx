@@ -1,15 +1,27 @@
+import { css } from "solid-styled-components"
+
 export default function TableHead(){
-    return(
-        <thead>
-          <tr>
-            <td>مسجل العطل</td>
-            <td>ملحوظة جانبية</td>
-            <td>(24)التوقيت</td>
-            <td>قطع الغيار</td>
-            <td>المشاكل</td>
-            <td>القائم باصلاح العطل</td>
-            <td>الماكينة التي حدث عليها العطل</td>
-          </tr>
-        </thead>
-    )
+
+    const style = css({
+    width: "9%",
+    paddingLeft: "7px",
+    paddingRight: "7px",
+    borderRight: "dotted 1px",
+    borderLeft: "dotted 1px",
+    borderBottom: "dotted 1px",
+  })
+
+  return(
+      <thead>
+        <tr>
+          <th class={style}>مسجل العطل</th>
+          <th class={style}>ملحوظة جانبية</th>
+          <th class={style}>(24)التوقيت</th>
+          <th class={style}>قطع الغيار</th>
+          <th class={style}>المشاكل</th>
+          <th class={style}>القائم باصلاح العطل</th>
+          <th class={style}>الماكينة التي حدث عليها العطل</th>
+        </tr>
+      </thead>
+  )
 }

@@ -41,7 +41,7 @@ function App() {
         <Wall employee={employee()!} shiftId={shiftId()!} setEmployee={setEmployee} setShiftId={setShiftId}/>
       </Show>
     </section>
-  );
+  )
 }
 
 export default App;

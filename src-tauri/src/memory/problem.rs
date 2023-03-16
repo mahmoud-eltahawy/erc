@@ -39,7 +39,7 @@ pub async fn find_problems_by_department_id(pool : &Pool<Sqlite>,id : String) ->
 }
 
 pub async fn find_department_problems_by_name(pool : &Pool<Sqlite>,
-                        department_id : String,target : &String,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
+                        department_id : String,target : &str,canceled : Vec<String>) -> Result<Vec<Name>,Error> {
   let canceled = canceled
     .into_iter()
     .map(|x| format!("'{x}'"))
@@ -65,7 +65,7 @@ pub async fn find_department_problems_by_name(pool : &Pool<Sqlite>,
 }
 
 pub async fn find_department_full_problems_by_name(pool : &Pool<Sqlite>,
-                        department_id : String,target : &String) -> Result<Vec<Name>,Error> {
+                        department_id : String,target : &str) -> Result<Vec<Name>,Error> {
   let target = format!("%{target}%");
   match query_as!(Name,r#"
     SELECT id ,title as name FROM problem
