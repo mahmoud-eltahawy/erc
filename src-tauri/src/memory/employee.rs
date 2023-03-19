@@ -52,7 +52,7 @@ pub async fn find_employees_by_name(pool : &Pool<Sqlite>,
   } else {
     format!("
     SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name FROM employee
-    WHERE cond AND id NOT IN ({canceled}) LIMIT 4;")
+    WHERE {cond} AND id NOT IN ({canceled}) LIMIT 4;")
   };
   match query_as::<_,Name>(&query).fetch_all(pool).await {
     Ok(problems) => Ok(problems),
@@ -76,6 +76,43 @@ pub async fn find_4_employees(pool : &Pool<Sqlite>,
     WHERE id NOT IN ({canceled}) LIMIT 4;")
   };
   match query_as::<_,Name>(&query).fetch_all(pool).await {
+    Ok(problems) => Ok(problems),
+    Err(err) => Err(err)
+  }
+}
+
+pub async fn find_4_non_admins(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
+  match query_as!(Name,"
+    SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
+    FROM employee WHERE position <> 'SUPER_USER' LIMIT 4;").fetch_all(pool).await {
+    Ok(problems) => Ok(problems),
+    Err(err) => Err(err)
+  }
+}
+
+pub async fn find_4_non_admins_by_name(pool : &Pool<Sqlite>,target : &str) -> Result<Vec<Name>,Error> {
+  let target = target.split(' ').collect::<Vec<&str>>();
+  let cond = match target.len() {
+    1 => format!("first_name LIKE '%{}%'",target.first().unwrap()),
+    2 => format!("(first_name = '{}' AND middle_name LIKE '%{}%')",
+                 target.first().unwrap(),target.get(1).unwrap()),
+    3 => format!("(first_name = '{}' AND (middle_name = '{}' AND last_name LIKE '%{}%'))",
+                 target.first().unwrap(),target.get(1).unwrap(),target.get(2).unwrap()),
+    _ => "id = '0'".to_string()
+  };
+  let query = format!("
+    SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name FROM employee
+    WHERE {cond} LIMIT 4;");
+  match query_as::<_,Name>(&query).fetch_all(pool).await {
+    Ok(problems) => Ok(problems),
+    Err(err) => Err(err)
+  }
+}
+
+pub async fn find_admins(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
+  match query_as!(Name,"
+    SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
+    FROM employee WHERE position = 'SUPER_USER' AND card_id <> 0;").fetch_all(pool).await {
     Ok(problems) => Ok(problems),
     Err(err) => Err(err)
   }

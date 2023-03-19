@@ -7,6 +7,7 @@ use super::{
     non_async_commands::*,
     components_commands::shift_problem_form::*,
     components_commands::history::*,
+    components_commands::controll::*,
 };
 use super::models::TauriState;
 
@@ -40,5 +41,9 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
       search_parts,
       search_machines,
       search_employees,
+      search_admins,
+      search_non_admins,
+      admin_employee,
+      unadmin_employee,
     ])
 }

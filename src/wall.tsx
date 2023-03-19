@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api"
-import { createSignal, Setter } from "solid-js"
+import { createSignal, JSXElement, Setter } from "solid-js"
 import DefineProblem from "./components/molecules/defineProblem"
 import HistoryShow from "./components/organisms/HistoryShow"
 import { Employee } from "./index"
@@ -8,6 +8,7 @@ import ShiftProblems from "./components/organisms/ShiftProblems"
 import { ButtonsOrElement } from "./components/molecules/buttonsOrElement"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
+import Controlling from "./components/organisms/controlling"
 
 export default function Wall({
           employee,
@@ -33,20 +34,31 @@ export default function Wall({
       <AboutParagraph employee={employee} />
       <LogoutButton setEmployee={setEmployee} setShiftId={setShiftId} />
       <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
-            buttonElementPairs={() => [
-              ["اضافة عطل"          ,<ProblemForm
-                                         toggle={() => setLast([0])}
-                                         shiftId={shiftId}
-                                         writerId={employee.id}
-                                         departmentId={employee.department_id}/>],
-              ["تعريف مشكلة"        ,<DefineProblem
-                                         employee={employee}
-                                         toggle={() => setLast([1])}/>],
-              ["اظهار الاعطال"         ,<ShiftProblems
-                                         shiftId={shiftId}/>],
-              ["السجل"              ,<HistoryShow
-                                         department_id={employee.department_id} />]
-            ]}
+            buttonElementPairs={() => {
+              let pairs : [string,JSXElement][] = []
+              if(employee.card_id !== 0){
+                 pairs = [
+                  ["اضافة عطل"          ,<ProblemForm
+                                            toggle={() => setLast([0])}
+                                            shiftId={shiftId}
+                                            writerId={employee.id}
+                                            departmentId={employee.department_id}/>],
+                  ["تعريف مشكلة"        ,<DefineProblem
+                                            employee={employee}
+                                            toggle={() => setLast([1])}/>],
+                  ["اظهار الاعطال"         ,<ShiftProblems
+                                            shiftId={shiftId}/>],
+                  ["السجل"              ,<HistoryShow
+                                            department_id={employee.department_id} />]
+                ]
+             }
+
+             if(employee.position === 'SUPER_USER'){
+               pairs.unshift(["التحكم", <Controlling/>])
+             }
+
+             return pairs
+            }}
             num={last}
             fun={() => setLast([-1])}/>
     </section>

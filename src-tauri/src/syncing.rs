@@ -27,6 +27,8 @@ use memory::{
     relations
 };
 
+use self::memory::permissions;
+
 pub async fn upgrade(app_state : &AppState,window :Option<&Window>) -> Result<(),Box<dyn Error>> {
     let version = syncing::last_version(&app_state.pool).await?;
     let updates = api::updates(app_state, version as u64).await?;
@@ -51,9 +53,27 @@ async fn apply_update(app_state : &AppState,cud_version : CudVersion,window : Op
     Table::DepartmentShift       => update_department_shift(app_state, cud, target_id).await?,
     Table::ShiftProblemProblem   => update_shift_problem_problem(app_state, cud, target_id, other_target_id).await?,
     Table::ShiftProblemSparePart => update_shift_problem_spare_part(app_state, cud, target_id, other_target_id).await?,
+    Table::Permissions           => update_permissions(app_state, cud, target_id).await?,
     Table::Undefined             => return Err("undefined table".into())
   }
   syncing::save_version(&app_state.pool, cud_version).await?;
+  Ok(())
+}
+
+async fn update_permissions(app_state : &AppState,cud : Cud,target_id : Uuid) -> Result<(),Box<dyn Error>>{
+  match cud {
+    Cud::Create     => {
+      let per = api::permissions(app_state, target_id).await?;
+      permissions::save(&app_state.pool, per).await?;
+    }
+    Cud::Update     => {
+      let per = api::permissions(app_state, target_id).await?;
+      permissions::update(&app_state.pool, per).await?;
+    }
+    Cud::Delete     => return Err("permissions can not be deleted".into()),
+    Cud::Undefined  => return Err("undefined department crud".into())
+  }
+
   Ok(())
 }
 

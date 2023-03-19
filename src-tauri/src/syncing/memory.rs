@@ -1,4 +1,5 @@
 pub mod department;
+pub mod permissions;
 pub mod employee;
 pub mod machine;
 pub mod note;

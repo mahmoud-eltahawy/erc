@@ -13,7 +13,8 @@ use rec::{
     department::Department,
     machine::Machine,
     note::DbNote,
-    shift_problem::ShiftProblem
+    shift_problem::ShiftProblem,
+    permissions::Permissions
   }
 };
 use uuid::Uuid;
@@ -64,6 +65,18 @@ pub async fn employee(app_state : &AppState,id : Uuid) -> Result<Employee,Box<dy
     .send()
     .await?
     .json::<Employee>()
+    .await?;
+
+  Ok(result)
+}
+
+pub async fn permissions(app_state : &AppState,id : Uuid) -> Result<Permissions,Box<dyn Error>> {
+  let origin = &app_state.origin;
+  let result = reqwest::Client::new()
+    .get(format!("{origin}/per/{id}"))
+    .send()
+    .await?
+    .json::<Permissions>()
     .await?;
 
   Ok(result)

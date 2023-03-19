@@ -18,7 +18,7 @@ pub async fn save(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error> 
     match query!(r#"
       INSERT INTO employee(id,card_id,department_id,first_name,last_name,middle_name,position,password)
       VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING;
-    "#,id,card_id,department_id,first_name,last_name,middle_name,position,password).bind(id.to_string())
+    "#,id,card_id,department_id,first_name,last_name,middle_name,position,password)
     .execute(pool).await {
       Ok(_) => Ok(()),
       Err(err) => Err(err)
@@ -30,15 +30,15 @@ pub async fn update(pool : &Pool<Sqlite>,employee : Employee) -> Result<(),Error
                      last_name,middle_name,position,password} = ClientEmployee::new(employee);
     match query!(r#"
     UPDATE employee SET
-    department_id = $2,
-    position      = $3,
-    first_name    = $4,
-    middle_name   = $5,
+    card_id       = $2,
+    department_id = $3,
+    position      = $4,
+    first_name    = $5,
     last_name     = $6,
-    card_id       = $7,
+    middle_name   = $7,
     password      = $8
     WHERE id = $1;
-    "#,id,card_id,department_id,first_name,last_name,middle_name,position,password)
+    "#,id,card_id,department_id,position,first_name,last_name,middle_name,password)
     .execute(pool).await {
       Ok(_) => Ok(()),
       Err(err) => Err(err)

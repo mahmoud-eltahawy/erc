@@ -32,6 +32,21 @@ CREATE TABLE IF NOT EXISTS employee(
        password           TEXT                                        NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS permissions(
+       id                                                      VARCHAR(80)        NOT NULL UNIQUE,
+       write_department_problem                                BOOL               NOT NULL,
+       read_department_problems                                BOOL               NOT NULL,
+       modify_department_problems                              BOOL               NOT NULL,
+       define_problem                                          BOOL               NOT NULL,
+       access_history_department_problems                      BOOL               NOT NULL,
+       access_history_all_departments_problems                 BOOL               NOT NULL,
+       access_history_department_department_problems           BOOL               NOT NULL,
+       access_history_all_departments_department_problems      BOOL               NOT NULL,
+       access_history_machines                                 BOOL               NOT NULL,
+       access_history_spare_parts                              BOOL               NOT NULL,
+       access_history_employees                                BOOL               NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_emp_id        ON employee(id);
 CREATE INDEX IF NOT EXISTS idx_emp_cid       ON employee(card_id);
 CREATE INDEX IF NOT EXISTS idx_emp_depid     ON employee(department_id);

@@ -1,6 +1,15 @@
-use std::error::Error;
+use std::{error::Error, str::FromStr};
 
-use rec::{model::{employee::Employee, spare_part::SparePart, department::Department, machine::Machine}, crud_sync::CudVersion};
+use rec::{
+  model::{
+    employee::Employee,
+    spare_part::SparePart,
+    department::Department,
+    machine::Machine,
+    permissions::Permissions
+  },
+  crud_sync::CudVersion
+};
 use uuid::Uuid;
 
 use crate::{
@@ -8,7 +17,8 @@ use crate::{
   api::{
     employee::save_employee,
     spare_parts::save_spare_part,
-    department::save_department, machine::save_machine
+    department::save_department,
+    machine::save_machine, permissions::save_permissions
   }
 };
 
@@ -26,6 +36,7 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
     return Ok(());
   }
 
+  let master_id   = Uuid::new_v4();
   let kilens_id   = Uuid::new_v4();
   let drayers_id  = Uuid::new_v4();
   let incjet_id   = Uuid::new_v4();
@@ -33,60 +44,123 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
   let sort_id     = Uuid::new_v4();
 
   let departments = vec![
+    Department{id : master_id ,name: "erc".to_string()  ,boss_id: None,department_id:None},
     Department{id : kilens_id ,name: "الافران".to_string()  ,boss_id: None,department_id:None},
     Department{id : drayers_id,name: "المجففات".to_string() ,boss_id: None,department_id:None},
     Department{id : incjet_id ,name: "الانكجت".to_string(),boss_id: None,department_id:None},
-    Department{id : watch_id  ,name: "المتابعة".to_string()   ,boss_id: None,department_id:None},
-    Department{id : sort_id   ,name: "الفرز".to_string()    ,boss_id: None,department_id:None},
+    Department{id : watch_id  ,name: "المتابعة".to_string() ,boss_id: None,department_id:None},
+    Department{id : sort_id   ,name: "الفرز".to_string()   ,boss_id: None,department_id:None},
   ];
   for d in departments {
       save_department(app_state, &d).await?;
   }
 
+  let employee1 = Employee{id : Uuid::new_v4(),card_id : 1,department_id  : kilens_id,
+        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),
+                          password : "1234".to_string(),position : "USER".to_string()};
+
+  let employee2 = Employee{department_id : drayers_id,..employee1.clone()};
+  let employee3 = Employee{department_id : incjet_id,..employee1.clone()};
+  let employee4 = Employee{department_id : watch_id,..employee1.clone()};
+  let employee5 = Employee{department_id : sort_id,..employee1.clone()};
+
+  let id0  = Uuid::from_str("95a66e27-2af9-4c91-8be3-c7192ba8c64b").expect("unvalid uuid");
+  let id1  = Uuid::new_v4();
+  let id2  = Uuid::new_v4();
+  let id3  = Uuid::new_v4();
+  let id4  = Uuid::new_v4();
+  let id5  = Uuid::new_v4();
+  let id6  = Uuid::new_v4();
+  let id7  = Uuid::new_v4();
+  let id8  = Uuid::new_v4();
+  let id9  = Uuid::new_v4();
+  let id10 = Uuid::new_v4();
+  let id11 = Uuid::new_v4();
+  let id12 = Uuid::new_v4();
+  let id13 = Uuid::new_v4();
+  let id14 = Uuid::new_v4();
+  let id15 = Uuid::new_v4();
+  let id16 = Uuid::new_v4();
+  let id17 = Uuid::new_v4();
+  let id18 = Uuid::new_v4();
+  let id19 = Uuid::new_v4();
+  let id20 = Uuid::new_v4();
+  let id21 = Uuid::new_v4();
+  let id22 = Uuid::new_v4();
+  let id23 = Uuid::new_v4();
+  let id24 = Uuid::new_v4();
+  let id25 = Uuid::new_v4();
+
   let employees : Vec<Employee> = vec![
-    Employee{id : Uuid::new_v4(),card_id : 1,department_id  : kilens_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 2,department_id  : kilens_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 3,department_id  : kilens_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 4,department_id  : kilens_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 5,department_id  : drayers_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 6,department_id  : drayers_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 7,department_id  : drayers_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 8,department_id  : drayers_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 9,department_id  : incjet_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 10,department_id : incjet_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 11,department_id : incjet_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 12,department_id : incjet_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 13,department_id : watch_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 14,department_id : watch_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 15,department_id : watch_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 16,department_id : watch_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 17,department_id : sort_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 18,department_id : sort_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 19,department_id : sort_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
-    Employee{id : Uuid::new_v4(),card_id : 20,department_id : sort_id,
-        first_name : "احمد".to_string(),middle_name: "جمال".to_string(),last_name : "محمد".to_string(),password : "1234".to_string(),position : "ADMIN".to_string()},
+    Employee{id : id0 ,card_id : 0,first_name  : "e".to_string(),middle_name : "r".to_string(),
+             last_name : "c".to_string(),position : "SUPER_USER".to_string(),
+             department_id : master_id,..employee1.clone()},
+    Employee{id : id1 ,card_id : 1,first_name  : "احمد".to_string(),..employee1.clone()},
+    Employee{id : id2 ,card_id : 2,first_name  : "علي".to_string(),..employee1.clone()},
+    Employee{id : id3 ,card_id : 3,first_name  : "صابر".to_string(),..employee1.clone()},
+    Employee{id : id4 ,card_id : 4,first_name  : "صلاح".to_string(),..employee1.clone()},
+    Employee{id : id5 ,card_id : 5,first_name  : "جابر".to_string(),..employee1.clone()},
+
+    Employee{id : id6 ,card_id : 6,first_name  : "جلال".to_string(),..employee2.clone()},
+    Employee{id : id7 ,card_id : 7,first_name  : "يوسف".to_string(),..employee2.clone()},
+    Employee{id : id8 ,card_id : 8,first_name  : "هلال".to_string(),..employee2.clone()},
+    Employee{id : id9 ,card_id : 9,first_name  : "ابراهيم".to_string(),..employee2.clone()},
+    Employee{id : id10,card_id : 10,first_name : "منتصر".to_string(),..employee2.clone()},
+
+    Employee{id : id11,card_id : 11,first_name : "عمر".to_string(),..employee3.clone()},
+    Employee{id : id12,card_id : 12,first_name : "حكيم".to_string(),..employee3.clone()},
+    Employee{id : id13,card_id : 13,first_name : "طه".to_string(),..employee3.clone()},
+    Employee{id : id14,card_id : 14,first_name : "علاء".to_string(),..employee3.clone()},
+    Employee{id : id15,card_id : 15,first_name : "مصطفي".to_string(),..employee3.clone()},
+
+    Employee{id : id16,card_id : 16,first_name : "معتز".to_string(),..employee4.clone()},
+    Employee{id : id17,card_id : 17,first_name : "سيد".to_string(),..employee4.clone()},
+    Employee{id : id18,card_id : 18,first_name : "اسماعيل".to_string(),..employee4.clone()},
+    Employee{id : id19,card_id : 19,first_name : "جمعة".to_string(),..employee4.clone()},
+    Employee{id : id20,card_id : 20,first_name : "اشرف".to_string(),..employee4.clone()},
+
+    Employee{id : id21,card_id : 21,first_name : "طارق".to_string(),..employee5.clone()},
+    Employee{id : id22,card_id : 22,first_name : "يحي".to_string(),..employee5.clone()},
+    Employee{id : id23,card_id : 23,first_name : "مهدي".to_string(),..employee5.clone()},
+    Employee{id : id24,card_id : 24,first_name : "شعبان".to_string(),..employee5.clone()},
+    Employee{id : id25,card_id : 25,first_name : "عباس".to_string(),..employee5.clone()},
   ];
+
   for e in employees {
       save_employee(app_state, &e).await?;
+  }
+
+  let permissions = vec![
+    Permissions::default(id0),
+    Permissions::default(id1),
+    Permissions::default(id2),
+    Permissions::default(id3),
+    Permissions::default(id4),
+    Permissions::default(id5),
+    Permissions::default(id6),
+    Permissions::default(id7),
+    Permissions::default(id8),
+    Permissions::default(id9),
+    Permissions::default(id10),
+    Permissions::default(id11),
+    Permissions::default(id12),
+    Permissions::default(id13),
+    Permissions::default(id14),
+    Permissions::default(id15),
+    Permissions::default(id16),
+    Permissions::default(id17),
+    Permissions::default(id18),
+    Permissions::default(id19),
+    Permissions::default(id20),
+    Permissions::default(id21),
+    Permissions::default(id22),
+    Permissions::default(id23),
+    Permissions::default(id24),
+    Permissions::default(id25),
+  ];
+
+  for p in permissions{
+    save_permissions(app_state, &p).await?;
   }
 
   let spare_parts = vec![

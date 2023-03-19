@@ -40,7 +40,7 @@ export type Problem = {
 
 export type Employee = {
   id            : string,
-  card_id       : string,
+  card_id       : number,
   department_id : string,
   first_name    : string,
   middle_name   : string,
