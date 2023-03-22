@@ -1,9 +1,9 @@
-use rec::model::department::ClientDepartment;
+use rec::model::{department::ClientDepartment, name::Name};
 use sqlx::{Pool, Sqlite,Error, query_as, query};
 
-pub async fn find_all_departments(pool : &Pool<Sqlite>) -> Result<Vec<ClientDepartment>,Error> {
-    match query_as!(ClientDepartment,r#"
-      select * from department;
+pub async fn find_all_departments(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
+    match query_as!(Name,r#"
+      select id,name from department WHERE name <> 'erc';
     "#).fetch_all(pool).await {
       Ok(parts) => Ok(parts),
       Err(err) => Err(err)

@@ -54,12 +54,10 @@ export default function ControllAdmins() {
             setTarget([e.currentTarget.value])
             na.refetch()
           }} />
-        <Show when={(target[0] || '').length > 0}>
-          <section class={viewContainer}>
-            <AdminsSection/>
-            <NonAdminSection/>
-          </section>
-      </Show>
+        <section class={viewContainer}>
+          <AdminsSection/>
+          <NonAdminSection/>
+        </section>
     </div>
   )
 }
@@ -86,7 +84,7 @@ function AdminsSection(){
   }
 
   return (
-     <select multiple class={viewMember}>
+    <select multiple size={9} class={viewMember}>
          {
              <For each={admins()}>
                  {
@@ -109,7 +107,7 @@ function NonAdminSection(){
   }
 
   return (
-    <select multiple class={viewMember}>
+    <select multiple size={9} class={viewMember}>
       {
           <For each={nonAdmins()}>
               {

@@ -1,6 +1,7 @@
 import { css } from "solid-styled-components"
 import { ButtonsOrElement } from "../molecules/buttonsOrElement"
 import ControllAdmins from "../molecules/controllAdmins"
+import ControllDepartments from "../molecules/controllDepartments"
 
 export default function Controlling(){
 
@@ -18,6 +19,7 @@ export default function Controlling(){
                returnButtonText="العودة لصفحة التحكم"
                buttonElementPairs={() => [
                    ["تمكين موظف", () => <ControllAdmins/>],
+                   ["اعدادات الاقسام", () => <ControllDepartments/>],
                  ]}
                num={[-1]}
                fun={() => console.log("later")}/>}

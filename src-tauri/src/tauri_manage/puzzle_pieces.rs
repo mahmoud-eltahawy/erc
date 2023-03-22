@@ -44,6 +44,11 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
       search_admins,
       search_non_admins,
       admin_employee,
+      employee_name,
       unadmin_employee,
+      list_departments,
+      find_department,
+      department_employees,
+      boss_employee,
     ])
 }
