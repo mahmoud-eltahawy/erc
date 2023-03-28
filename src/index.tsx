@@ -6,6 +6,21 @@ import { invoke } from "@tauri-apps/api";
 
 render(() => <App/>,document.getElementById("root") as HTMLElement);
 
+export type Permissions = {
+  id                                                    :  String,
+  write_department_problem                              :  boolean,
+  read_department_problems                              :  boolean,
+  modify_department_problems                            :  boolean,
+  define_problem                                        :  boolean,
+  access_history_department_problems                    :  boolean,
+  access_history_all_departments_problems               :  boolean,
+  access_history_department_department_problems         :  boolean,
+  access_history_all_departments_department_problems    :  boolean,
+  access_history_machines                               :  boolean,
+  access_history_spare_parts                            :  boolean,
+  access_history_employees                              :  boolean,
+}
+
 export type ShiftProblem = {
   id                : string,
   shiftId           : string,

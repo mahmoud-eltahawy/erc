@@ -6,19 +6,24 @@ use errc::{
       find_admins,
       find_employee_name_by_id,
       find_employees_by_department_id_except_boss
+    },
+    department::{
+      find_all_departments,
+      find_department_by_id
+    }, permissions::{find_department_permissions_by_id, find_employee_permissions_by_id}
   },
-  department::{
-    find_all_departments,
-    find_department_by_id
-  }},
   config::AppState,
-  api::{employee::{
-    up_employee,
-    down_employee
-  }, department::sets_department_boss},
-  syncing::upgrade
+  api::{
+    employee::{
+      up_employee,
+      down_employee
+    },
+    department::sets_department_boss, permissions::{allow_permission, forbid_permission}
+  },
+  syncing::upgrade, translator::translate_permission
 };
-use rec::model::{name::Name, department::ClientDepartment};
+use rec::model::{name::Name, department::ClientDepartment, permissions::{PermissionsNames, ClientPermissions}};
+use serde::{Serialize, Deserialize};
 use tauri::Window;
 use uuid::Uuid;
 
@@ -88,6 +93,64 @@ pub async fn employee_name(app_state : tauri::State<'_,AppState>,id : Uuid) -> R
     Ok(days) => Ok(days),
     Err(err) => Err(err.to_string())
   }
+}
+
+#[derive(Serialize,Deserialize)]
+pub struct DepartmentPermissions {
+  id        : String,
+  allowed   : Vec<(String,PermissionsNames)>,
+  forbidden : Vec<(String,PermissionsNames)>,
+}
+
+#[tauri::command]
+pub async fn department_permissions(app_state : tauri::State<'_,AppState>
+       ,department_id : Uuid) -> Result<DepartmentPermissions,String> {
+  match find_department_permissions_by_id(&app_state.pool, department_id.to_string()).await {
+    Ok(permissions) => {
+      let (allowed,forbidden) = permissions.list();
+      let allowed   : Vec<(String,PermissionsNames)> = allowed
+        .into_iter().map(|p| (translate_permission(&p),p)).collect();
+      let forbidden : Vec<(String,PermissionsNames)> = forbidden
+        .into_iter().map(|p| (translate_permission(&p),p)).collect();
+      Ok(DepartmentPermissions {id: permissions.id, allowed, forbidden })
+    },
+    Err(err)        => {
+      Err(err.to_string())
+    }
+  }
+}
+
+#[tauri::command]
+pub async fn employee_permissions(app_state : tauri::State<'_,AppState>
+                                    ,id : Uuid) -> Result<ClientPermissions,String> {
+  match find_employee_permissions_by_id(&app_state.pool, id.to_string()).await {
+    Ok(permissions) => Ok(permissions),
+    Err(err)        => Err(err.to_string())
+  }
+}
+
+#[tauri::command]
+pub async fn permission_allow(app_state : tauri::State<'_,AppState>,
+              window : Window,id : Uuid,permission : PermissionsNames) -> Result<(),String> {
+  let Ok(()) = allow_permission(&app_state, id, &permission).await else {
+    return Err("".to_string());
+  };
+  let Ok(()) = upgrade(&app_state, Some(&window)).await else {
+    return Err("".to_string());
+  };
+  Ok(())
+}
+
+#[tauri::command]
+pub async fn permission_forbid(app_state : tauri::State<'_,AppState>,
+              window : Window,id : Uuid,permission : PermissionsNames) -> Result<(),String> {
+  let Ok(()) = forbid_permission(&app_state, id, &permission).await else {
+    return Err("".to_string());
+  };
+  let Ok(()) = upgrade(&app_state, Some(&window)).await else {
+    return Err("".to_string());
+  };
+  Ok(())
 }
 
 #[tauri::command]

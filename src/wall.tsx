@@ -1,14 +1,20 @@
 import { invoke } from "@tauri-apps/api"
-import { createSignal, JSXElement, Setter } from "solid-js"
+import { createResource, createSignal, JSXElement, Setter, Show } from "solid-js"
 import DefineProblem from "./components/molecules/defineProblem"
 import HistoryShow from "./components/organisms/HistoryShow"
-import { Employee } from "./index"
+import { Employee, Permissions } from "./index"
 import ProblemForm from "./components/organisms/ProblemForm"
 import ShiftProblems from "./components/organisms/ShiftProblems"
 import { ButtonsOrElement } from "./components/molecules/buttonsOrElement"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
 import Controlling from "./components/organisms/controlling"
+import { listen } from "@tauri-apps/api/event"
+
+
+const permissions_fetcher = async ({id} : {id : string}) => {
+  return (await invoke("employee_permissions",{id})) as Permissions
+}
 
 export default function Wall({
           employee,
@@ -22,6 +28,11 @@ export default function Wall({
           setShiftId  : Setter<string | null>
         }){
   const [last,setLast] = createStore([-1])
+  const [permissions,{refetch}] = createResource({id : employee.id},permissions_fetcher)
+
+  listen("update_permissions",() => {
+    setTimeout(() => refetch(),1000)
+  })
 
   setInterval(() => {
     invoke('check_shift_time',{departmentId : employee.department_id})
@@ -33,24 +44,43 @@ export default function Wall({
     <section>
       <AboutParagraph employee={employee} />
       <LogoutButton setEmployee={setEmployee} setShiftId={setShiftId} />
-      <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
+      <Show when={permissions()}>
+        <ButtonsOrElement returnButtonText="الصفحة الرئيسية"
             buttonElementPairs={() => {
-              let pairs : [string,JSXElement][] = []
-              if(employee.card_id !== 0){
-                 pairs = [
-                  ["اضافة عطل"          ,<ProblemForm
+             if(employee.card_id === 0){
+                 return [["التحكم", <Controlling/>]]
+             }
+
+             let pairs : [string,JSXElement][] = []
+
+             if(permissions()?.write_department_problem){
+               pairs.unshift(["اضافة عطل",<ProblemForm
                                             toggle={() => setLast([0])}
                                             shiftId={shiftId}
                                             writerId={employee.id}
-                                            departmentId={employee.department_id}/>],
-                  ["تعريف مشكلة"        ,<DefineProblem
+                                            departmentId={employee.department_id}/>])
+             }
+
+             if(permissions()?.define_problem){
+               pairs.unshift(["تعريف مشكلة" ,<DefineProblem
                                             employee={employee}
-                                            toggle={() => setLast([1])}/>],
-                  ["اظهار الاعطال"         ,<ShiftProblems
-                                            shiftId={shiftId}/>],
-                  ["السجل"              ,<HistoryShow
-                                            department_id={employee.department_id} />]
-                ]
+                                            toggle={() => setLast([1])}/>])
+             }
+
+             if(permissions()?.read_department_problems){
+               pairs.unshift(["اظهار الاعطال",<ShiftProblems
+                                            shiftId={shiftId}/>])
+             }
+
+             if(permissions()?.access_history_all_departments_department_problems ||
+                permissions()?.access_history_all_departments_problems ||
+                permissions()?.access_history_department_department_problems ||
+                permissions()?.access_history_department_problems ||
+                permissions()?.access_history_employees ||
+                permissions()?.access_history_machines ||
+                permissions()?.access_history_spare_parts){
+               pairs.unshift(["السجل"              ,<HistoryShow
+                                            department_id={employee.department_id} />])
              }
 
              if(employee.position === 'SUPER_USER'){
@@ -61,6 +91,7 @@ export default function Wall({
             }}
             num={last}
             fun={() => setLast([-1])}/>
+      </Show>
     </section>
   )
 }

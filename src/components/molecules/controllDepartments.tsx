@@ -61,8 +61,110 @@ const department_fetcher = async ({id} : {id : string}) => {
 }
 
 function DepartmentSettings({id} : {id : string}){
-  const [target, setTarget]     = createSignal<string>('')
   const [department,{refetch}]  = createResource({id},department_fetcher)
+  const container = css({
+    display: "block",
+    fontSize: "18px",
+    border: "solid 3px",
+    margin: "2px auto",
+    padding: "2px",
+  })
+
+  return (
+    <Show when={department()}>
+      <section class={container}>
+          {<ButtonsOrElement
+               returnButtonText={"العودة الي " + department()?.name}
+               buttonElementPairs={() => [
+                 ["اختيار رئيس القسم", () => <ChooseBoss
+                                                department={() => department()}
+                                                refetch={() => refetch()} />],
+                 ["صلاحيات القسم", () => <PermissionsElem
+                                            departmentId={id} />],
+               ]}
+               num={[-1]}
+               fun={() => console.log("later")}/>}
+      </section>
+    </Show>
+  )
+}
+
+const department_permissions_fetcher = async ({departmentId} : {departmentId : string}) => {
+  return (await invoke("department_permissions",{departmentId})) as {
+    id        : string,
+               //client backend
+    allowed   : [string,string][],
+    forbidden : [string,string][],
+  }
+}
+
+function PermissionsElem({departmentId} : {departmentId : string}){
+  const [permissions,{refetch}] = createResource({departmentId},department_permissions_fetcher)
+
+  const allowedHandler    = async (id : string,permission : string) => {
+      await invoke("permission_forbid",{id,permission})
+      refetch()
+  }
+
+  const forbiddenHandler  = async (id : string,permission : string) => {
+      await invoke("permission_allow",{id,permission})
+      refetch()
+  }
+
+  const viewContainer = css({
+    display: "flex",
+    padding: ".1em",
+  })
+
+  const viewMember = css({
+    display: "inline-block",
+    fontSize: "20px",
+    margin: "20px auto",
+    width: "48%",
+    backgroundColor: "inherit",
+    borderLeft: "solid 5px",
+    borderRight: "solid 5px",
+    borderBottom: "solid 5px",
+    borderTop: "none",
+    borderBottomLeftRadius : "20px",
+    borderBottomRightRadius : "20px",
+  })
+
+  const allowed   = () => permissions()?.allowed
+  const forbidden = () => permissions()?.forbidden
+
+  return (
+    <section class={viewContainer}>
+      <select multiple size={(allowed() || []).length + 1} class={viewMember}>
+        {
+            <For each={allowed()}>
+                {
+                    (item) => (
+                      <option onClick={() => allowedHandler(permissions()!.id,item[1])}>{item[0]}</option>
+                    )
+                }
+            </For>
+        }
+        <Show when={!(allowed() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
+      </select>
+      <select multiple size={(forbidden() || []).length + 1} class={viewMember}>
+        {
+            <For each={forbidden()}>
+                {
+                    (item) => (
+                      <option onClick={() => forbiddenHandler(permissions()!.id,item[1])}>{item[0]}</option>
+                    )
+                }
+            </For>
+        }
+        <Show when={!(forbidden() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
+      </select>
+    </section>
+  )
+}
+
+function ChooseBoss({department,refetch} : {department : () => Department | undefined,refetch : Function}){
+  const [target, setTarget]     = createSignal<string>('')
 
   const optionHandler = async (id : string) => {
       await invoke("boss_employee",{id})
@@ -93,16 +195,15 @@ function DepartmentSettings({id} : {id : string}){
   })
 
   return (
-    <Show when={!department.loading} fallback={<h1>جاري التحميل ...</h1>}>
-      <h1>{department()?.name}</h1>
-      <label>رئيس القسم : {department()?.boss?.name ? department()?.boss?.name: 'لا يوجد'}</label>
+    <Show when={department()} fallback={<h1> ...جاري التحميل</h1>}>
+      <h1 class={css({fontSize: "20px"})}>رئيس القسم : {department()?.boss?.name ? department()?.boss?.name: 'لا يوجد'}</h1>
       <input
         class={inputStyle}
         type="text"
         value={target()}
         onInput={e => {
           setTarget(e.currentTarget.value)
-        }} />
+        }}/>
       <select multiple size={department()?.employees.length} class={viewMember}>
         <For each={department()?.employees.filter(m => m.name.includes(target()!))}>
           {item => <option onClick={() => optionHandler(item.id)}>{item.name}</option>}

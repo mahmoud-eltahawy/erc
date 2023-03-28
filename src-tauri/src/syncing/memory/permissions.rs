@@ -1,5 +1,5 @@
 use rec::model::permissions::Permissions;
-use sqlx::{Pool, Sqlite,Error, query};
+use sqlx::{Pool,Sqlite,Error, query};
 
 pub async fn save(pool : &Pool<Sqlite>,permissions : Permissions) -> Result<(),Error> {
   let Permissions{
@@ -16,6 +16,7 @@ pub async fn save(pool : &Pool<Sqlite>,permissions : Permissions) -> Result<(),E
       access_history_spare_parts,
       write_department_problem
   } = permissions;
+  let id = id.to_string();
   let row = query!("
     INSERT INTO permissions(id,
       define_problem,
@@ -63,6 +64,7 @@ pub async fn update(pool : &Pool<Sqlite>,permissions : Permissions) -> Result<()
       access_history_spare_parts,
       write_department_problem
   } = permissions;
+  let id = id.to_string();
   let row = query!("
     UPDATE permissions SET
       define_problem                                        = $2,

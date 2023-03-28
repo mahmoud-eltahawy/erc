@@ -53,14 +53,14 @@ async fn apply_update(app_state : &AppState,cud_version : CudVersion,window : Op
     Table::DepartmentShift       => update_department_shift(app_state, cud, target_id).await?,
     Table::ShiftProblemProblem   => update_shift_problem_problem(app_state, cud, target_id, other_target_id).await?,
     Table::ShiftProblemSparePart => update_shift_problem_spare_part(app_state, cud, target_id, other_target_id).await?,
-    Table::Permissions           => update_permissions(app_state, cud, target_id).await?,
+    Table::Permissions           => update_permissions(app_state, cud, target_id,window).await?,
     Table::Undefined             => return Err("undefined table".into())
   }
   syncing::save_version(&app_state.pool, cud_version).await?;
   Ok(())
 }
 
-async fn update_permissions(app_state : &AppState,cud : Cud,target_id : Uuid) -> Result<(),Box<dyn Error>>{
+async fn update_permissions(app_state : &AppState,cud : Cud,target_id : Uuid,window : Option<&Window>) -> Result<(),Box<dyn Error>>{
   match cud {
     Cud::Create     => {
       let per = api::permissions(app_state, target_id).await?;
@@ -72,6 +72,10 @@ async fn update_permissions(app_state : &AppState,cud : Cud,target_id : Uuid) ->
     }
     Cud::Delete     => return Err("permissions can not be deleted".into()),
     Cud::Undefined  => return Err("undefined department crud".into())
+  }
+
+  if let Some(window) = window {
+    window.emit("update_permissions","hello")?;
   }
 
   Ok(())

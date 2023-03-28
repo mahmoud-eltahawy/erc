@@ -1,4 +1,4 @@
-use rec::timer::ShiftOrder;
+use rec::{timer::ShiftOrder,model::permissions::PermissionsNames};
 
 pub fn translate_date(date : String) -> Vec<String> {
   let date = validate_date(date);
@@ -44,5 +44,21 @@ pub fn translate_num(num : char) -> char{
     '8' => '٨',
     '9' => '٩',
     _ => '٠',
+  }
+}
+
+pub fn translate_permission(permission : &PermissionsNames) -> String{
+  match permission {
+    PermissionsNames::WriteDepartmentProblem                        => "ادخال عطل".to_string(),
+    PermissionsNames::ReadDepartmentProblems                        => "قراءة الاعطال".to_string(),
+    PermissionsNames::DefineProblem                                 => "تعريف مشكلة".to_string(),
+    PermissionsNames::ModifyDepartmentProblems                      => "تعديل الاعطال".to_string(),
+    PermissionsNames::AccessHistoryAllDepartmentsDepartmentProblems => "قراءة سجل اعطال جميع الاقسام".to_string(),
+    PermissionsNames::AccessHistoryDepartmentDepartmentProblems     => "قراءة سجل الاعطال الخاصة بالقسم فقط".to_string(),
+    PermissionsNames::AccessHistoryAllDepartmentsProblems           => "قراءة سجل جميع المشاكل".to_string(),
+    PermissionsNames::AccessHistoryDepartmentProblems               => "قراءة المشاكل الخاصة بالقسم فقط".to_string(),
+    PermissionsNames::AccessHistoryEmployees                        => "قراءة سجل الموظفين".to_string(),
+    PermissionsNames::AccessHistoryMachines                         => "قراءة سجل الماكينات".to_string(),
+    PermissionsNames::AccessHistorySpareParts                       => "قراءة سجل قطع الغيار".to_string(),
   }
 }
