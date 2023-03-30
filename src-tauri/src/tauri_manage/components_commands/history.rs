@@ -20,7 +20,19 @@ use errc::{
       find_all_spare_parts,
       find_spare_parts_by_name,
       find_4_spare_parts,
-    }, machine::{find_all_machines, find_4_machines, find_machines_by_name}, employee::{find_all_employees_names, find_employees_by_name, find_4_employees, find_employee_name_by_id}, department::find_department_name_by_id,
+    },
+    machine::{
+      find_all_machines,
+      find_4_machines,
+      find_machines_by_name
+    },
+    employee::{
+      find_all_employees_names,
+      find_employees_by_name,
+      find_4_employees,
+      find_employee_name_by_id,
+    },
+    department::find_department_name_by_id,
   }
 };
 use rec::{model::{shift::ClientDbShift, name::Name, problem::ClientProblem}, timer::ShiftOrder};

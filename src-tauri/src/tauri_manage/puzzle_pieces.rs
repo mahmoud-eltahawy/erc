@@ -41,6 +41,7 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
       search_parts,
       search_machines,
       search_employees,
+      search_department_employees,
       search_admins,
       search_non_admins,
       admin_employee,
@@ -52,6 +53,7 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
       boss_employee,
       department_permissions,
       employee_permissions,
+      employee_permissions_classified,
       permission_allow,
       permission_forbid,
     ])

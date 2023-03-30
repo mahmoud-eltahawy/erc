@@ -8,8 +8,10 @@ import { css } from "solid-styled-components"
 
 export default function ShiftProblems({
     shiftId,
+    mutable,
     } : {
     shiftId : string,
+    mutable : boolean,
 }){
   const limit = 4
   const [shiftProblems,{refetch}] = createResource(shiftId,problemsFetcher)
@@ -39,6 +41,9 @@ export default function ShiftProblems({
 
   return (
     <section>
+      <Show when={mutable}>
+        <h1>امكانية التعديل قريبا</h1>
+      </Show>
       <table class={style}>
         <TableHead/>
         <Show when={state()} fallback={<h1>جاري التحميل ...</h1>}>

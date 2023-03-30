@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api"
 import { createEffect, createResource, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
+import { departmentsNames } from "../.."
 import { ButtonsOrElement } from "./buttonsOrElement"
 import HistoryShiftProblems from "./historyShiftProblems"
 
@@ -10,7 +11,7 @@ type Day = {
     shifts : [string,string][]
 }
 
-export default function HistoryDays({department_id} : {department_id : string}){
+export default function HistoryDays({department_id} : {department_id : string | null}){
   const [dates,setDates] = createStore<[string | null,string | null]>([null,null])
 
   const dateContainer = css({
@@ -57,9 +58,13 @@ export default function HistoryDays({department_id} : {department_id : string}){
                required/>
         <label class={dateLabel}><h4>وقت البداية</h4></label>
       </div>
-      <ShowHistory
-          departmentId={department_id}
+      <Show
+          when={department_id}
+          fallback={<ShowAllHistory dates={() => dates}/>}>
+        <ShowHistory
+          departmentId={department_id!}
           dates={dates}/>
+      </Show>
     </section>
   )
 }
@@ -71,6 +76,19 @@ const fetcher = async (args : {
 }) => {
     return (await invoke("search_shifts",{departmentId : args.departmentId(),
                                     begin :args.begin(),end : args.end()})) as Day[]
+}
+
+function ShowAllHistory({dates} : {dates :() => [string | null,string | null]}){
+    return (
+        <ButtonsOrElement
+              returnButtonText="الرجوع الي الاقسام"
+              buttonElementPairs={() => (departmentsNames() || [])
+                .map(d => [d.name, <ShowHistory
+                                      departmentId={d.id}
+                                      dates={dates()}/>])}
+              num={[-1]}
+              fun={() => console.log("later")}/>
+    )
 }
 
 function ShowHistory({
@@ -102,7 +120,7 @@ function ShowHistory({
         <Show when={days()}>
           <ButtonsOrElement
             buttonElementPairs={() => (days() || []).
-                map(x => [x.date.join(" / "), () => <Shifts shifts={() => x.shifts} />])}
+                map(x => [x.date.join(" / "), () => <Shifts shifts={() => x.shifts}/>])}
             num={[-1]}
             fun={() => console.log("fun")}
             returnButtonText="يوم اخر"/>

@@ -2,10 +2,10 @@ import { invoke } from "@tauri-apps/api"
 import { createEffect, createResource, createSignal, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import { Name } from '../..'
+import { departmentsNames, Name } from '../..'
 import { ButtonsOrElement } from "./buttonsOrElement"
 
-export default function HistoryProblems({department_id}:{department_id : string}){
+export default function HistoryProblems({department_id}:{department_id : string | null}){
   const [target,setTarget] = createStore<[string | null]>([null])
 
   const toggle = () => {
@@ -47,7 +47,13 @@ export default function HistoryProblems({department_id}:{department_id : string}
                required/>
       </div>
       <ShowAllToggleButton target={target} toggle={toggle}/>
-      <ShowHistory target={target} departmentId={department_id}/>
+      <Show
+          when={department_id}
+          fallback={<ShowAllHistory target={() => target}/>}>
+        <ShowHistory
+            target={target}
+            departmentId={department_id!}/>
+      </Show>
     </section>
   )
 }
@@ -77,6 +83,19 @@ function ShowAllToggleButton({toggle,target} : {toggle : Function,target : [stri
 
 const fetcher = async ({departmentId,name} : {departmentId : string, name : () => string | null}) => {
   return (await invoke("search_problem",{name : name() !== ' ' ? name() : null,departmentId})) as Name[]
+}
+
+function ShowAllHistory({target} : {target :() => [string | null]}){
+    return (
+        <ButtonsOrElement
+              returnButtonText="الرجوع الي الاقسام"
+              buttonElementPairs={() => (departmentsNames() || [])
+                .map(d => [d.name, <ShowHistory
+                                      departmentId={d.id}
+                                      target={target()}/>])}
+              num={[-1]}
+              fun={() => console.log("later")}/>
+    )
 }
 
 function ShowHistory({target,departmentId} :{departmentId : string,target : [string | null]}){

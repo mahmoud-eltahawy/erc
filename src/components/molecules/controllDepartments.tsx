@@ -1,16 +1,11 @@
 import { invoke } from "@tauri-apps/api"
 import { createResource, createSignal, For, Show } from "solid-js"
 import { css } from "solid-styled-components"
-import { Name } from "../.."
+import { Name,departmentsNames, NativeDepartment, PermissionsClassified } from "../.."
+import PermissionsTemplate from "../atoms/permissionsTemplate"
 import { ButtonsOrElement } from "./buttonsOrElement"
 
-const departments_fetcher = async () => {
-  return (await invoke("list_departments")) as Name[]
-}
-
 export default function ControllDepartments(){
-  const [departments] = createResource(departments_fetcher)
-
   const container = css({
     display: "block",
     fontSize: "18px",
@@ -23,19 +18,12 @@ export default function ControllDepartments(){
       <section class={container}>
           {<ButtonsOrElement
                returnButtonText="العودة لاعدادات الاقسام"
-               buttonElementPairs={() => (departments() || [])
+               buttonElementPairs={() => (departmentsNames() || [])
                  .map(d => [d.name, <DepartmentSettings id={d.id} />])}
                num={[-1]}
                fun={() => console.log("later")}/>}
       </section>
   )
-}
-
-type NativeDepartment = {
-   id            : string,
-   boss_id       : string | null,
-   department_id : string | null,
-   name          : string,
 }
 
 type Department = {
@@ -60,8 +48,24 @@ const department_fetcher = async ({id} : {id : string}) => {
   return department
 }
 
+
+const department_permissions_fetcher = async ({departmentId} : {departmentId : string}) => {
+  return (await invoke("department_permissions",{departmentId})) as PermissionsClassified
+}
+
 function DepartmentSettings({id} : {id : string}){
-  const [department,{refetch}]  = createResource({id},department_fetcher)
+  const [permissions,dbf]      = createResource({departmentId : id},department_permissions_fetcher)
+  const [department,{refetch}] = createResource({id},department_fetcher)
+
+  const allowedHandler    = async (id : string,permission : string) => {
+      await invoke("permission_forbid",{id,permission})
+      dbf.refetch()
+  }
+
+  const forbiddenHandler  = async (id : string,permission : string) => {
+      await invoke("permission_allow",{id,permission})
+      dbf.refetch()
+  }
   const container = css({
     display: "block",
     fontSize: "18px",
@@ -71,95 +75,23 @@ function DepartmentSettings({id} : {id : string}){
   })
 
   return (
-    <Show when={department()}>
+    <Show when={department() && permissions()}>
       <section class={container}>
           {<ButtonsOrElement
                returnButtonText={"العودة الي " + department()?.name}
                buttonElementPairs={() => [
                  ["اختيار رئيس القسم", () => <ChooseBoss
-                                                department={() => department()}
-                                                refetch={() => refetch()} />],
-                 ["صلاحيات القسم", () => <PermissionsElem
-                                            departmentId={id} />],
+                                          department={() => department()}
+                                          refetch={() => refetch()} />],
+                 ["صلاحيات القسم", () => <PermissionsTemplate
+                                        allowedHandler={allowedHandler}
+                                        forbiddenHandler={forbiddenHandler}
+                                        permissions={() => permissions()} />],
                ]}
                num={[-1]}
                fun={() => console.log("later")}/>}
       </section>
     </Show>
-  )
-}
-
-const department_permissions_fetcher = async ({departmentId} : {departmentId : string}) => {
-  return (await invoke("department_permissions",{departmentId})) as {
-    id        : string,
-               //client backend
-    allowed   : [string,string][],
-    forbidden : [string,string][],
-  }
-}
-
-function PermissionsElem({departmentId} : {departmentId : string}){
-  const [permissions,{refetch}] = createResource({departmentId},department_permissions_fetcher)
-
-  const allowedHandler    = async (id : string,permission : string) => {
-      await invoke("permission_forbid",{id,permission})
-      refetch()
-  }
-
-  const forbiddenHandler  = async (id : string,permission : string) => {
-      await invoke("permission_allow",{id,permission})
-      refetch()
-  }
-
-  const viewContainer = css({
-    display: "flex",
-    padding: ".1em",
-  })
-
-  const viewMember = css({
-    display: "inline-block",
-    fontSize: "20px",
-    margin: "20px auto",
-    width: "48%",
-    backgroundColor: "inherit",
-    borderLeft: "solid 5px",
-    borderRight: "solid 5px",
-    borderBottom: "solid 5px",
-    borderTop: "none",
-    borderBottomLeftRadius : "20px",
-    borderBottomRightRadius : "20px",
-  })
-
-  const allowed   = () => permissions()?.allowed
-  const forbidden = () => permissions()?.forbidden
-
-  return (
-    <section class={viewContainer}>
-      <select multiple size={(allowed() || []).length + 1} class={viewMember}>
-        {
-            <For each={allowed()}>
-                {
-                    (item) => (
-                      <option onClick={() => allowedHandler(permissions()!.id,item[1])}>{item[0]}</option>
-                    )
-                }
-            </For>
-        }
-        <Show when={!(allowed() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
-      </select>
-      <select multiple size={(forbidden() || []).length + 1} class={viewMember}>
-        {
-            <For each={forbidden()}>
-                {
-                    (item) => (
-                      <option onClick={() => forbiddenHandler(permissions()!.id,item[1])}>{item[0]}</option>
-                    )
-                }
-            </For>
-        }
-        <Show when={!(forbidden() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
-      </select>
-    </section>
   )
 }
 

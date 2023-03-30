@@ -1,8 +1,8 @@
-import { invoke } from "@tauri-apps/api"
-import { createEffect,createResource,createSignal,Show } from "solid-js"
+import { createEffect,createResource,Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import { Name } from '../..'
+import { employees_names_fetcher } from '../..'
+import ShowAllToggleButton from "../atoms/showAllToggleButton"
 import { ButtonsOrElement } from "./buttonsOrElement"
 
 export default function HistoryEmployees() {
@@ -52,35 +52,8 @@ export default function HistoryEmployees() {
   )
 }
 
-function ShowAllToggleButton({toggle,target} : {toggle : Function,target : [string | null]}){
-  const [hover, setHover] = createSignal(false)
-
-  const style = () => css({
-   display: "block",
-   width: "25%",
-   borderRadius: hover() ? "5px" : "20px",
-   fontSize: hover() ? "24px" : "18px",
-   border: "solid 3px",
-   margin: "2px auto",
-   padding: "2px",
-  })
-
-  return (
-    <button
-        onClick={() => toggle()}
-        class={style()}
-        onMouseOver={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        type="submit">{target[0] === '*' ? "شاهد اقل" : "شاهد الكل"}</button>
-  )
-}
-
-const fetcher = async ({name} : {name : () => string | null}) => {
-  return (await invoke("search_employees",{name : name() !== ' ' ? name() : null})) as Name[]
-}
-
 function ShowHistory({target} :{target : [string | null]}){
-  const [employees,{refetch}] = createResource({name :() => target[0]},fetcher)
+  const [employees,{refetch}] = createResource({name :() => target[0]},employees_names_fetcher)
 
   createEffect(() => {
     if (target[0]) {

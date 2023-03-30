@@ -47,7 +47,7 @@ async fn apply_update(app_state : &AppState,cud_version : CudVersion,window : Op
     Table::Machine               => update_machine(app_state, cud, target_id,window).await?,
     Table::ShiftProblem          => update_shift_problem(app_state, cud, target_id,window).await?,
     Table::Shift                 => update_shift(app_state, cud, target_id).await?,
-    Table::Department            => update_department(app_state, cud, target_id).await?,
+    Table::Department            => update_department(app_state, cud, target_id,window).await?,
     Table::ShiftNote             => update_shift_note(app_state, cud, target_id).await?,
     Table::ShiftProblemNote      => update_shift_problem_note(app_state, cud, target_id).await?,
     Table::DepartmentShift       => update_department_shift(app_state, cud, target_id).await?,
@@ -75,7 +75,7 @@ async fn update_permissions(app_state : &AppState,cud : Cud,target_id : Uuid,win
   }
 
   if let Some(window) = window {
-    window.emit("update_permissions","hello")?;
+    window.emit("update_permissions",target_id)?;
   }
 
   Ok(())
@@ -178,7 +178,7 @@ async fn update_machine(app_state : &AppState,cud : Cud,target_id : Uuid,window 
   Ok(())
 }
 
-async fn update_department(app_state : &AppState,cud : Cud,target_id : Uuid) -> Result<(),Box<dyn Error>>{
+async fn update_department(app_state : &AppState,cud : Cud,target_id : Uuid,window : Option<&Window>) -> Result<(),Box<dyn Error>>{
   match cud {
     Cud::Create     => {
       let dep = api::department(app_state, target_id).await?;
@@ -191,6 +191,11 @@ async fn update_department(app_state : &AppState,cud : Cud,target_id : Uuid) -> 
     }
     Cud::Undefined  => return Err("undefined department crud".into())
   }
+
+  if let Some(window) = window {
+    window.emit("update_departments",target_id)?;
+  }
+
   Ok(())
 }
 

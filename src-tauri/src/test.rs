@@ -23,7 +23,6 @@ use crate::{
 };
 
 pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>> {
-
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/sync/1"))
@@ -36,7 +35,8 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
     return Ok(());
   }
 
-  let master_id   = Uuid::new_v4();
+  let master_id   = Uuid::from_str("00000000-0000-0000-0000-000000000000").expect("unvalid uuid");
+
   let kilens_id   = Uuid::new_v4();
   let drayers_id  = Uuid::new_v4();
   let incjet_id   = Uuid::new_v4();
@@ -44,11 +44,11 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
   let sort_id     = Uuid::new_v4();
 
   let departments = vec![
-    Department{id : master_id ,name: "erc".to_string()  ,boss_id: None,department_id:None},
+    Department{id : master_id ,name: "الادارة".to_string()  ,boss_id: None,department_id:None},
     Department{id : kilens_id ,name: "الافران".to_string()  ,boss_id: None,department_id:None},
     Department{id : drayers_id,name: "المجففات".to_string() ,boss_id: None,department_id:None},
-    Department{id : incjet_id ,name: "الانكجت".to_string(),boss_id: None,department_id:None},
-    Department{id : watch_id  ,name: "المتابعة".to_string() ,boss_id: None,department_id:None},
+    Department{id : incjet_id ,name: "الانكجت".to_string() ,boss_id: None,department_id:None},
+    Department{id : watch_id  ,name: "المتابعة".to_string()  ,boss_id: None,department_id:None},
     Department{id : sort_id   ,name: "الفرز".to_string()   ,boss_id: None,department_id:None},
   ];
   for d in departments {
@@ -64,7 +64,6 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
   let employee4 = Employee{department_id : watch_id,..employee1.clone()};
   let employee5 = Employee{department_id : sort_id,..employee1.clone()};
 
-  let id0  = Uuid::from_str("95a66e27-2af9-4c91-8be3-c7192ba8c64b").expect("unvalid uuid");
   let id1  = Uuid::new_v4();
   let id2  = Uuid::new_v4();
   let id3  = Uuid::new_v4();
@@ -92,7 +91,7 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
   let id25 = Uuid::new_v4();
 
   let employees : Vec<Employee> = vec![
-    Employee{id : id0 ,card_id : 0,first_name  : "e".to_string(),middle_name : "r".to_string(),
+    Employee{id : master_id ,card_id : 0,first_name  : "e".to_string(),middle_name : "r".to_string(),
              last_name : "c".to_string(),position : "SUPER_USER".to_string(),
              department_id : master_id,..employee1.clone()},
     Employee{id : id1 ,card_id : 1,first_name  : "احمد".to_string(),..employee1.clone()},
@@ -131,7 +130,7 @@ pub async fn insert_employees(app_state : &AppState) -> Result<(),Box<dyn Error>
   }
 
   let permissions = vec![
-    Permissions::default(id0),
+    Permissions::default(master_id),
     Permissions::default(id1),
     Permissions::default(id2),
     Permissions::default(id3),
