@@ -1,5 +1,5 @@
 use std::sync::Mutex;
-use rec::model::employee::ClientEmployee;
+use rec::model::employee::Employee;
 use tauri::{Builder, Wry};
 
 use super::{
@@ -15,7 +15,7 @@ pub fn build_tauri(state : TauriState) -> Builder<Wry>{
   let TauriState{app_state} = state;
   tauri::Builder::default()
     .manage(app_state)
-    .manage(Mutex::new(None::<(ClientEmployee,String)>))
+    .manage(Mutex::new(None::<(Employee<String>,String)>))
     .invoke_handler(tauri::generate_handler![
       update,
       login,

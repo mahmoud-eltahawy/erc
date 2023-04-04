@@ -1,4 +1,4 @@
-use rec::model::{employee::ClientEmployee, name::Name};
+use rec::model::{employee::Employee, name::Name};
 use sqlx::{Pool, Sqlite,Error, query_as, query};
 use uuid::Uuid;
 
@@ -153,8 +153,8 @@ pub async fn find_admins(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
   }
 }
 
-pub async fn find_employee_by_id(pool : &Pool<Sqlite>,id : String) -> Result<ClientEmployee,Error> {
-    match query_as!(ClientEmployee,r#"
+pub async fn find_employee_by_id(pool : &Pool<Sqlite>,id : String) -> Result<Employee<String>,Error> {
+    match query_as!(Employee,r#"
       SELECT * FROM employee WHERE id = $1;
     "#,id).fetch_one(pool).await {
       Ok(employee) => Ok(employee),
@@ -162,8 +162,8 @@ pub async fn find_employee_by_id(pool : &Pool<Sqlite>,id : String) -> Result<Cli
     }
 }
 
-pub async fn find_employee_by_card(pool : &Pool<Sqlite>,card_id : i64) -> Result<ClientEmployee,Error> {
-    match query_as!(ClientEmployee,r#"
+pub async fn find_employee_by_card(pool : &Pool<Sqlite>,card_id : i64) -> Result<Employee<String>,Error> {
+    match query_as!(Employee,r#"
       SELECT * FROM employee WHERE card_id = $1;
     "#,card_id).fetch_one(pool).await {
       Ok(employee) => Ok(employee),

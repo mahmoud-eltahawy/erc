@@ -1,4 +1,4 @@
-use rec::model::machine::{ClientMachine, Machine};
+use rec::model::machine::Machine;
 use sqlx::{Pool, Sqlite,Error, query};
 use uuid::Uuid;
 
@@ -12,8 +12,8 @@ pub async fn delete(pool : &Pool<Sqlite>,id : Uuid) -> Result<(),Error> {
   }
 }
 
-pub async fn save(pool : &Pool<Sqlite>,machine : Machine) -> Result<(),Error> {
-  let ClientMachine{id,name} = ClientMachine::new(machine);
+pub async fn save(pool : &Pool<Sqlite>,machine : Machine<Uuid>) -> Result<(),Error> {
+  let Machine{id,name} = machine.string_to_client();
   match query!(r#"
     INSERT INTO machine(id,name)
     VALUES($1,$2) ON CONFLICT (id) DO NOTHING;
@@ -24,15 +24,15 @@ pub async fn save(pool : &Pool<Sqlite>,machine : Machine) -> Result<(),Error> {
   }
 }
 
-pub async fn update(pool : &Pool<Sqlite>,machine : Machine) -> Result<(),Error> {
-  let ClientMachine{id,name} = ClientMachine::new(machine);
-    match query!(r#"
-    UPDATE machine SET
-    name = $2
-    WHERE id = $1;
-    "#,id,name)
-    .execute(pool).await {
-      Ok(_) => Ok(()),
-      Err(err) => Err(err)
-    }
+pub async fn update(pool : &Pool<Sqlite>,machine : Machine<Uuid>) -> Result<(),Error> {
+  let Machine{id,name} = machine.string_to_client();
+  match query!(r#"
+  UPDATE machine SET
+  name = $2
+  WHERE id = $1;
+  "#,id,name)
+  .execute(pool).await {
+    Ok(_) => Ok(()),
+    Err(err) => Err(err)
+  }
 }

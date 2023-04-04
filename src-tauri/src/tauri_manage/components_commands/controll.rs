@@ -22,7 +22,7 @@ use errc::{
   },
   syncing::upgrade, translator::translate_permission
 };
-use rec::model::{name::Name, department::ClientDepartment, permissions::{PermissionsNames, ClientPermissions}};
+use rec::model::{name::Name, department::Department, permissions::{PermissionName, Permissions}};
 use serde::{Serialize, Deserialize};
 use tauri::Window;
 use uuid::Uuid;
@@ -80,7 +80,7 @@ pub async fn boss_employee(app_state : tauri::State<'_,AppState>,id : Uuid,windo
 }
 
 #[tauri::command]
-pub async fn find_department(app_state : tauri::State<'_,AppState>,id : Uuid) -> Result<ClientDepartment,String> {
+pub async fn find_department(app_state : tauri::State<'_,AppState>,id : Uuid) -> Result<Department<String>,String> {
   match find_department_by_id(&app_state.pool,id.to_string()).await {
     Ok(days) => Ok(days),
     Err(err) => Err(err.to_string())
@@ -98,8 +98,8 @@ pub async fn employee_name(app_state : tauri::State<'_,AppState>,id : Uuid) -> R
 #[derive(Serialize,Deserialize)]
 pub struct ClassifiedPermissions {
   id        : String,
-  allowed   : Vec<(String,PermissionsNames)>,
-  forbidden : Vec<(String,PermissionsNames)>,
+  allowed   : Vec<(String,PermissionName)>,
+  forbidden : Vec<(String,PermissionName)>,
 }
 
 #[tauri::command]
@@ -108,9 +108,9 @@ pub async fn department_permissions(app_state : tauri::State<'_,AppState>
   match find_department_permissions_by_id(&app_state.pool, department_id.to_string()).await {
     Ok(permissions) => {
       let (allowed,forbidden) = permissions.list();
-      let allowed   : Vec<(String,PermissionsNames)> = allowed
+      let allowed   : Vec<(String,PermissionName)> = allowed
         .into_iter().map(|p| (translate_permission(&p),p)).collect();
-      let forbidden : Vec<(String,PermissionsNames)> = forbidden
+      let forbidden : Vec<(String,PermissionName)> = forbidden
         .into_iter().map(|p| (translate_permission(&p),p)).collect();
       Ok(ClassifiedPermissions {id: permissions.id, allowed, forbidden })
     },
@@ -124,9 +124,9 @@ pub async fn employee_permissions_classified(app_state : tauri::State<'_,AppStat
   match find_employee_permissions_by_id(&app_state.pool, employee_id.to_string()).await {
     Ok(permissions) => {
       let (allowed,forbidden) = permissions.list();
-      let allowed   : Vec<(String,PermissionsNames)> = allowed
+      let allowed   : Vec<(String,PermissionName)> = allowed
         .into_iter().map(|p| (translate_permission(&p),p)).collect();
-      let forbidden : Vec<(String,PermissionsNames)> = forbidden
+      let forbidden : Vec<(String,PermissionName)> = forbidden
         .into_iter().map(|p| (translate_permission(&p),p)).collect();
       Ok(ClassifiedPermissions {id: permissions.id, allowed, forbidden })
     },
@@ -136,7 +136,7 @@ pub async fn employee_permissions_classified(app_state : tauri::State<'_,AppStat
 
 #[tauri::command]
 pub async fn employee_permissions(app_state : tauri::State<'_,AppState>
-                                    ,id : Uuid) -> Result<ClientPermissions,String> {
+                                    ,id : Uuid) -> Result<Permissions<String>,String> {
   match find_employee_permissions_by_id(&app_state.pool, id.to_string()).await {
     Ok(permissions) => Ok(permissions),
     Err(err)        => Err(err.to_string())
@@ -145,7 +145,7 @@ pub async fn employee_permissions(app_state : tauri::State<'_,AppState>
 
 #[tauri::command]
 pub async fn permission_allow(app_state : tauri::State<'_,AppState>,
-              window : Window,id : Uuid,permission : PermissionsNames) -> Result<(),String> {
+              window : Window,id : Uuid,permission : PermissionName) -> Result<(),String> {
   let Ok(()) = allow_permission(&app_state, id, &permission).await else {
     return Err("".to_string());
   };
@@ -157,7 +157,7 @@ pub async fn permission_allow(app_state : tauri::State<'_,AppState>,
 
 #[tauri::command]
 pub async fn permission_forbid(app_state : tauri::State<'_,AppState>,
-              window : Window,id : Uuid,permission : PermissionsNames) -> Result<(),String> {
+              window : Window,id : Uuid,permission : PermissionName) -> Result<(),String> {
   let Ok(()) = forbid_permission(&app_state, id, &permission).await else {
     return Err("".to_string());
   };

@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::config::AppState;
 
-pub async fn save_spare_part(app_state : &AppState,spare_part : &SparePart) -> Result<(),Box<dyn Error>> {
+pub async fn save_spare_part(app_state : &AppState,spare_part : &SparePart<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/part/"))
@@ -20,7 +20,7 @@ pub async fn save_spare_part(app_state : &AppState,spare_part : &SparePart) -> R
   }
 }
 
-pub async fn update_spare_part(app_state : &AppState,spare_part : &SparePart) -> Result<(),Box<dyn Error>> {
+pub async fn update_spare_part(app_state : &AppState,spare_part : &SparePart<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .put(format!("{origin}/part/"))

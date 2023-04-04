@@ -4,7 +4,7 @@ use rec::{
   crud_sync::CudVersion,
   model::{
     employee::Employee,
-    problem::Probelm,
+    problem::Problem,
     shift::{
       Shift,
       DepartmentShift
@@ -58,85 +58,85 @@ pub async fn shift_department(app_state : &AppState,id : Uuid) -> Result<Departm
   Ok(result)
 }
 
-pub async fn employee(app_state : &AppState,id : Uuid) -> Result<Employee,Box<dyn Error>> {
+pub async fn employee(app_state : &AppState,id : Uuid) -> Result<Employee<Uuid>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/emp/{id}"))
     .send()
     .await?
-    .json::<Employee>()
+    .json::<Employee<Uuid>>()
     .await?;
 
   Ok(result)
 }
 
-pub async fn permissions(app_state : &AppState,id : Uuid) -> Result<Permissions,Box<dyn Error>> {
+pub async fn permissions(app_state : &AppState,id : Uuid) -> Result<Permissions<Uuid>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/per/{id}"))
     .send()
     .await?
-    .json::<Permissions>()
+    .json::<Permissions<Uuid>>()
     .await?;
 
   Ok(result)
 }
 
-pub async fn problem(app_state : &AppState,id : Uuid) -> Result<Probelm,Box<dyn Error>> {
+pub async fn problem(app_state : &AppState,id : Uuid) -> Result<Problem<Uuid>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/problem/{id}"))
     .send()
     .await?
-    .json::<Probelm>()
+    .json::<Problem<Uuid>>()
     .await?;
 
   Ok(result)
 }
 
-pub async fn spare_part(app_state : &AppState,id : Uuid) -> Result<SparePart,Box<dyn Error>> {
+pub async fn spare_part(app_state : &AppState,id : Uuid) -> Result<SparePart<Uuid>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/part/{id}"))
     .send()
     .await?
-    .json::<SparePart>()
+    .json::<SparePart<Uuid>>()
     .await?;
 
   Ok(result)
 }
 
-pub async fn department(app_state : &AppState,id : Uuid) -> Result<Department,Box<dyn Error>> {
+pub async fn department(app_state : &AppState,id : Uuid) -> Result<Department<Uuid>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/dep/{id}"))
     .send()
     .await?
-    .json::<Department>()
+    .json::<Department<Uuid>>()
     .await?;
 
   Ok(result)
 }
 
-pub async fn machine(app_state : &AppState,id : Uuid) -> Result<Machine,Box<dyn Error>> {
+pub async fn machine(app_state : &AppState,id : Uuid) -> Result<Machine<Uuid>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/machine/{id}"))
     .send()
     .await?
-    .json::<Machine>()
+    .json::<Machine<Uuid>>()
     .await?;
 
   Ok(result)
 }
 
-pub async fn note(app_state : &AppState,id : Uuid) -> Result<DbNote,Box<dyn Error>> {
+pub async fn note(app_state : &AppState,id : Uuid) -> Result<DbNote<Uuid>,Box<dyn Error>> {
   let origin = &app_state.origin;
   let result = reqwest::Client::new()
     .get(format!("{origin}/note/{id}"))
     .send()
     .await?
-    .json::<DbNote>()
+    .json::<DbNote<Uuid>>()
     .await?;
 
   Ok(result)

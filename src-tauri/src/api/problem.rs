@@ -1,12 +1,12 @@
 use std::error::Error;
 
-use rec::model::problem::Probelm;
+use rec::model::problem::Problem;
 use reqwest::StatusCode;
 use uuid::Uuid;
 
 use crate::config::AppState;
 
-pub async fn save_problem(app_state : &AppState,problem :&Probelm) -> Result<(),Box<dyn Error>> {
+pub async fn save_problem(app_state : &AppState,problem :&Problem<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/problem/"))
@@ -20,7 +20,7 @@ pub async fn save_problem(app_state : &AppState,problem :&Probelm) -> Result<(),
   }
 }
 
-pub async fn update_problem(app_state : &AppState,problem : &Probelm) -> Result<(),Box<dyn Error>> {
+pub async fn update_problem(app_state : &AppState,problem : &Problem<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .put(format!("{origin}/problem/"))

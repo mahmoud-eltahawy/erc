@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::config::AppState;
 
-pub async fn save_note_to_problem(app_state : &AppState,note : &DbNote) -> Result<(),Box<dyn Error>> {
+pub async fn save_note_to_problem(app_state : &AppState,note : &DbNote<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/note/problem"))
@@ -20,7 +20,7 @@ pub async fn save_note_to_problem(app_state : &AppState,note : &DbNote) -> Resul
   }
 }
 
-pub async fn save_note_to_shift(app_state : &AppState,note : &DbNote) -> Result<(),Box<dyn Error>> {
+pub async fn save_note_to_shift(app_state : &AppState,note : &DbNote<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/note/shift"))
@@ -34,7 +34,7 @@ pub async fn save_note_to_shift(app_state : &AppState,note : &DbNote) -> Result<
   }
 }
 
-pub async fn update_note(app_state : &AppState,note : &Note) -> Result<(),Box<dyn Error>> {
+pub async fn update_note(app_state : &AppState,note : &Note<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .put(format!("{origin}/note/"))

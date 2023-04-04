@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use crate::config::AppState;
 
-pub async fn save_department(app_state : &AppState,dep : &Department) -> Result<(),Box<dyn Error>> {
+pub async fn save_department(app_state : &AppState,dep : &Department<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/dep/"))
@@ -19,7 +19,7 @@ pub async fn save_department(app_state : &AppState,dep : &Department) -> Result<
   }
 }
 
-pub async fn update_department(app_state : &AppState,dep : &Department) -> Result<(),Box<dyn Error>> {
+pub async fn update_department(app_state : &AppState,dep : &Department<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .put(format!("{origin}/dep/"))

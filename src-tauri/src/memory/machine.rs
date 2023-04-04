@@ -1,4 +1,4 @@
-use rec::model::{machine::ClientMachine, name::Name};
+use rec::model::{machine::Machine, name::Name};
 use sqlx::{Pool, Sqlite,Error, query_as};
 
 pub async fn find_all_machines(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
@@ -62,8 +62,8 @@ pub async fn find_all_machines_names(pool : &Pool<Sqlite>) -> Result<Vec<Name>,E
     }
 }
 
-pub async fn find_machine_by_id(pool : &Pool<Sqlite>,id : String) -> Result<ClientMachine,Error> {
-    match query_as!(ClientMachine,r#"
+pub async fn find_machine_by_id(pool : &Pool<Sqlite>,id : String) -> Result<Machine<String>,Error> {
+    match query_as!(Machine,r#"
       SELECT * FROM machine WHERE id = $1;
     "#,id).fetch_one(pool).await {
       Ok(machine) => Ok(machine),

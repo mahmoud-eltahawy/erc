@@ -1,4 +1,4 @@
-use rec::model::problem::{ClientProblem, Probelm};
+use rec::model::problem::Problem;
 use sqlx::{Pool, Sqlite,Error, query};
 use uuid::Uuid;
 
@@ -12,8 +12,8 @@ pub async fn delete(pool : &Pool<Sqlite>,id : Uuid) -> Result<(),Error> {
   }
 }
 
-pub async fn save(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
-  let ClientProblem{id,writer_id,department_id,title,description} = ClientProblem::new(problem);
+pub async fn save(pool : &Pool<Sqlite>,problem : Problem<Uuid>) -> Result<(),Error> {
+  let Problem{id,writer_id,department_id,title,description} = problem.string_to_client();
   match query!(r#"
     INSERT INTO problem(id,writer_id,department_id,title,description)
     VALUES($1,$2,$3,$4,$5) ON CONFLICT (id) DO NOTHING;
@@ -24,18 +24,18 @@ pub async fn save(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
   }
 }
 
-pub async fn update(pool : &Pool<Sqlite>,problem : Probelm) -> Result<(),Error> {
-  let ClientProblem{id,writer_id,department_id,title,description} = ClientProblem::new(problem);
-    match query!(r#"
-    UPDATE problem SET
-    writer_id     = $2,
-    department_id = $3,
-    title         = $4,
-    description   = $5
-    WHERE id = $1;
-    "#,id,writer_id,department_id,title,description)
-    .execute(pool).await {
-      Ok(_) => Ok(()),
-      Err(err) => Err(err)
-    }
+pub async fn update(pool : &Pool<Sqlite>,problem : Problem<Uuid>) -> Result<(),Error> {
+  let Problem{id,writer_id,department_id,title,description} = problem.string_to_client();
+  match query!(r#"
+  UPDATE problem SET
+  writer_id     = $2,
+  department_id = $3,
+  title         = $4,
+  description   = $5
+  WHERE id = $1;
+  "#,id,writer_id,department_id,title,description)
+  .execute(pool).await {
+    Ok(_) => Ok(()),
+    Err(err) => Err(err)
+  }
 }

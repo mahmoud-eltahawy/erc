@@ -35,7 +35,14 @@ use errc::{
     department::find_department_name_by_id,
   }
 };
-use rec::{model::{shift::ClientDbShift, name::Name, problem::ClientProblem}, timer::ShiftOrder};
+use rec::{
+  model::{
+    shift::ClientDbShift,
+    name::Name,
+    problem::Problem
+  },
+  timer::ShiftOrder
+};
 
 use itertools::Itertools;
 use serde::{Serialize, Deserialize};
@@ -124,7 +131,7 @@ pub struct ProblemProfile{
 #[tauri::command]
 pub async fn profile_problem(app_state : tauri::State<'_,AppState>,
                   id : Uuid) -> Result<ProblemProfile,String> {
-  let Ok(ClientProblem{id : _,department_id,writer_id,
+  let Ok(Problem{id : _,department_id,writer_id,
       title,description}) = find_problem_by_id(&app_state.pool, id.to_string()).await else {
     return Err("err".to_string());
   };

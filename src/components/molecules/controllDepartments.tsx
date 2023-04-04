@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api"
-import { createResource, createSignal, For, Show } from "solid-js"
+import { createResource, createSignal, For, JSXElement, Show } from "solid-js"
 import { css } from "solid-styled-components"
 import { Name,departmentsNames, NativeDepartment, PermissionsClassified } from "../.."
 import PermissionsTemplate from "../atoms/permissionsTemplate"
@@ -19,7 +19,7 @@ export default function ControllDepartments(){
           {<ButtonsOrElement
                returnButtonText="العودة لاعدادات الاقسام"
                buttonElementPairs={() => (departmentsNames() || [])
-                 .map(d => [d.name, <DepartmentSettings id={d.id} />])}
+                   .map(d => [d.name, <DepartmentSettings departmentId={d.id} />])}
                num={[-1]}
                fun={() => console.log("later")}/>}
       </section>
@@ -34,10 +34,10 @@ type Department = {
    employees     : Name[]
 }
 
-const department_fetcher = async ({id} : {id : string}) => {
+const department_fetcher = async ({departmentId} : {departmentId : string}) => {
   let department : Department
-  let nd = (await invoke("find_department",{id})) as NativeDepartment
-  let employees = (await invoke("department_employees",{id})) as Name[]
+  let nd = (await invoke("find_department",{id : departmentId})) as NativeDepartment
+  let employees = (await invoke("department_employees",{id : departmentId})) as Name[]
   if (nd.boss_id){
     let name : string = (await invoke("employee_name",{id : nd.boss_id})) as string
     let boss : Name = {id : nd.boss_id,name}
@@ -50,12 +50,16 @@ const department_fetcher = async ({id} : {id : string}) => {
 
 
 const department_permissions_fetcher = async ({departmentId} : {departmentId : string}) => {
-  return (await invoke("department_permissions",{departmentId})) as PermissionsClassified
+    return (await invoke("department_permissions", { departmentId })
+        .catch(err => {
+            console.log(err)
+            return []
+    })) as PermissionsClassified
 }
 
-function DepartmentSettings({id} : {id : string}){
-  const [permissions,dbf]      = createResource({departmentId : id},department_permissions_fetcher)
-  const [department,{refetch}] = createResource({id},department_fetcher)
+function DepartmentSettings({departmentId} : {departmentId : string}){
+  const [permissions,dbf]      = createResource({departmentId},department_permissions_fetcher)
+  const [department,{refetch}] = createResource({departmentId},department_fetcher)
 
   const allowedHandler    = async (id : string,permission : string) => {
       await invoke("permission_forbid",{id,permission})
@@ -79,15 +83,19 @@ function DepartmentSettings({id} : {id : string}){
       <section class={container}>
           {<ButtonsOrElement
                returnButtonText={"العودة الي " + department()?.name}
-               buttonElementPairs={() => [
-                 ["اختيار رئيس القسم", () => <ChooseBoss
-                                          department={() => department()}
-                                          refetch={() => refetch()} />],
-                 ["صلاحيات القسم", () => <PermissionsTemplate
+               buttonElementPairs={() => {
+                 const pairs : [string,JSXElement][] = [
+                   ["اختيار رئيس القسم",() => <ChooseBoss
+                                        department={() => department()}
+                                        refetch={() => refetch()} />],
+                   ["صلاحيات القسم",() => <PermissionsTemplate
                                         allowedHandler={allowedHandler}
                                         forbiddenHandler={forbiddenHandler}
                                         permissions={() => permissions()} />],
-               ]}
+                 ]
+
+                 return pairs;
+               }}
                num={[-1]}
                fun={() => console.log("later")}/>}
       </section>

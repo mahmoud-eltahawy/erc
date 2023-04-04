@@ -34,31 +34,35 @@ export default function PermissionsTemplate({
   const forbidden = () => permissions()?.forbidden
 
   return (
-    <section class={viewContainer}>
-      <select multiple size={(allowed() || []).length + 1} class={viewMember}>
-        {
+    <Show
+        when={allowed() || forbidden()}
+        fallback={<h1>يجب تعيين رئيس قسم قبل اضافة صلاحيات</h1>}>
+      <section class={viewContainer}>
+        <select multiple size={(allowed() || []).length + 1} class={viewMember}>
+          {
             <For each={allowed()}>
-                {
-                    (item) => (
-                      <option onClick={() => allowedHandler(permissions()!.id,item[1])}>{item[0]}</option>
-                    )
-                }
+              {
+                (item) => (
+                  <option onClick={() => allowedHandler(permissions()!.id,item[1])}>{item[0]}</option>
+                )
+              }
             </For>
-        }
-        <Show when={!(allowed() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
-      </select>
-      <select multiple size={(forbidden() || []).length + 1} class={viewMember}>
-        {
-            <For each={forbidden()}>
-                {
-                    (item) => (
-                      <option onClick={() => forbiddenHandler(permissions()!.id,item[1])}>{item[0]}</option>
-                    )
-                }
+          }
+          <Show when={!(allowed() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
+        </select>
+        <select multiple size={(forbidden() || []).length + 1} class={viewMember}>
+         {
+           <For each={forbidden()}>
+             {
+                (item) => (
+                  <option onClick={() => forbiddenHandler(permissions()!.id,item[1])}>{item[0]}</option>
+                )
+              }
             </For>
-        }
-        <Show when={!(forbidden() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
-      </select>
-    </section>
+          }
+          <Show when={!(forbidden() || []).length}><option disabled>{"لا توجد صلاحيات"}</option></Show>
+        </select>
+      </section>
+    </Show>
   )
 }

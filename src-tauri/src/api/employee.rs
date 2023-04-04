@@ -5,7 +5,7 @@ use std::error::Error;
 
 use crate::config::AppState;
 
-pub async fn save_employee(app_state : &AppState,employee : &Employee) -> Result<(),Box<dyn Error>> {
+pub async fn save_employee(app_state : &AppState,employee : &Employee<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/emp/"))
@@ -19,7 +19,7 @@ pub async fn save_employee(app_state : &AppState,employee : &Employee) -> Result
   }
 }
 
-pub async fn update_employee(app_state : &AppState,employee : &Employee) -> Result<(),Box<dyn Error>> {
+pub async fn update_employee(app_state : &AppState,employee : &Employee<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .put(format!("{origin}/emp/"))

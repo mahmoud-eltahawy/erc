@@ -4,7 +4,7 @@ use rec::{
     get_current_date,
     get_relative_now, get_current_order
   },
-  model::employee::ClientEmployee
+  model::employee::Employee
 };
 use errc::translator::{
   translate_date,
@@ -12,7 +12,7 @@ use errc::translator::{
 };
 
 #[tauri::command]
-pub fn check_login(state : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>) -> Result<(ClientEmployee,String),String> {
+pub fn check_login(state : tauri::State<'_,Mutex<Option<(Employee<String>,String)>>>) -> Result<(Employee<String>,String),String> {
   match &*state.lock().unwrap() {
     Some((employee,id)) => Ok((employee.clone(),id.clone())),
     None     => Err("تحتاج الي تسجيل الدخول من جديد".to_string())
@@ -30,6 +30,6 @@ pub fn current_shift() -> Result<(String,Vec<String>),String> {
 }
 
 #[tauri::command]
-pub fn logout(state : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>) {
+pub fn logout(state : tauri::State<'_,Mutex<Option<(Employee<String>,String)>>>) {
   *state.lock().unwrap() = None;
 }

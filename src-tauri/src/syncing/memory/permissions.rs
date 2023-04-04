@@ -1,7 +1,8 @@
 use rec::model::permissions::Permissions;
 use sqlx::{Pool,Sqlite,Error, query};
+use uuid::Uuid;
 
-pub async fn save(pool : &Pool<Sqlite>,permissions : Permissions) -> Result<(),Error> {
+pub async fn save(pool : &Pool<Sqlite>,permissions : Permissions<Uuid>) -> Result<(),Error> {
   let Permissions{
       id,
       define_problem,
@@ -49,7 +50,7 @@ pub async fn save(pool : &Pool<Sqlite>,permissions : Permissions) -> Result<(),E
   }
 }
 
-pub async fn update(pool : &Pool<Sqlite>,permissions : Permissions) -> Result<(),Error> {
+pub async fn update(pool : &Pool<Sqlite>,permissions : Permissions<Uuid>) -> Result<(),Error> {
   let Permissions{
       id,
       define_problem,

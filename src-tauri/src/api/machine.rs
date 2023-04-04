@@ -6,7 +6,7 @@ use uuid::Uuid;
 
 use crate::config::AppState;
 
-pub async fn save_machine(app_state : &AppState,machine : &Machine) -> Result<(),Box<dyn Error>> {
+pub async fn save_machine(app_state : &AppState,machine : &Machine<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/machine/"))
@@ -20,7 +20,7 @@ pub async fn save_machine(app_state : &AppState,machine : &Machine) -> Result<()
   }
 }
 
-pub async fn update_machine(app_state : &AppState,machine : &Machine) -> Result<(),Box<dyn Error>> {
+pub async fn update_machine(app_state : &AppState,machine : &Machine<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .put(format!("{origin}/machine/"))

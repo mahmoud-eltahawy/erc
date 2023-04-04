@@ -1,4 +1,4 @@
-use rec::model::spare_part::{ClientSparePart, SparePart};
+use rec::model::spare_part::SparePart;
 use sqlx::{Pool, Sqlite,Error, query};
 use uuid::Uuid;
 
@@ -12,8 +12,8 @@ pub async fn delete(pool : &Pool<Sqlite>,id : Uuid) -> Result<(),Error> {
   }
 }
 
-pub async fn save(pool : &Pool<Sqlite>,part : SparePart) -> Result<(),Error> {
-  let ClientSparePart{id,name} = ClientSparePart::new(part);
+pub async fn save(pool : &Pool<Sqlite>,part : SparePart<Uuid>) -> Result<(),Error> {
+  let SparePart{id,name} = part.string_to_client();
   match query!(r#"
     INSERT INTO spare_part(id,name)
     VALUES($1,$2) ON CONFLICT (id) DO NOTHING;
@@ -24,15 +24,15 @@ pub async fn save(pool : &Pool<Sqlite>,part : SparePart) -> Result<(),Error> {
   }
 }
 
-pub async fn update(pool : &Pool<Sqlite>,part : SparePart) -> Result<(),Error> {
-  let ClientSparePart{id,name} = ClientSparePart::new(part);
-    match query!(r#"
-    UPDATE spare_part SET
-    name = $2
-    WHERE id = $1;
-    "#,id,name)
-    .execute(pool).await {
-      Ok(_) => Ok(()),
-      Err(err) => Err(err)
-    }
+pub async fn update(pool : &Pool<Sqlite>,part : SparePart<Uuid>) -> Result<(),Error> {
+  let SparePart{id,name} = part.string_to_client();
+  match query!(r#"
+  UPDATE spare_part SET
+  name = $2
+  WHERE id = $1;
+  "#,id,name)
+  .execute(pool).await {
+    Ok(_) => Ok(()),
+    Err(err) => Err(err)
+  }
 }

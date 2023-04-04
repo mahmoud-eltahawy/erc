@@ -1,8 +1,8 @@
-use rec::model::{problem::ClientProblem, name::Name};
+use rec::model::{problem::Problem, name::Name};
 use sqlx::{Pool, Sqlite,Error, query_as};
 
-pub async fn find_all_problems(pool : &Pool<Sqlite>) -> Result<Vec<ClientProblem>,Error> {
-  match query_as!(ClientProblem,r#"
+pub async fn find_all_problems(pool : &Pool<Sqlite>) -> Result<Vec<Problem<String>>,Error> {
+  match query_as!(Problem,r#"
     select * from problem;
   "#).fetch_all(pool).await {
     Ok(problems) => Ok(problems),
@@ -20,8 +20,8 @@ pub async fn find_department_all_problems(pool : &Pool<Sqlite>,
   }
 }
 
-pub async fn find_problem_by_id(pool : &Pool<Sqlite>,id : String) -> Result<ClientProblem,Error> {
-  match query_as!(ClientProblem,r#"
+pub async fn find_problem_by_id(pool : &Pool<Sqlite>,id : String) -> Result<Problem<String>,Error> {
+  match query_as!(Problem,r#"
     SELECT * FROM problem WHERE id = $1;
   "#,id).fetch_one(pool).await {
     Ok(problem) => Ok(problem),
@@ -102,8 +102,8 @@ pub async fn find_department_4_problems(pool : &Pool<Sqlite>,
   }
 }
 
-pub async fn find_problems_by_writer_id(pool : &Pool<Sqlite>,id : String) -> Result<Vec<ClientProblem>,Error> {
-  match query_as!(ClientProblem,r#"
+pub async fn find_problems_by_writer_id(pool : &Pool<Sqlite>,id : String) -> Result<Vec<Problem<String>>,Error> {
+  match query_as!(Problem,r#"
     SELECT * FROM problem WHERE writer_id = $1;
   "#,id).fetch_all(pool).await {
     Ok(problems) => Ok(problems),

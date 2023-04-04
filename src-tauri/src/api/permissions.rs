@@ -1,38 +1,38 @@
 use std::error::Error;
-use rec::model::permissions::{Permissions, PermissionsNames};
+use rec::model::permissions::{Permissions, PermissionName};
 use reqwest::StatusCode;
 use uuid::Uuid;
 
 use crate::config::AppState;
 
-fn get_permission_target(permission : &PermissionsNames) -> String {
+fn get_permission_target(permission : &PermissionName) -> String {
   match permission {
-    PermissionsNames::WriteDepartmentProblem
+    PermissionName::WriteDepartmentProblem
       => "write_department_problem".to_string(),
-    PermissionsNames::ReadDepartmentProblems
+    PermissionName::ReadDepartmentProblems
       => "read_department_problems".to_string(),
-    PermissionsNames::ModifyDepartmentProblems
+    PermissionName::ModifyDepartmentProblems
       => "modify_department_problems".to_string(),
-    PermissionsNames::DefineProblem
+    PermissionName::DefineProblem
       => "define_problem".to_string(),
-    PermissionsNames::AccessHistoryDepartmentProblems
+    PermissionName::AccessHistoryDepartmentProblems
       => "access_history_department_problems".to_string(),
-    PermissionsNames::AccessHistoryAllDepartmentsProblems
+    PermissionName::AccessHistoryAllDepartmentsProblems
       => "access_history_all_departments_problems".to_string(),
-    PermissionsNames::AccessHistoryDepartmentDepartmentProblems
+    PermissionName::AccessHistoryDepartmentDepartmentProblems
       => "access_history_department_department_problems".to_string(),
-    PermissionsNames::AccessHistoryAllDepartmentsDepartmentProblems
+    PermissionName::AccessHistoryAllDepartmentsDepartmentProblems
       => "access_history_all_departments_department_problems".to_string(),
-    PermissionsNames::AccessHistoryMachines
+    PermissionName::AccessHistoryMachines
       => "access_history_machines".to_string(),
-    PermissionsNames::AccessHistorySpareParts
+    PermissionName::AccessHistorySpareParts
       => "access_history_spare_parts".to_string(),
-    PermissionsNames::AccessHistoryEmployees
+    PermissionName::AccessHistoryEmployees
       => "access_history_employees".to_string(),
   }
 }
 
-pub async fn save_permissions(app_state : &AppState,permissions : &Permissions) -> Result<(),Box<dyn Error>> {
+pub async fn save_permissions(app_state : &AppState,permissions : &Permissions<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .post(format!("{origin}/per/"))
@@ -46,7 +46,7 @@ pub async fn save_permissions(app_state : &AppState,permissions : &Permissions) 
   }
 }
 
-pub async fn allow_permission(app_state : &AppState,id : Uuid,permission : &PermissionsNames) -> Result<(),Box<dyn Error>> {
+pub async fn allow_permission(app_state : &AppState,id : Uuid,permission : &PermissionName) -> Result<(),Box<dyn Error>> {
   let origin     = &app_state.origin;
   let permission = get_permission_target(permission);
   let id = id.to_string();
@@ -61,7 +61,7 @@ pub async fn allow_permission(app_state : &AppState,id : Uuid,permission : &Perm
   }
 }
 
-pub async fn forbid_permission(app_state : &AppState,id : Uuid,permission : &PermissionsNames) -> Result<(),Box<dyn Error>> {
+pub async fn forbid_permission(app_state : &AppState,id : Uuid,permission : &PermissionName) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let permission = get_permission_target(permission);
   let id = id.to_string();
@@ -76,7 +76,7 @@ pub async fn forbid_permission(app_state : &AppState,id : Uuid,permission : &Per
   }
 }
 
-pub async fn update_department(app_state : &AppState,permissions : &Permissions) -> Result<(),Box<dyn Error>> {
+pub async fn update_department(app_state : &AppState,permissions : &Permissions<Uuid>) -> Result<(),Box<dyn Error>> {
   let origin = &app_state.origin;
   let req = reqwest::Client::new()
     .put(format!("{origin}/per/"))

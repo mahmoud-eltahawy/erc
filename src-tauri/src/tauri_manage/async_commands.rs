@@ -27,11 +27,11 @@ use errc::{
     shift_problem::find_shift_shift_problems
   }, syncing::upgrade
 };
-use rec::model::{employee::ClientEmployee,
-                 problem::{Probelm, ClientProblem},
+use rec::model::{employee::Employee,
+                 problem::Problem,
                  shift_problem::{MinimamlShiftProblem, ProblemDetail, ClientMinimamlShiftProblem},
-                 machine::ClientMachine,
-                 spare_part::ClientSparePart,
+                 machine::Machine,
+                 spare_part::SparePart,
                  note::{Note, DbNote}};
 use tauri::Window;
 use uuid::Uuid;
@@ -57,7 +57,7 @@ async fn get_or_save_shift_id(app_state : &AppState,department_id : &String,wind
 }
 
 async fn helper(app_state : &AppState,
-               card_id: i64,password: String,window : &Window) -> Result<(ClientEmployee,String),Box<dyn Error>> {
+               card_id: i64,password: String,window : &Window) -> Result<(Employee<String>,String),Box<dyn Error>> {
 
   let employee = find_employee_by_card(&app_state.pool, card_id).await?;
 
@@ -74,7 +74,7 @@ async fn helper(app_state : &AppState,
 }
 
 #[tauri::command]
-pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>,
+pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(Employee<String>,String)>>>,
                app_state : tauri::State<'_,AppState>,window : Window,
                card_id: i64,password: String) -> Result<(),String> {
   let failure = Err("فشلت عملية تسجيل الدخول".to_string());
@@ -89,7 +89,7 @@ pub async fn login(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,S
 }
 
 #[tauri::command]
-pub async fn check_shift_time(emp_and_uuid : tauri::State<'_,Mutex<Option<(ClientEmployee,String)>>>,
+pub async fn check_shift_time(emp_and_uuid : tauri::State<'_,Mutex<Option<(Employee<String>,String)>>>,
                app_state : tauri::State<'_,AppState>,window : Window,
                department_id : Uuid) -> Result<(),String> {
   let failure = Err("فشلت عملية تسجيل الدخول".to_string());
@@ -123,7 +123,7 @@ pub async fn define_problem(app_state : tauri::State<'_,AppState>,window : Windo
                         title : String,
                         description : String) -> Result<(),String> {
   let id = Uuid::new_v4();
-  let problem = Probelm{id,writer_id,department_id,title : title.trim().to_string(),description};
+  let problem = Problem{id,writer_id,department_id,title : title.trim().to_string(),description};
   match save_problem(&app_state,&problem).await {
     Ok(_)   => (),
     Err(err) => return Err(err.to_string())
@@ -217,7 +217,7 @@ pub async fn get_current_shift_problems(app_state : tauri::State<'_,AppState>,
 
 #[tauri::command]
 pub async fn get_problem_by_id(app_state : tauri::State<'_,AppState>,
-  id : Uuid) -> Result<ClientProblem,String> {
+  id : Uuid) -> Result<Problem<String>,String> {
   match find_problem_by_id(&app_state.pool,id.to_string()).await {
     Ok(problem)   => Ok(problem),
     Err(err) => Err(err.to_string())
@@ -226,7 +226,7 @@ pub async fn get_problem_by_id(app_state : tauri::State<'_,AppState>,
 
 #[tauri::command]
 pub async fn get_machine_by_id(app_state : tauri::State<'_,AppState>,
-  id : Uuid) -> Result<ClientMachine,String> {
+  id : Uuid) -> Result<Machine<String>,String> {
   match find_machine_by_id(&app_state.pool,id.to_string()).await {
     Ok(mac)   => Ok(mac),
     Err(err) => Err(err.to_string())
@@ -235,7 +235,7 @@ pub async fn get_machine_by_id(app_state : tauri::State<'_,AppState>,
 
 #[tauri::command]
 pub async fn get_spare_part_by_id(app_state : tauri::State<'_,AppState>,
-  id : Uuid) -> Result<ClientSparePart,String> {
+  id : Uuid) -> Result<SparePart<String>,String> {
   match find_spare_part_by_id(&app_state.pool,id.to_string()).await {
     Ok(s)   => Ok(s),
     Err(err) => Err(err.to_string())
@@ -244,7 +244,7 @@ pub async fn get_spare_part_by_id(app_state : tauri::State<'_,AppState>,
 
 #[tauri::command]
 pub async fn get_employee_by_id(app_state : tauri::State<'_,AppState>,
-  id : Uuid) -> Result<ClientEmployee,String> {
+  id : Uuid) -> Result<Employee<String>,String> {
   match find_employee_by_id(&app_state.pool,id.to_string()).await {
     Ok(e)   => Ok(e),
     Err(err) => Err(err.to_string())

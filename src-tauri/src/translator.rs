@@ -1,4 +1,4 @@
-use rec::{timer::ShiftOrder,model::permissions::PermissionsNames};
+use rec::{timer::ShiftOrder,model::permissions::PermissionName};
 
 pub fn translate_date(date : String) -> Vec<String> {
   let date = validate_date(date);
@@ -26,9 +26,9 @@ fn validate_date(date : String) -> String{
 
 pub fn translate_order(order : &ShiftOrder) -> String{
   match order {
-    ShiftOrder::FIRST => "الاولي".to_owned(),
+    ShiftOrder::FIRST  => "الاولي".to_owned(),
     ShiftOrder::SECOND => "الثانية".to_owned(),
-    ShiftOrder::THIRD => "الثالثة".to_owned(),
+    ShiftOrder::THIRD  => "الثالثة".to_owned(),
   }
 }
 
@@ -47,18 +47,18 @@ pub fn translate_num(num : char) -> char{
   }
 }
 
-pub fn translate_permission(permission : &PermissionsNames) -> String{
+pub fn translate_permission(permission : &PermissionName) -> String{
   match permission {
-    PermissionsNames::WriteDepartmentProblem                        => "ادخال عطل".to_string(),
-    PermissionsNames::ReadDepartmentProblems                        => "قراءة الاعطال".to_string(),
-    PermissionsNames::DefineProblem                                 => "تعريف مشكلة".to_string(),
-    PermissionsNames::ModifyDepartmentProblems                      => "تعديل الاعطال".to_string(),
-    PermissionsNames::AccessHistoryAllDepartmentsDepartmentProblems => "قراءة سجل اعطال جميع الاقسام".to_string(),
-    PermissionsNames::AccessHistoryDepartmentDepartmentProblems     => "قراءة سجل الاعطال الخاصة بالقسم فقط".to_string(),
-    PermissionsNames::AccessHistoryAllDepartmentsProblems           => "قراءة سجل مشاكل جميع الاقسام".to_string(),
-    PermissionsNames::AccessHistoryDepartmentProblems               => "قراءة سجل المشاكل الخاصة بالقسم فقط".to_string(),
-    PermissionsNames::AccessHistoryEmployees                        => "قراءة سجل الموظفين".to_string(),
-    PermissionsNames::AccessHistoryMachines                         => "قراءة سجل الماكينات".to_string(),
-    PermissionsNames::AccessHistorySpareParts                       => "قراءة سجل قطع الغيار".to_string(),
+    PermissionName::WriteDepartmentProblem                        => "ادخال عطل".to_string(),
+    PermissionName::ReadDepartmentProblems                        => "قراءة الاعطال".to_string(),
+    PermissionName::DefineProblem                                 => "تعريف مشكلة".to_string(),
+    PermissionName::ModifyDepartmentProblems                      => "تعديل الاعطال".to_string(),
+    PermissionName::AccessHistoryAllDepartmentsDepartmentProblems => "قراءة سجل اعطال جميع الاقسام".to_string(),
+    PermissionName::AccessHistoryDepartmentDepartmentProblems     => "قراءة سجل الاعطال الخاصة بالقسم فقط".to_string(),
+    PermissionName::AccessHistoryAllDepartmentsProblems           => "قراءة سجل مشاكل جميع الاقسام".to_string(),
+    PermissionName::AccessHistoryDepartmentProblems               => "قراءة سجل المشاكل الخاصة بالقسم فقط".to_string(),
+    PermissionName::AccessHistoryEmployees                        => "قراءة سجل الموظفين".to_string(),
+    PermissionName::AccessHistoryMachines                         => "قراءة سجل الماكينات".to_string(),
+    PermissionName::AccessHistorySpareParts                       => "قراءة سجل قطع الغيار".to_string(),
   }
 }

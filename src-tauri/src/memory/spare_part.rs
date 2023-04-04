@@ -1,4 +1,4 @@
-use rec::model::{spare_part::ClientSparePart, name::Name};
+use rec::model::{spare_part::SparePart, name::Name};
 use sqlx::{Pool, Sqlite,Error, query_as};
 
 pub async fn find_all_spare_parts(pool : &Pool<Sqlite>) -> Result<Vec<Name>,Error> {
@@ -62,8 +62,8 @@ pub async fn find_all_spare_parts_names(pool : &Pool<Sqlite>) -> Result<Vec<Name
     }
 }
 
-pub async fn find_spare_part_by_id(pool : &Pool<Sqlite>,id : String) -> Result<ClientSparePart,Error> {
-    match query_as!(ClientSparePart,r#"
+pub async fn find_spare_part_by_id(pool : &Pool<Sqlite>,id : String) -> Result<SparePart<String>,Error> {
+    match query_as!(SparePart,r#"
       SELECT * FROM spare_part WHERE id = $1;
     "#,id).fetch_one(pool).await {
       Ok(problem) => Ok(problem),
