@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api"
 import { createResource, createSignal, Setter, Show} from "solid-js"
 import { createStore } from "solid-js/store"
-import { Name} from "../../index"
+import { Name, permissions} from "../../index"
 import { SearchBar } from "../molecules/SearchBar"
 import { listen } from '@tauri-apps/api/event'
 import { css } from "solid-styled-components"
@@ -152,6 +152,9 @@ export default function ProblemForm({
 
   return (
     <div class={container}>
+      <Show
+          when={permissions()?.write_department_problem}
+          fallback={<h1>ليس لديك صلاحية تسجيل عطل</h1>}>
         <form onSubmit={handleSubmit}>
         <div class={timeContainer}>
             <input value={endTime()}
@@ -232,7 +235,8 @@ export default function ProblemForm({
                  nyMessage={"لم يتم تسجيل اي قطع غيار <اختياري> ا"}/>
         <ExtraNote note={() => note()} setNote={setNote} />
         <SubmitButton/>
-    </form>
+      </form>
+    </Show>
   </div>
   )
 }

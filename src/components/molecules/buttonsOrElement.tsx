@@ -8,7 +8,7 @@ export function ButtonsOrElement({
   fun
   } : {
   returnButtonText   : string,
-  buttonElementPairs :() => [string,JSXElement][],
+  buttonElementPairs :() => (string | (() => JSXElement))[][],
   num : number[],
   fun : Function}){
 
@@ -38,7 +38,7 @@ export function ButtonsOrElement({
           <ToggleButton
             tButton={() => isChosen(index())}
             defaultCont={returnButtonText}
-            cont={item[0]}
+            cont={item[0] as string}
             toggle={() => toggle(index())}/>
           </Show>
         <Show when={isChosen(index())}>{item[1]}</Show>

@@ -1,5 +1,5 @@
-import { createEffect, createSignal,createResource, Show } from "solid-js"
-import { ShiftProblem, problemsFetcher } from "../../index"
+import { createEffect, createSignal,createResource, Show, For } from "solid-js"
+import { ShiftProblem, problemsFetcher, permissions } from "../../index"
 import ProblemRow from "../atoms/problemRow"
 import TableHead from "../atoms/problemTableHead"
 import togglingButton from "../atoms/problemTogglingButton"
@@ -8,10 +8,8 @@ import { css } from "solid-styled-components"
 
 export default function ShiftProblems({
     shiftId,
-    mutable,
     } : {
     shiftId : string,
-    mutable : boolean,
 }){
   const limit = 4
   const [shiftProblems,{refetch}] = createResource(shiftId,problemsFetcher)
@@ -41,21 +39,28 @@ export default function ShiftProblems({
 
   return (
     <section>
-      <Show when={mutable}>
-        <h1>امكانية التعديل قريبا</h1>
-      </Show>
-      <table class={style}>
-        <TableHead/>
-        <Show when={state()} fallback={<h1>جاري التحميل ...</h1>}>
-          <tbody>
-            {state()!.map(problem => <ProblemRow problem={problem}/>)}
-          </tbody>
+      <Show when={permissions()?.read_department_problems}
+            fallback={<h1>ليس لديك صلاحية قراءة اعطال الوردية</h1>} >
+        <Show when={permissions()?.modify_department_problems}>
+          <h1>امكانية التعديل قريبا</h1>
         </Show>
-      </table>
-      {togglingButton({
-          showButton : () => (shiftProblems() || []).length > limit,
-          showMore   : () => tooLong(),
-          doOnClick  : () => setTooLong(!tooLong())})}
+        <table class={style}>
+          <TableHead/>
+          <Show when={state()} fallback={<h1>جاري التحميل ...</h1>}>
+            {notNullState =>
+              <tbody>
+                <For each={notNullState()}>
+                  {problem =><ProblemRow problem={problem}/>}
+                </For>
+              </tbody>
+            }
+          </Show>
+        </table>
+        {togglingButton({
+            showButton : () => (shiftProblems() || []).length > limit,
+            showMore   : () => tooLong(),
+            doOnClick  : () => setTooLong(!tooLong())})}
+      </Show>
     </section>
   )
 }

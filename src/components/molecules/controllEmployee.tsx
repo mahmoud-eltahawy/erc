@@ -49,14 +49,18 @@ export default function ControllEmployees() {
                required/>
       </div>
       <ShowAllToggleButton target={target} toggle={toggle}/>
-      <ButtonsOrElement
+      <Show when={departmentsNames()}>
+       {notNullDepartments =>
+         <ButtonsOrElement
            returnButtonText="العودة لاعدادات الاقسام"
-           buttonElementPairs={() => (departmentsNames() || [])
-             .map(d => [d.name, <DepartmentEmployees
-                                   target={target}
-                                   departmentId={d.id}/>])}
+           buttonElementPairs={() => notNullDepartments()
+             .map(d => [d.name,() => <DepartmentEmployees
+                                     target={target}
+                                     departmentId={d.id}/>])}
            num={[-1]}
            fun={() => console.log("later")}/>
+       }
+      </Show>
     </section>
   )
 }
@@ -77,14 +81,16 @@ function DepartmentEmployees({target,departmentId} :{target : [string | null],de
 
   return (
     <section>
-        <Show when={!employees.loading} fallback={<h1>جاري التحميل ...</h1>}>
-          <ButtonsOrElement
-            buttonElementPairs={
-              () => (employees() || [])
-                .map(x => [x.name, () => <EmployeePermissions employeeId={x.id}/> ])}
-            num={[-1]}
-            fun={() => console.log("fun")}
-            returnButtonText="العودة لنتائج البحث"/>
+        <Show when={employees()} fallback={<h1>جاري التحميل ...</h1>}>
+          {notNullEmployees =>
+            <ButtonsOrElement
+              buttonElementPairs={
+                () => notNullEmployees()
+                  .map(x => [x.name, () => <EmployeePermissions employeeId={x.id}/> ])}
+              num={[-1]}
+              fun={() => console.log("fun")}
+              returnButtonText="العودة لنتائج البحث"/>
+          }
         </Show>
     </section>
   )
@@ -108,9 +114,15 @@ function EmployeePermissions({employeeId} : {employeeId : string}){
   }
 
   return (
-    <PermissionsTemplate
-      allowedHandler={allowedHandler}
-      forbiddenHandler={forbiddenHandler}
-      permissions={() => permissions()}/>
+    <section>
+      <Show when={permissions()}>
+        {notNullPermissions =>
+          <PermissionsTemplate
+            allowedHandler={allowedHandler}
+            forbiddenHandler={forbiddenHandler}
+            permissions={() => notNullPermissions()}/>
+        }
+      </Show>
+    </section>
   )
 }

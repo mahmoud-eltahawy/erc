@@ -1,7 +1,7 @@
 import { createEffect,createResource,Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import { employees_names_fetcher } from '../..'
+import { employees_names_fetcher, permissions } from '../..'
 import ShowAllToggleButton from "../atoms/showAllToggleButton"
 import { ButtonsOrElement } from "./buttonsOrElement"
 
@@ -38,16 +38,20 @@ export default function HistoryEmployees() {
 
   return (
     <section>
-      <div class={container}>
-        <input value={target[0]!}
-               onInput={e => setTarget([e.currentTarget.value])}
-               class={targetStyle}
-               type="text"
-               placeholder="ادخل اسم الموظف"
-               required/>
-      </div>
-      <ShowAllToggleButton target={target} toggle={toggle}/>
-      <ShowHistory target={target}/>
+      <Show
+          when={permissions()?.access_history_employees}
+          fallback={<h1>ليس لديك الصلاحيات للاطلاع علي سجل الموظفين</h1>} >
+        <div class={container}>
+          <input value={target[0]!}
+                onInput={e => setTarget([e.currentTarget.value])}
+                class={targetStyle}
+                type="text"
+                placeholder="ادخل اسم الموظف"
+                required/>
+        </div>
+        <ShowAllToggleButton target={target} toggle={toggle}/>
+        <ShowHistory target={target}/>
+      </Show>
     </section>
   )
 }
@@ -63,12 +67,18 @@ function ShowHistory({target} :{target : [string | null]}){
 
   return (
     <section>
-        <Show when={!employees.loading} fallback={<h1>جاري التحميل ...</h1>}>
-          <ButtonsOrElement
-            buttonElementPairs={() => (employees() || []).map(x => [x.name, () => <h1> employee profile </h1>])}
-            num={[-1]}
-            fun={() => console.log("fun")}
-            returnButtonText="العودة لنتائج البحث"/>
+        <Show
+            when={employees()}
+            fallback={<h1>جاري التحميل ...</h1>}>
+          {notNullEmployees =>
+            <ButtonsOrElement
+              buttonElementPairs={() => notNullEmployees()
+                .filter(d => d.id !== "00000000-0000-0000-0000-000000000000")
+                .map(x => [x.name, () => <h1> employee profile </h1>])}
+              num={[-1]}
+              fun={() => console.log("fun")}
+              returnButtonText="العودة لنتائج البحث"/>
+          }
         </Show>
     </section>
   )

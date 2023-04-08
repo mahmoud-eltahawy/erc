@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api';
-import { createSignal, Setter } from 'solid-js'
+import { createSignal, Setter, Show } from 'solid-js'
 import { css } from 'solid-styled-components';
-import { Employee } from '../../index';
+import { Employee, permissions } from '../../index';
 
 export default function DefineProblem({
     toggle,
@@ -36,11 +36,15 @@ export default function DefineProblem({
 
   return (
   <section class={style}>
-    <form onSubmit={handleSubmit}>
-      <TitleInput title={() => title()} setTitle={setTitle} />
-      <DescriptionInput desc={() => desc()} setDesc={setDesc}/>
-      <SubmitButton length={() => desc().length} />
-    </form>
+    <Show
+        when={permissions()?.define_problem}
+        fallback={<h1>ليس لديك صلاحية تعريف مشكلة</h1>}>
+      <form onSubmit={handleSubmit}>
+        <TitleInput title={() => title()} setTitle={setTitle} />
+        <DescriptionInput desc={() => desc()} setDesc={setDesc}/>
+        <SubmitButton length={() => desc().length} />
+      </form>
+    </Show>
   </section>
   )
 }

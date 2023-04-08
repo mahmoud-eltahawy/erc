@@ -2,10 +2,10 @@ import { invoke } from "@tauri-apps/api"
 import { createEffect, createResource, createSignal, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import { departmentsNames, Name } from '../..'
+import { departmentsNames, Name, permissions } from '../..'
 import { ButtonsOrElement } from "./buttonsOrElement"
 
-export default function HistoryProblems({department_id}:{department_id : string | null}){
+export default function HistoryProblems({department_id}:{department_id : string}){
   const [target,setTarget] = createStore<[string | null]>([null])
 
   const toggle = () => {
@@ -38,21 +38,33 @@ export default function HistoryProblems({department_id}:{department_id : string 
 
   return (
     <section>
-      <div class={container}>
-        <input value={target[0]!}
-               onInput={e => setTarget([e.currentTarget.value])}
-               class={targetStyle}
-               type="text"
-               placeholder="ادخل اسم المشكلة"
-               required/>
-      </div>
-      <ShowAllToggleButton target={target} toggle={toggle}/>
       <Show
-          when={department_id}
-          fallback={<ShowAllHistory target={() => target}/>}>
-        <ShowHistory
-            target={target}
-            departmentId={department_id!}/>
+          when={
+            permissions()?.access_history_all_departments_problems ||
+            permissions()?.access_history_department_problems
+          }
+          fallback={<h1>ليس لديك الصلاحيات للاطلاع علي سجل المشكلات</h1>}>
+        <div class={container}>
+          <input value={target[0]!}
+                onInput={e => setTarget([e.currentTarget.value])}
+                class={targetStyle}
+                type="text"
+                placeholder="ادخل اسم المشكلة"
+                required/>
+        </div>
+        <ShowAllToggleButton target={target} toggle={toggle}/>
+        <Show
+            when={permissions()?.access_history_all_departments_problems}
+            fallback={
+              <div>
+                <h1>مسموح لك بالاطلاع علي مشكلات قسمك فقط</h1>
+                <ShowHistory
+                  target={target}
+                  departmentId={department_id}/>
+              </div>
+            }>
+          <ShowAllHistory target={() => target}/>
+        </Show>
       </Show>
     </section>
   )
@@ -87,14 +99,20 @@ const fetcher = async ({departmentId,name} : {departmentId : string, name : () =
 
 function ShowAllHistory({target} : {target :() => [string | null]}){
     return (
-        <ButtonsOrElement
+      <Show when={departmentsNames()}>
+        {
+          notNullDepartments =>
+            <ButtonsOrElement
               returnButtonText="الرجوع الي الاقسام"
-              buttonElementPairs={() => (departmentsNames() || [])
-                .map(d => [d.name, <ShowHistory
-                                      departmentId={d.id}
-                                      target={target()}/>])}
+              buttonElementPairs={() => notNullDepartments()
+                .filter(d => d.id !== "00000000-0000-0000-0000-000000000000")
+                .map(d => [d.name,() => <ShowHistory
+                                        departmentId={d.id}
+                                        target={target()}/>])}
               num={[-1]}
               fun={() => console.log("later")}/>
+        }
+      </Show>
     )
 }
 
@@ -109,12 +127,14 @@ function ShowHistory({target,departmentId} :{departmentId : string,target : [str
 
   return (
     <section>
-        <Show when={!problems.loading} fallback={<h1>جاري التحميل ...</h1>}>
-          <ButtonsOrElement
-            buttonElementPairs={() => (problems() || []).map(x => [x.name, () => <Profile id={x.id}/>])}
-            num={[-1]}
-            fun={() => console.log("fun")}
-            returnButtonText="العودة لنتائج البحث"/>
+        <Show when={problems()} fallback={<h1>جاري التحميل ...</h1>}>
+          {notNullProblems =>
+            <ButtonsOrElement
+              buttonElementPairs={() => notNullProblems().map(x => [x.name, () => <Profile id={x.id}/>])}
+              num={[-1]}
+              fun={() => console.log("fun")}
+              returnButtonText="العودة لنتائج البحث"/>
+          }
         </Show>
     </section>
   )
@@ -128,7 +148,7 @@ export type Profile = {
 }
 
 const profiler = async ({id} : {id : string}) => {
-  return (await invoke("profile_problem", { id })) as Profile
+  return (await invoke("profile_problem", {id})) as Profile
 }
 
 function Profile({id} : {id : string}){
@@ -140,25 +160,29 @@ function Profile({id} : {id : string}){
   })
 
   return (
-      <section>
-        <table class={tableStyle}>
-              <thead>
-                <tr>
-                  <th>الاسم</th>
-                  <th>القسم</th>
-                  <th>المؤلف</th>
-                  <th>الوصف</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{profile()?.title}</td>
-                  <td>{profile()?.department_name}</td>
-                  <td>{profile()?.writer_name}</td>
-                  <td><p>{profile()?.description}</p></td>
-                </tr>
-              </tbody>
-          </table>
-      </section>
+    <section>
+      <table class={tableStyle}>
+            <thead>
+              <tr>
+                <th>الاسم</th>
+                <th>القسم</th>
+                <th>المؤلف</th>
+                <th>الوصف</th>
+              </tr>
+            </thead>
+            <tbody>
+            <Show when={profile()}>
+              {notNullProfile =>
+                  <tr>
+                    <td>{notNullProfile().title}</td>
+                    <td>{notNullProfile().department_name}</td>
+                    <td>{notNullProfile().writer_name}</td>
+                    <td><p>{notNullProfile().description}</p></td>
+                  </tr>
+              }
+            </Show>
+            </tbody>
+        </table>
+    </section>
   )
 }

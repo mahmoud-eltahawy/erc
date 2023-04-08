@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api"
 import { createEffect,createResource,createSignal,Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import { Name } from '../..'
+import { Name, permissions } from '../..'
 import { ButtonsOrElement } from "./buttonsOrElement"
 
 export default function HistoryMachines() {
@@ -38,16 +38,20 @@ export default function HistoryMachines() {
 
   return (
     <section>
-      <div class={container}>
-        <input value={target[0]!}
-               onInput={e => setTarget([e.currentTarget.value])}
-               class={targetStyle}
-               type="text"
-               placeholder="ادخل اسم الماكينة"
-               required/>
-      </div>
-      <ShowAllToggleButton target={target} toggle={toggle}/>
-      <ShowHistory target={target}/>
+      <Show
+          when={permissions()?.access_history_machines}
+          fallback={<h1>ليس لديك الصلاحيات للاطلاع علي الماكينات</h1>}>
+        <div class={container}>
+          <input value={target[0]!}
+                onInput={e => setTarget([e.currentTarget.value])}
+                class={targetStyle}
+                type="text"
+                placeholder="ادخل اسم الماكينة"
+                required/>
+        </div>
+        <ShowAllToggleButton target={target} toggle={toggle}/>
+        <ShowHistory target={target}/>
+      </Show>
     </section>
   )
 }
@@ -90,12 +94,17 @@ function ShowHistory({target} :{target : [string | null]}){
 
   return (
     <section>
-        <Show when={!machines.loading} fallback={<h1>جاري التحميل ...</h1>}>
-          <ButtonsOrElement
-            buttonElementPairs={() => (machines() || []).map(x => [x.name, () => <h1> machine profile </h1>])}
-            num={[-1]}
-            fun={() => console.log("fun")}
-            returnButtonText="العودة لنتائج البحث"/>
+        <Show
+            when={machines()}
+            fallback={<h1>جاري التحميل ...</h1>}>
+          {notNullMachines =>
+            <ButtonsOrElement
+              buttonElementPairs={() => notNullMachines()
+                  .map(x => [x.name, () => <h1> machine profile </h1>])}
+              num={[-1]}
+              fun={() => console.log("fun")}
+              returnButtonText="العودة لنتائج البحث"/>
+          }
         </Show>
     </section>
   )

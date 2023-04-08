@@ -32,13 +32,29 @@ function App() {
     }
   },1000)
 
+  const fallback = <LoginForm
+                      setEmployee={setEmployee}
+                      setShiftId={setShiftId}/>
+
   return (
     <section>
       <ShiftIdentity/>
       <Show
-          when={employee() && shiftId()}
-          fallback={<LoginForm setEmployee={setEmployee} setShiftId={setShiftId}/>}>
-        <Wall employee={employee()!} shiftId={shiftId()!} setEmployee={setEmployee} setShiftId={setShiftId}/>
+          when={shiftId()}
+          fallback={fallback}>
+          {nonNullshiftId =>
+              <Show
+                  when={employee()}
+                  fallback={fallback}>
+                  {nonNullEmployee =>
+                    <Wall
+                        employee={nonNullEmployee()!}
+                        shiftId={nonNullshiftId()}
+                        setEmployee={setEmployee}
+                        setShiftId={setShiftId}/>
+                  }
+              </Show>
+          }
       </Show>
     </section>
   )

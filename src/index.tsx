@@ -9,17 +9,35 @@ import { listen } from "@tauri-apps/api/event";
 render(() => <App/>,document.getElementById("root") as HTMLElement);
 
 async function departments_fetcher () {
-  return (await invoke("list_departments")) as Name[]
+  return (await invoke("list_departments")
+    .catch(err => console.log(err))) as Name[]
+}
+
+let current_session : string | null =  null
+
+const permissions_fetcher = async ({id} : {id : () => string | null}) => {
+  return (await invoke("employee_permissions",{id :id()})
+      .catch(err => console.log(err))) as Permissions
 }
 
 export const employees_names_fetcher = async ({name} : {name : () => string | null}) => {
   return (await invoke("search_employees",{name : name() !== ' ' ? name() : null})) as Name[]
 }
 
-export const [departmentsNames,{refetch}] = createResource(departments_fetcher)
+export const [permissions,pr] = createResource({id : () => current_session},permissions_fetcher)
+export const [departmentsNames,dr] = createResource(departments_fetcher)
+
+listen("update_permissions",() => {
+  pr.refetch()
+})
+
+listen("new_login",(e) => {
+  current_session = e.payload as string
+  pr.refetch()
+})
 
 listen("update_departments",() => {
-  refetch()
+  dr.refetch()
 })
 
 export type NativeDepartment = {
@@ -42,16 +60,6 @@ export type Permissions = {
   read_department_problems                              :  boolean,
   modify_department_problems                            :  boolean,
   define_problem                                        :  boolean,
-  access_history_department_problems                    :  boolean,
-  access_history_all_departments_problems               :  boolean,
-  access_history_department_department_problems         :  boolean,
-  access_history_all_departments_department_problems    :  boolean,
-  access_history_machines                               :  boolean,
-  access_history_spare_parts                            :  boolean,
-  access_history_employees                              :  boolean,
-}
-
-export type HistoryPermissions = {
   access_history_department_problems                    :  boolean,
   access_history_all_departments_problems               :  boolean,
   access_history_department_department_problems         :  boolean,

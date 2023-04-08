@@ -9,7 +9,7 @@ export default function PermissionsTemplate({
     } : {
     allowedHandler : Function,
     forbiddenHandler : Function,
-    permissions : () => PermissionsClassified | undefined
+    permissions : () => PermissionsClassified
 }){
     const viewContainer = css({
     display: "flex",
@@ -30,12 +30,12 @@ export default function PermissionsTemplate({
     borderBottomRightRadius : "20px",
   })
 
-  const allowed   = () => permissions()?.allowed
-  const forbidden = () => permissions()?.forbidden
+  const allowed   = () => permissions().allowed
+  const forbidden = () => permissions().forbidden
 
   return (
     <Show
-        when={allowed() || forbidden()}
+        when={permissions()}
         fallback={<h1>يجب تعيين رئيس قسم قبل اضافة صلاحيات</h1>}>
       <section class={viewContainer}>
         <select multiple size={(allowed() || []).length + 1} class={viewMember}>

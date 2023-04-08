@@ -15,14 +15,19 @@ export default function ControllDepartments(){
   })
 
   return (
-      <section class={container}>
+    <Show when={departmentsNames()}>
+      {notNullDepartments =>
+        <section class={container}>
           {<ButtonsOrElement
                returnButtonText="العودة لاعدادات الاقسام"
-               buttonElementPairs={() => (departmentsNames() || [])
-                   .map(d => [d.name, <DepartmentSettings departmentId={d.id} />])}
+            buttonElementPairs={() => notNullDepartments()
+                .filter(d => d.id !== "00000000-0000-0000-0000-000000000000")
+                .map(d => [d.name,() => <DepartmentSettings departmentId={d.id} />])}
                num={[-1]}
                fun={() => console.log("later")}/>}
-      </section>
+        </section>
+      }
+    </Show>
   )
 }
 
@@ -79,31 +84,33 @@ function DepartmentSettings({departmentId} : {departmentId : string}){
   })
 
   return (
-    <Show when={department() && permissions()}>
-      <section class={container}>
-          {<ButtonsOrElement
-               returnButtonText={"العودة الي " + department()?.name}
-               buttonElementPairs={() => {
-                 const pairs : [string,JSXElement][] = [
-                   ["اختيار رئيس القسم",() => <ChooseBoss
-                                        department={() => department()}
+    <section class={container}>
+      <Show when={department()}>
+        {notNullDepartment =>
+          <ButtonsOrElement
+             returnButtonText={"العودة الي " + notNullDepartment().name}
+             buttonElementPairs={() => {
+                 const pairs : (string | (() => JSXElement))[][] = [
+                 ["اختيار رئيس القسم",() => <ChooseBoss
+                                        department={() => notNullDepartment()}
                                         refetch={() => refetch()} />],
-                   ["صلاحيات القسم",() => <PermissionsTemplate
+                 ["صلاحيات القسم",() => <PermissionsTemplate
                                         allowedHandler={allowedHandler}
                                         forbiddenHandler={forbiddenHandler}
-                                        permissions={() => permissions()} />],
-                 ]
+                                        permissions={() => permissions()!} />], //TODO remove this (!)
+               ]
 
-                 return pairs;
-               }}
-               num={[-1]}
-               fun={() => console.log("later")}/>}
-      </section>
-    </Show>
+               return pairs;
+             }}
+             num={[-1]}
+             fun={() => console.log("later")}/>
+        }
+      </Show>
+    </section>
   )
 }
 
-function ChooseBoss({department,refetch} : {department : () => Department | undefined,refetch : Function}){
+function ChooseBoss({department,refetch} : {department : () => Department,refetch : Function}){
   const [target, setTarget]     = createSignal<string>('')
 
   const optionHandler = async (id : string) => {
@@ -135,8 +142,8 @@ function ChooseBoss({department,refetch} : {department : () => Department | unde
   })
 
   return (
-    <Show when={department()} fallback={<h1> ...جاري التحميل</h1>}>
-      <h1 class={css({fontSize: "20px"})}>رئيس القسم : {department()?.boss?.name ? department()?.boss?.name: 'لا يوجد'}</h1>
+    <section>
+      <h1 class={css({fontSize: "20px"})}>رئيس القسم : {department().boss?.name ? department().boss?.name: 'لا يوجد'}</h1>
       <input
         class={inputStyle}
         type="text"
@@ -144,11 +151,11 @@ function ChooseBoss({department,refetch} : {department : () => Department | unde
         onInput={e => {
           setTarget(e.currentTarget.value)
         }}/>
-      <select multiple size={department()?.employees.length} class={viewMember}>
-        <For each={department()?.employees.filter(m => m.name.includes(target()!))}>
+      <select multiple size={department().employees.length} class={viewMember}>
+        <For each={department().employees.filter(m => m.name.includes(target()!))}>
           {item => <option onClick={() => optionHandler(item.id)}>{item.name}</option>}
         </For>
       </select>
-    </Show>
+    </section>
   )
 }
