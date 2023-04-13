@@ -13,28 +13,12 @@ async function departments_fetcher () {
     .catch(err => console.log(err))) as Name[]
 }
 
-let current_session : string | null =  null
-
-const permissions_fetcher = async ({id} : {id : () => string | null}) => {
-  return (await invoke("employee_permissions",{id :id()})
-      .catch(err => console.log(err))) as Permissions
-}
 
 export const employees_names_fetcher = async ({name} : {name : () => string | null}) => {
   return (await invoke("search_employees",{name : name() !== ' ' ? name() : null})) as Name[]
 }
 
-export const [permissions,pr] = createResource({id : () => current_session},permissions_fetcher)
 export const [departmentsNames,dr] = createResource(departments_fetcher)
-
-listen("update_permissions",() => {
-  pr.refetch()
-})
-
-listen("new_login",(e) => {
-  current_session = e.payload as string
-  pr.refetch()
-})
 
 listen("update_departments",() => {
   dr.refetch()
@@ -43,7 +27,6 @@ listen("update_departments",() => {
 export type NativeDepartment = {
    id            : string,
    boss_id       : string | null,
-   department_id : string | null,
    name          : string,
 }
 

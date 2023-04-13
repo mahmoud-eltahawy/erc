@@ -1,18 +1,20 @@
 import { invoke } from "@tauri-apps/api"
-import { createEffect, createResource, Show } from "solid-js"
-import { createStore } from "solid-js/store"
+import { createEffect, createResource, createSignal, Show } from "solid-js"
 import { css } from "solid-styled-components"
-import { departmentsNames, permissions } from "../.."
-import { ButtonsOrElement } from "./buttonsOrElement"
-import HistoryShiftProblems from "./historyShiftProblems"
+import { departmentsNames } from "../.."
+import { employee, permissions } from "../../App"
+import { ButtonsOrElementLite } from "./buttonsOrElement"
+import ShiftWrittenShow from "./shiftWrittenNote"
 
 type Day = {
     date   : [string,string,string],
     shifts : [string,string][]
 }
 
-export default function HistoryDays({department_id} : {department_id : string}){
-  const [dates,setDates] = createStore<[string | null,string | null]>([null,null])
+const [begin, setBegin] = createSignal<string | null>()
+const [end, setEnd] = createSignal<string | null>()
+
+export default function HistoryDays(){
 
   const dateContainer = css({
     display: "inline-block",
@@ -44,65 +46,62 @@ export default function HistoryDays({department_id} : {department_id : string}){
     <section>
       <Show
           when={
-            permissions()?.access_history_all_departments_department_problems ||
-            permissions()?.access_history_department_department_problems
+            permissions()!.access_history_all_departments_department_problems ||
+            permissions()!.access_history_department_department_problems
           }
           fallback={<h1>غير مسموح لك بالاطلاع علي سجل الورديات</h1>} >
         <div class={dateContainer}>
-          <input value={dates[1]!}
-                onChange={e => setDates([dates[0],e.currentTarget.value])}
+          <input value={end()!}
+                onChange={e => setEnd(e.currentTarget.value)}
                 class={dateInput}
                 type="date"
                 required/>
-          <label class={dateLabel}><h4>وقت النهاية</h4></label>
+          <label class={dateLabel}><h4>تاريخ النهاية</h4></label>
         </div>
         <div class={dateContainer}>
-          <input value={dates[0]!}
-                onChange={e => setDates([e.currentTarget.value,dates[1]])}
+          <input value={begin()!}
+                onChange={e => setBegin(e.currentTarget.value)}
                 class={dateInput}
                 type="date"
                 required/>
-          <label class={dateLabel}><h4>وقت البداية</h4></label>
+          <label class={dateLabel}><h4>تاريخ البداية</h4></label>
         </div>
         <Show
-          when={permissions()?.access_history_all_departments_department_problems}
+          when={permissions()!.access_history_all_departments_department_problems}
           fallback={
             <div>
               <h1>مسموح لك بالاطلاع علي سجل ورديات قسمك فقط</h1>
               <ShowHistory
-                departmentId={department_id}
-                dates={dates}/>
+                departmentId={() => employee()!.department_id}/>
             </div>
           }>
-          <ShowAllHistory dates={() => dates}/>
+          <ShowAllHistory/>
         </Show>
       </Show>
     </section>
   )
 }
 
-const fetcher = async (args : {
+const fetcher = async ({departmentId}:{
     departmentId  : () => string,
-    begin         : () => string | null | undefined,
-    end           : () => string | null | undefined
 }) => {
-    return (await invoke("search_shifts",{departmentId : args.departmentId(),
-                                    begin :args.begin(),end : args.end()})) as Day[]
+   return (await invoke("search_shifts",{
+       departmentId : departmentId(),
+       begin :begin(),
+       end: end()
+   }).catch(err => console.log(err))) as Day[]
 }
 
-function ShowAllHistory({dates} : {dates :() => [string | null,string | null]}){
+function ShowAllHistory(){
     return (
       <Show when={departmentsNames()}>
         {notNullDepartments =>
-          <ButtonsOrElement
+          <ButtonsOrElementLite
               returnButtonText="الرجوع الي الاقسام"
               buttonElementPairs={() => notNullDepartments()
                 .filter(d => d.id !== "00000000-0000-0000-0000-000000000000")
-                .map(d => [d.name,() => <ShowHistory
-                                        departmentId={d.id}
-                                        dates={dates()}/>])}
-              num={[-1]}
-              fun={() => console.log("later")}/>
+                .map(d => [d.name,<ShowHistory
+                                        departmentId={() => d.id}/>])}/>
         }
       </Show>
     )
@@ -110,18 +109,16 @@ function ShowAllHistory({dates} : {dates :() => [string | null,string | null]}){
 
 function ShowHistory({
     departmentId,
-    dates
     } : {
-    departmentId : string,
-    dates :[string | null,string | null],
+    departmentId : () => string
     }){
-  const [days, { refetch }] = createResource({ departmentId : () => departmentId,
-                    begin: () => dates.at(0), end: () => dates.at(1)},fetcher);
+  const [days, { refetch }] = createResource({departmentId},fetcher);
 
   createEffect(() => {
-      if(dates[0] && dates[1]){
-        refetch()
-      }
+    const b = begin()
+    const e =end()
+    console.log(b + "  " + e)
+    refetch()
   })
 
   const container = css({
@@ -136,11 +133,9 @@ function ShowHistory({
       <div class={container}>
         <Show when={days()}>
           {notNullDays =>
-            <ButtonsOrElement
+            <ButtonsOrElementLite
               buttonElementPairs={() => notNullDays().
-                  map(x => [x.date.join(" / "), () => <Shifts shifts={() => x.shifts}/>])}
-              num={[-1]}
-              fun={() => console.log("fun")}
+                  map(x => [x.date.join(" / "), <Shifts shifts={() => x.shifts}/>])}
               returnButtonText="يوم اخر"/>
           }
         </Show>
@@ -150,13 +145,11 @@ function ShowHistory({
 
 function Shifts({shifts} : {shifts : () => [string,string][]}){
     return (
-        <div>
-        <ButtonsOrElement
+      <div>
+        <ButtonsOrElementLite
                 buttonElementPairs={() => shifts().
-                    map(x => [x[1], () => <HistoryShiftProblems shiftId={x[0]} />])}
-                num={[-1]}
-                fun={() => console.log("fun")}
+                  map(x => [x[1], <ShiftWrittenShow shiftId={() => x[0]}/>])}
                 returnButtonText="وردية اخري"/>
-        </div>
+      </div>
     )
 }

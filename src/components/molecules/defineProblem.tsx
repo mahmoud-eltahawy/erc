@@ -1,14 +1,13 @@
 import { invoke } from '@tauri-apps/api';
 import { createSignal, Setter, Show } from 'solid-js'
 import { css } from 'solid-styled-components';
-import { Employee, permissions } from '../../index';
+import { employee, permissions } from '../../App';
+import SubmitButton from '../atoms/submitButton';
 
 export default function DefineProblem({
-    toggle,
-    employee,
+    toggle
 } : {
-    toggle : Function,
-    employee : Employee
+    toggle : Function
 }){
   const [title,setTitle] = createSignal('')
   const [desc,setDesc] = createSignal('')
@@ -18,7 +17,11 @@ export default function DefineProblem({
     toggle()
     try{
       await invoke('define_problem',
-            {writerId : employee.id,departmentId : employee.department_id,title : title(),description : desc()})
+                   {
+                       writerId : employee()?.id,
+                       departmentId : employee()?.department_id,
+                       title : title(),description : desc()
+      })
         setTitle('')
         setDesc('')
     } catch(err){
@@ -49,29 +52,7 @@ export default function DefineProblem({
   )
 }
 
-function SubmitButton({length} : {length : () => number}){
-  const [hover,setHover] = createSignal(false)
-
-  const style = () => css({
-   display: "block",
-   width: "25%",
-   borderRadius: hover() ? "5px" : "20px",
-   fontSize: hover() ? "24px" : "18px",
-   border: "solid 3px",
-   margin: "2px auto",
-   padding: "2px",
-  })
-
-  return (
-    <button
-        class={style()}
-        onMouseOver={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        type="submit">تاكيد {length()}</button>
-  )
-}
-
-function DescriptionInput({desc,setDesc} : {desc : () => string,setDesc : Setter<string>}){
+export function DescriptionInput({desc,setDesc} : {desc : () => string,setDesc : Setter<string>}){
   const style = css({
    display: "block",
    width: "50%",
@@ -88,7 +69,7 @@ function DescriptionInput({desc,setDesc} : {desc : () => string,setDesc : Setter
         maxLength={349}
         cols={30} rows={5}
         class={style}
-        placeholder="وصف المشكلة في اقل من 350 حرف"
+        placeholder="اقل من 350 حرف"
         required></textarea>
   )
 }

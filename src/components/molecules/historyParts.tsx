@@ -2,8 +2,9 @@ import { invoke } from "@tauri-apps/api"
 import { createEffect, createResource, createSignal, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import {Name, permissions} from '../..'
-import { ButtonsOrElement } from "./buttonsOrElement"
+import { Name } from '../..'
+import { permissions } from "../../App"
+import { ButtonsOrElementLite } from "./buttonsOrElement"
 
 export default function HistoryParts() {
   const [target,setTarget] = createStore<[string | null]>([null])
@@ -96,11 +97,9 @@ function ShowHistory({target} :{target : [string | null]}){
     <section>
       <Show when={parts()} fallback={<h1>جاري التحميل ...</h1>}>
         {notNullParts =>
-          <ButtonsOrElement
+          <ButtonsOrElementLite
             buttonElementPairs={() => notNullParts()
-                .map(x => [x.name, () => <h1> spare part profile </h1>])}
-            num={[-1]}
-            fun={() => console.log("fun")}
+                .map(x => [x.name, <h1> spare part profile </h1>])}
             returnButtonText="العودة لنتائج البحث"/>
         }
         </Show>

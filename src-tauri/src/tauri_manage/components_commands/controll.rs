@@ -8,7 +8,7 @@ use errc::{
     memory::{
         department::{find_all_departments, find_department_by_id},
         employee::{
-            find_9_non_admins, find_9_non_admins_by_name, find_admins, find_department_4_employees,
+            find_9_non_admins, find_9_non_admins_by_name, find_admins, find_department_8_employees,
             find_department_employees_by_name, find_employee_name_by_id,
             find_employees_by_department_id_except_boss,
         },
@@ -269,7 +269,7 @@ pub async fn search_department_employees(
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_department_4_employees(&app_state.pool, &department_id).await {
+        match find_department_8_employees(&app_state.pool, &department_id).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }

@@ -13,13 +13,11 @@ CREATE INDEX IF NOT EXISTS idx_cv_otid ON cud_version (other_target_id);
 CREATE TABLE IF NOT EXISTS department(
        id                 VARCHAR(80)                                 NOT NULL        UNIQUE,
        boss_id            VARCHAR(80),
-       department_id      VARCHAR(80),
        name               VARCHAR(20)                                 NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_dep_id      ON department (id);
 CREATE INDEX IF NOT EXISTS idx_dep_bid     ON department (boss_id);
-CREATE INDEX IF NOT EXISTS idx_dep_depid   ON department (department_id);
 
 CREATE TABLE IF NOT EXISTS employee(
        id                 VARCHAR(80)                                 NOT NULL        UNIQUE,
@@ -97,6 +95,12 @@ CREATE TABLE IF NOT EXISTS department_shift (
 CREATE INDEX IF NOT EXISTS idx_dep_sft_id       ON department_shift(id);
 CREATE INDEX IF NOT EXISTS idx_dep_sft_sft_id   ON department_shift(shift_id);
 CREATE INDEX IF NOT EXISTS idx_dep_sft_dep_id   ON department_shift(department_id);
+
+CREATE TABLE IF NOT EXISTS department_shift_employee (
+       department_shift_id  UUID              NOT NULL,
+       employee_id          UUID              NOT NULL,
+       UNIQUE(department_shift_id,employee_id)
+);
 
 CREATE TABLE IF NOT EXISTS shift_problem(
        id                   VARCHAR(80)                               NOT NULL        UNIQUE,

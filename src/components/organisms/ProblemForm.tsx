@@ -1,10 +1,12 @@
 import { invoke } from "@tauri-apps/api"
 import { createResource, createSignal, Setter, Show} from "solid-js"
 import { createStore } from "solid-js/store"
-import { Name, permissions} from "../../index"
+import { Name} from "../../index"
 import { SearchBar } from "../molecules/SearchBar"
 import { listen } from '@tauri-apps/api/event'
 import { css } from "solid-styled-components"
+import SubmitButton from "../atoms/submitButton"
+import { employee, permissions, shiftId } from "../../App"
 
 const borders_fetcher = async () => {
     return (await invoke("current_shift_borders")) as [string,string]
@@ -19,7 +21,7 @@ const fetcher = async (selection : string,the_name : string | null,canceled :() 
     return (await invoke(selection,{name,canceled :canceled()})) as Name[]
 }
 const department_fetcher = async (selection : string,
-                departmentId : string,name : string | null,canceled : () => string[]) => {
+                name : string | null,canceled : () => string[]) => {
     let the_name = null;
     if ( name ) {
         if ( name !== ' ' ){
@@ -27,22 +29,17 @@ const department_fetcher = async (selection : string,
         }
     }
     console.log("the name is"+the_name)
-    return (await invoke(selection,{departmentId,name : the_name,canceled :canceled()})) as Name[]
+    return (await invoke(selection,{departmentId : employee()!.department_id,name : the_name,canceled :canceled()})) as Name[]
 }
 
 export type Updates = ["Problem"] | ["SparePart"] | ["Machine"] | ["Employee"] | ["None"]
 
 export default function ProblemForm({
     toggle,
-    writerId,
-    shiftId,
-    departmentId,
 } : {
     toggle          : Function,
-    writerId        : string,
-    shiftId         : string,
-    departmentId    : string,
 }){
+
   const [shiftBorders] = createResource(borders_fetcher)
 
   const [beginTime      ,setBeginTime    ] = createSignal("")
@@ -98,8 +95,8 @@ export default function ProblemForm({
     toggle()
     try{
       const problemDetail = {
-          shift_id             : shiftId,
-          writer_id            : writerId,
+          shift_id             : shiftId(),
+          writer_id            : employee()?.id,
           maintainer_id        : employees.at(0)!.id,
           machine_id           : machines.at(0)!.id,
           begin_time           : beginTime().length === 8 ? beginTime() : beginTime() + ":00",
@@ -216,7 +213,7 @@ export default function ProblemForm({
                  resultPlaceholder="عدد المشاكل"
                  selection_fetcher={(name : () => string | null) =>
                      department_fetcher("problems_selection",
-                                        departmentId, name(),
+                                        name(),
                                         () => problems.map(p => p.name))}
                  nyMessage={"لم يتم اختيار اي مشكلة حتي الان <اجباري> ا"}/>
         <SearchBar
@@ -234,7 +231,7 @@ export default function ProblemForm({
                                 () => spareParts.map(s => s.name))}
                  nyMessage={"لم يتم تسجيل اي قطع غيار <اختياري> ا"}/>
         <ExtraNote note={() => note()} setNote={setNote} />
-        <SubmitButton/>
+        <SubmitButton length={undefined} />
       </form>
     </Show>
   </div>
@@ -304,27 +301,5 @@ function NoteButton({length,toggleNote} : {length : () => number,toggleNote : Fu
           onMouseOver={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
       >اضافة ملحوظة  { length() }</button>
-  )
-}
-
-function SubmitButton(){
-  const [hover,setHover] = createSignal(false)
-
-  const style = () => css({
-   display: "block",
-   width: "25%",
-   borderRadius: hover() ? "5px" : "20px",
-   fontSize: hover() ? "24px" : "18px",
-   border: "solid 3px",
-   margin: "2px auto",
-   padding: "2px",
-  })
-
-  return (
-    <button
-        class={style()}
-        onMouseOver={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        type="submit">حفظ</button>
   )
 }

@@ -1,3 +1,4 @@
+import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri'
 import { createResource } from 'solid-js';
 import { css } from 'solid-styled-components';
@@ -13,7 +14,7 @@ export default function ShiftIdentity(){
   const date  = () => (shift() || []).at(0)
   const order = () => (shift() || []).at(1)
 
-  setInterval(() => refetch(),60000)
+  listen("shift_ended", () => refetch())
 
   const container = css({
     margin: "0px",

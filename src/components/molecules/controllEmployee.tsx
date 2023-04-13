@@ -5,7 +5,7 @@ import { css } from "solid-styled-components"
 import { departmentsNames, PermissionsClassified,Name } from '../..'
 import PermissionsTemplate from "../atoms/permissionsTemplate"
 import ShowAllToggleButton from "../atoms/showAllToggleButton"
-import { ButtonsOrElement } from "./buttonsOrElement"
+import { ButtonsOrElementLite } from "./buttonsOrElement"
 
 export default function ControllEmployees() {
   const [target,setTarget] = createStore<[string | null]>([null])
@@ -51,14 +51,12 @@ export default function ControllEmployees() {
       <ShowAllToggleButton target={target} toggle={toggle}/>
       <Show when={departmentsNames()}>
        {notNullDepartments =>
-         <ButtonsOrElement
+         <ButtonsOrElementLite
            returnButtonText="العودة لاعدادات الاقسام"
            buttonElementPairs={() => notNullDepartments()
-             .map(d => [d.name,() => <DepartmentEmployees
+             .map(d => [d.name,<DepartmentEmployees
                                      target={target}
-                                     departmentId={d.id}/>])}
-           num={[-1]}
-           fun={() => console.log("later")}/>
+                                     departmentId={d.id}/>])}/>
        }
       </Show>
     </section>
@@ -83,12 +81,10 @@ function DepartmentEmployees({target,departmentId} :{target : [string | null],de
     <section>
         <Show when={employees()} fallback={<h1>جاري التحميل ...</h1>}>
           {notNullEmployees =>
-            <ButtonsOrElement
+            <ButtonsOrElementLite
               buttonElementPairs={
                 () => notNullEmployees()
-                  .map(x => [x.name, () => <EmployeePermissions employeeId={x.id}/> ])}
-              num={[-1]}
-              fun={() => console.log("fun")}
+                  .map(x => [x.name, <EmployeePermissions employeeId={x.id}/> ])}
               returnButtonText="العودة لنتائج البحث"/>
           }
         </Show>

@@ -8,7 +8,7 @@ export function ButtonsOrElement({
   fun
   } : {
   returnButtonText   : string,
-  buttonElementPairs :() => (string | (() => JSXElement))[][],
+  buttonElementPairs :() => [string , JSXElement][],
   num : number[],
   fun : Function}){
 
@@ -28,6 +28,41 @@ export function ButtonsOrElement({
       fun()
     }
   })
+
+  const isChosen = (index : number) =>  buttonIndex() === index
+
+  return (
+    <For each={buttonElementPairs()}>
+      {(item,index) => <>
+        <Show when={buttonIndex() === -1 || isChosen(index())}>
+          <ToggleButton
+            tButton={() => isChosen(index())}
+            defaultCont={returnButtonText}
+            cont={item[0] as string}
+            toggle={() => toggle(index())}/>
+          </Show>
+        <Show when={isChosen(index())}>{item[1]}</Show>
+      </>}
+    </For>
+  )
+}
+
+export function ButtonsOrElementLite({
+  returnButtonText  ,
+  buttonElementPairs,
+  } : {
+  returnButtonText   : string,
+  buttonElementPairs :() => [string , JSXElement][],
+}){
+  const [buttonIndex, setButtonIndex] = createSignal(-1)
+
+  const toggle = (id : number) => {
+      if(buttonIndex() === id){
+          setButtonIndex(-1)
+      } else {
+          setButtonIndex(id)
+      }
+  }
 
   const isChosen = (index : number) =>  buttonIndex() === index
 

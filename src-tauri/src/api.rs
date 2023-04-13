@@ -1,10 +1,10 @@
-pub mod shift_problem;
-pub mod permissions;
-pub mod spare_parts;
 pub mod department;
-pub mod relations;
 pub mod employee;
-pub mod problem;
 pub mod machine;
-pub mod shift;
 pub mod note;
+pub mod permissions;
+pub mod problem;
+pub mod relations;
+pub mod shift;
+pub mod shift_problem;
+pub mod spare_parts;

@@ -1,16 +1,16 @@
-mod models;
 mod async_commands;
-mod non_async_commands;
 mod components_commands;
-mod state;
+mod models;
+mod non_async_commands;
 mod puzzle_pieces;
+mod state;
 
 use std::error::Error;
-use tauri::{Wry, Builder};
+use tauri::{Builder, Wry};
 
-pub async fn app() -> Result<Builder<Wry>,Box<dyn Error>>{
-  match state::create_tauri_state().await {
-    Ok(state) => Ok(puzzle_pieces::build_tauri(state)),
-    Err(err) => Err(err)
-  }
+pub async fn app() -> Result<Builder<Wry>, Box<dyn Error>> {
+    match state::create_tauri_state().await {
+        Ok(state) => Ok(puzzle_pieces::build_tauri(state)),
+        Err(err) => Err(err),
+    }
 }

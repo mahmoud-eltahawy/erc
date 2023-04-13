@@ -1,9 +1,9 @@
 import { invoke } from "@tauri-apps/api"
-import { createResource, createSignal, For, JSXElement, Show } from "solid-js"
+import { createResource, createSignal, For, Show } from "solid-js"
 import { css } from "solid-styled-components"
 import { Name,departmentsNames, NativeDepartment, PermissionsClassified } from "../.."
 import PermissionsTemplate from "../atoms/permissionsTemplate"
-import { ButtonsOrElement } from "./buttonsOrElement"
+import { ButtonsOrElementLite } from "./buttonsOrElement"
 
 export default function ControllDepartments(){
   const container = css({
@@ -18,13 +18,11 @@ export default function ControllDepartments(){
     <Show when={departmentsNames()}>
       {notNullDepartments =>
         <section class={container}>
-          {<ButtonsOrElement
-               returnButtonText="العودة لاعدادات الاقسام"
+          {<ButtonsOrElementLite
+            returnButtonText="العودة لاعدادات الاقسام"
             buttonElementPairs={() => notNullDepartments()
                 .filter(d => d.id !== "00000000-0000-0000-0000-000000000000")
-                .map(d => [d.name,() => <DepartmentSettings departmentId={d.id} />])}
-               num={[-1]}
-               fun={() => console.log("later")}/>}
+                .map(d => [d.name,<DepartmentSettings departmentId={d.id}/>])}/>}
         </section>
       }
     </Show>
@@ -34,7 +32,6 @@ export default function ControllDepartments(){
 type Department = {
    id            : string,
    boss          : Name   | null,
-   department_id : string | null,
    name          : string,
    employees     : Name[]
 }
@@ -46,9 +43,9 @@ const department_fetcher = async ({departmentId} : {departmentId : string}) => {
   if (nd.boss_id){
     let name : string = (await invoke("employee_name",{id : nd.boss_id})) as string
     let boss : Name = {id : nd.boss_id,name}
-    department = {id : nd.id ,boss,name : nd.name,department_id : nd.department_id,employees}
+    department = {id : nd.id ,boss,name : nd.name,employees}
   } else {
-    department = {id:nd.id,department_id : nd.department_id,name : nd.name,boss : null,employees}
+    department = {id:nd.id,name : nd.name,boss : null,employees}
   }
   return department
 }
@@ -67,12 +64,14 @@ function DepartmentSettings({departmentId} : {departmentId : string}){
   const [department,{refetch}] = createResource({departmentId},department_fetcher)
 
   const allowedHandler    = async (id : string,permission : string) => {
-      await invoke("permission_forbid",{id,permission})
+    await invoke("permission_forbid", { id, permission })
+        .catch(err => console.log(err))
       dbf.refetch()
   }
 
   const forbiddenHandler  = async (id : string,permission : string) => {
       await invoke("permission_allow",{id,permission})
+        .catch(err => console.log(err))
       dbf.refetch()
   }
   const container = css({
@@ -87,23 +86,17 @@ function DepartmentSettings({departmentId} : {departmentId : string}){
     <section class={container}>
       <Show when={department()}>
         {notNullDepartment =>
-          <ButtonsOrElement
+          <ButtonsOrElementLite
              returnButtonText={"العودة الي " + notNullDepartment().name}
-             buttonElementPairs={() => {
-                 const pairs : (string | (() => JSXElement))[][] = [
-                 ["اختيار رئيس القسم",() => <ChooseBoss
+             buttonElementPairs={() => [
+                 ["اختيار رئيس القسم",<ChooseBoss
                                         department={() => notNullDepartment()}
                                         refetch={() => refetch()} />],
-                 ["صلاحيات القسم",() => <PermissionsTemplate
+                 ["صلاحيات القسم",<PermissionsTemplate
                                         allowedHandler={allowedHandler}
                                         forbiddenHandler={forbiddenHandler}
-                                        permissions={() => permissions()!} />], //TODO remove this (!)
-               ]
-
-               return pairs;
-             }}
-             num={[-1]}
-             fun={() => console.log("later")}/>
+                                        permissions={() => permissions()!} />],
+               ]}/>
         }
       </Show>
     </section>
@@ -141,6 +134,8 @@ function ChooseBoss({department,refetch} : {department : () => Department,refetc
     margin: ".1em auto",
   })
 
+  const filtered = () => department().employees.filter(m => m.name.includes(target()!))
+
   return (
     <section>
       <h1 class={css({fontSize: "20px"})}>رئيس القسم : {department().boss?.name ? department().boss?.name: 'لا يوجد'}</h1>
@@ -151,8 +146,8 @@ function ChooseBoss({department,refetch} : {department : () => Department,refetc
         onInput={e => {
           setTarget(e.currentTarget.value)
         }}/>
-      <select multiple size={department().employees.length} class={viewMember}>
-        <For each={department().employees.filter(m => m.name.includes(target()!))}>
+      <select multiple size={filtered().length} class={viewMember}>
+        <For each={filtered()}>
           {item => <option onClick={() => optionHandler(item.id)}>{item.name}</option>}
         </For>
       </select>

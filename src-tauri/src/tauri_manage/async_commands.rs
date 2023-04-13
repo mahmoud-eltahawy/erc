@@ -1,4 +1,4 @@
-use std::{error::Error, sync::Mutex};
+use std::{error::Error, str::FromStr, sync::Mutex};
 
 use bcrypt::BcryptResult;
 use errc::{
@@ -8,12 +8,12 @@ use errc::{
         relations::shift_problem::{
             save_problem_to_shift_problem, save_spare_part_to_shift_problem,
         },
-        shift::save_shift,
+        shift::{save_shift, save_shift_employee},
         shift_problem::save_shift_problem,
     },
     config::AppState,
     memory::{
-        employee::{find_employee_by_card, find_employee_by_id},
+        employee::{does_employee_exist, find_employee_by_card, find_employee_by_id},
         machine::find_machine_by_id,
         note::fetch_shift_problem_note,
         problem::find_problem_by_id,
@@ -24,7 +24,7 @@ use errc::{
         shift_problem::find_shift_shift_problems,
         spare_part::find_spare_part_by_id,
     },
-    syncing::upgrade,
+    syncing::{continious_upgrade, upgrade},
 };
 use rec::model::{
     employee::Employee,
@@ -75,8 +75,14 @@ async fn helper(
     };
 
     if verified {
-        let id = get_or_save_shift_id(&app_state, &employee.department_id, window).await?;
-        return Ok((employee, id));
+        let shift_id = get_or_save_shift_id(&app_state, &employee.department_id, window).await?;
+        let shift_uuid = Uuid::from_str(&shift_id)?;
+        let employee_id = Uuid::from_str(&employee.id)?;
+        let is_there = does_employee_exist(&app_state.pool, &shift_uuid, &employee_id).await?;
+        if !is_there {
+            save_shift_employee(&app_state, &shift_uuid, &employee_id).await?;
+        }
+        return Ok((employee, shift_id));
     }
     Err("".into())
 }
@@ -89,15 +95,29 @@ pub async fn login(
     card_id: i64,
     password: String,
 ) -> Result<(), String> {
-    let failure = Err("فشلت عملية تسجيل الدخول".to_string());
     match helper(&app_state, card_id, password, &window).await {
         Ok(result) => {
             let _ = window.emit("new_login", result.0.id.clone());
             *emp_and_uuid.lock().unwrap() = Some(result);
             Ok(())
         }
-        Err(_) => return failure,
+        Err(err) => return Err(err.to_string()),
     }
+}
+
+#[tauri::command]
+pub async fn update(
+    is_invoked: tauri::State<'_, Mutex<bool>>,
+    app_state: tauri::State<'_, AppState>,
+    window: Window,
+) -> Result<(), String> {
+    if !*is_invoked.lock().unwrap() {
+        *is_invoked.lock().unwrap() = true;
+        if let Err(err) = continious_upgrade(app_state.inner().clone(), window).await {
+            println!("{}", err.to_string());
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -116,7 +136,7 @@ pub async fn check_shift_time(
         Err(_) => return failure,
     };
 
-    let mut l = &mut *emp_and_uuid.lock().unwrap();
+    let l = &*emp_and_uuid.lock().unwrap();
 
     let (_, cid) = match l {
         Some(v) => v,
@@ -126,8 +146,10 @@ pub async fn check_shift_time(
     if cid == nid {
         Ok(())
     } else {
-        l = &mut None;
-        Ok(())
+        match window.emit("shift_ended", None::<&str>) {
+            Ok(_) => Ok(()),
+            Err(_) => failure,
+        }
     }
 }
 
@@ -156,14 +178,6 @@ pub async fn define_problem(
     match upgrade(&app_state, Some(&window)).await {
         Ok(_) => Ok(()),
         Err(err) => return Err(err.to_string()),
-    }
-}
-
-#[tauri::command]
-pub async fn update(app_state: tauri::State<'_, AppState>, window: Window) -> Result<(), String> {
-    match upgrade(&app_state, Some(&window)).await {
-        Ok(_) => Ok(()),
-        Err(err) => Err(err.to_string()),
     }
 }
 

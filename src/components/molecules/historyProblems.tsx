@@ -2,10 +2,11 @@ import { invoke } from "@tauri-apps/api"
 import { createEffect, createResource, createSignal, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import { departmentsNames, Name, permissions } from '../..'
-import { ButtonsOrElement } from "./buttonsOrElement"
+import { departmentsNames, Name } from '../..'
+import { employee, permissions } from "../../App"
+import { ButtonsOrElementLite } from "./buttonsOrElement"
 
-export default function HistoryProblems({department_id}:{department_id : string}){
+export default function HistoryProblems(){
   const [target,setTarget] = createStore<[string | null]>([null])
 
   const toggle = () => {
@@ -60,7 +61,7 @@ export default function HistoryProblems({department_id}:{department_id : string}
                 <h1>مسموح لك بالاطلاع علي مشكلات قسمك فقط</h1>
                 <ShowHistory
                   target={target}
-                  departmentId={department_id}/>
+                  departmentId={employee()!.department_id}/>
               </div>
             }>
           <ShowAllHistory target={() => target}/>
@@ -102,15 +103,13 @@ function ShowAllHistory({target} : {target :() => [string | null]}){
       <Show when={departmentsNames()}>
         {
           notNullDepartments =>
-            <ButtonsOrElement
+            <ButtonsOrElementLite
               returnButtonText="الرجوع الي الاقسام"
               buttonElementPairs={() => notNullDepartments()
                 .filter(d => d.id !== "00000000-0000-0000-0000-000000000000")
-                .map(d => [d.name,() => <ShowHistory
+                .map(d => [d.name,<ShowHistory
                                         departmentId={d.id}
-                                        target={target()}/>])}
-              num={[-1]}
-              fun={() => console.log("later")}/>
+                                        target={target()}/>])}/>
         }
       </Show>
     )
@@ -129,10 +128,9 @@ function ShowHistory({target,departmentId} :{departmentId : string,target : [str
     <section>
         <Show when={problems()} fallback={<h1>جاري التحميل ...</h1>}>
           {notNullProblems =>
-            <ButtonsOrElement
-              buttonElementPairs={() => notNullProblems().map(x => [x.name, () => <Profile id={x.id}/>])}
-              num={[-1]}
-              fun={() => console.log("fun")}
+            <ButtonsOrElementLite
+              buttonElementPairs={() => notNullProblems()
+                  .map(x => [x.name, <Profile id={x.id}/>])}
               returnButtonText="العودة لنتائج البحث"/>
           }
         </Show>

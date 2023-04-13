@@ -1,72 +1,33 @@
 import { invoke } from "@tauri-apps/api"
-import { createResource, createSignal, JSXElement, Setter, Show } from "solid-js"
-import DefineProblem from "./components/molecules/defineProblem"
+import { createResource, createSignal, Show } from "solid-js"
 import HistoryShow from "./components/organisms/HistoryShow"
-import { Employee,NativeDepartment, permissions } from "./index"
-import ProblemForm from "./components/organisms/ProblemForm"
-import ShiftProblems from "./components/organisms/ShiftProblems"
-import { ButtonsOrElement } from "./components/molecules/buttonsOrElement"
-import { createStore } from "solid-js/store"
+import { NativeDepartment } from "./index"
 import { css } from "solid-styled-components"
 import Controlling from "./components/organisms/controlling"
+import CurrentShiftData from "./components/organisms/CurrentShiftData"
+import { employee, setEmployee, setShiftId } from "./App"
+import { ButtonsOrElementLite } from "./components/molecules/buttonsOrElement"
+import { listen } from "@tauri-apps/api/event"
 
-export default function Wall({
-          employee,
-          shiftId,
-          setEmployee,
-          setShiftId
-        } : {
-          employee : Employee,
-          shiftId  : string,
-          setEmployee : Setter<Employee | null>,
-          setShiftId  : Setter<string | null>
-        }){
-  const [last,setLast] = createStore([-1])
-
+export default function Wall(){
   setInterval(() => {
-    invoke('check_shift_time',{departmentId : employee.department_id})
+    invoke('check_shift_time', { departmentId: employee()!.department_id })
       .catch(err => console.log(err))
-  },60000)
+  }, 60000)
 
   return (
     <section>
-      <AboutParagraph employee={employee} />
-      <LogoutButton setEmployee={setEmployee} setShiftId={setShiftId} />
-      <Show when={permissions()}>
-        {
-          <ButtonsOrElement
-              returnButtonText="الصفحة الرئيسية"
-              buttonElementPairs={() => {
-                const pairs : (string | (() =>JSXElement))[][] = [
-                  ["التحكم", () => <Controlling isAllowed={
-                    employee.card_id  === 0 ||
-                    employee.position === 'SUPER_USER'
-                  }/>]
+      <AboutParagraph/>
+      <LogoutButton/>
+      {employee()?.card_id === 0 ? <Controlling/> :
+        <ButtonsOrElementLite
+            returnButtonText="الصفحة الرئيسية"
+            buttonElementPairs={() => [
+                  ["التحكم", <Controlling/>],
+                  ["بيانات الوردية الحالية", <CurrentShiftData/>],
+                  ["السجل", <HistoryShow/>]
                 ]
-
-                if(employee.card_id === 0){
-                  return pairs
-                } else {
-                  return [...pairs,
-                    ["اضافة عطل",() => <ProblemForm
-                                        toggle={() => setLast([0])}
-                                        shiftId={shiftId}
-                                        writerId={employee.id}
-                                        departmentId={employee.department_id}/>],
-                    ["تعريف مشكلة" ,() => <DefineProblem
-                                        employee={employee}
-                                        toggle={() => setLast([1])}/>],
-                    ["اظهار الاعطال",() => <ShiftProblems
-                                        shiftId={shiftId}/>],
-                    ["السجل",() => <HistoryShow
-                                        department_id={employee.department_id} />]
-                  ]
-                }
-              }}
-              num={last}
-              fun={() => setLast([-1])}/>
-          }
-      </Show>
+            }/>}
     </section>
   )
 }
@@ -75,13 +36,13 @@ const department_fetcher = async ({id} : {id : string}) => {
   return (await invoke("find_department",{id})) as NativeDepartment
 }
 
-function AboutParagraph({employee} : {employee : Employee}){
+function AboutParagraph(){
   const [hover,setHover] = createSignal(false)
-  const [department] = createResource({id : employee.department_id},department_fetcher)
+  const [department] = createResource({id : employee()!.department_id},department_fetcher)
 
   const position = () => {
-    const superiority = employee.position === "SUPER_USER" ? "مشرف" : "مستخدم"
-    const is_boss = employee.id === department()!.boss_id ? " و رئيس القسم" : ""
+    const superiority = employee()!.position === "SUPER_USER" ? "مشرف" : "مستخدم"
+    const is_boss = employee()!.id === department()?.boss_id ? " و رئيس القسم" : ""
     return superiority + is_boss
   }
 
@@ -99,16 +60,16 @@ function AboutParagraph({employee} : {employee : Employee}){
   })
   return (
   <div
-      onMouseOver={() => employee.card_id !== 0 ? setHover(true) : setHover(false)}
+      onMouseOver={() => employee()!.card_id !== 0 ? setHover(true) : setHover(false)}
       onMouseLeave={() => setHover(false)}
       class={container()}>
     <Show
-        when={employee.card_id !== 0}
+        when={employee()!.card_id !== 0}
         fallback={<h1>الحساب الرئيسي</h1>}>
-      <p>{`الاسم : ${employee.first_name} ${employee.middle_name} ${employee.last_name}`}</p>
+      <p>{`الاسم : ${employee()!.first_name} ${employee()!.middle_name} ${employee()!.last_name}`}</p>
       <Show when={department()}>
         {notNullDepartment => <Show when={hover()}>
-          <p>{`رقم التعريف : ${employee.card_id}`}</p>
+          <p>{`رقم التعريف : ${employee()!.card_id}`}</p>
           <p>{`القسم : ${notNullDepartment().name}`}</p>
           <p>{`الرتبة : ${position()}`}</p>
         </Show>}
@@ -118,23 +79,20 @@ function AboutParagraph({employee} : {employee : Employee}){
   )
 }
 
-function LogoutButton({
-          setEmployee,
-          setShiftId
-        } : {
-          setEmployee : Setter<Employee | null>,
-          setShiftId  : Setter<string | null>
-        }){
+function LogoutButton(){
   const [hover, setHover] = createSignal(false)
 
   const logout = () => {
     invoke('logout')
-      .then(() => {
-        setEmployee(null)
-        setShiftId(null)
-      }
-    ).catch(err => console.log(err))
+    .catch(err => console.log(err))
   }
+
+  listen("logout",() => {
+    setEmployee(null)
+    setShiftId(null)
+  })
+
+  listen("shift_ended",() => logout())
 
   const style = () => css({
     position: "absolute",

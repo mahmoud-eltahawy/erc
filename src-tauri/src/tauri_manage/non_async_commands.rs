@@ -1,35 +1,39 @@
-use std::sync::Mutex;
+use errc::translator::{translate_date, translate_order};
 use rec::{
-  timer::{
-    get_current_date,
-    get_relative_now, get_current_order
-  },
-  model::employee::Employee
+    model::employee::Employee,
+    timer::{get_current_date, get_current_order, get_relative_now},
 };
-use errc::translator::{
-  translate_date,
-  translate_order
-};
+use tauri::Window;
+use std::sync::Mutex;
 
 #[tauri::command]
-pub fn check_login(state : tauri::State<'_,Mutex<Option<(Employee<String>,String)>>>) -> Result<(Employee<String>,String),String> {
-  match &*state.lock().unwrap() {
-    Some((employee,id)) => Ok((employee.clone(),id.clone())),
-    None     => Err("تحتاج الي تسجيل الدخول من جديد".to_string())
-  }
+pub fn check_login(
+    state: tauri::State<'_, Mutex<Option<(Employee<String>, String)>>>,
+) -> (Option<Employee<String>>, Option<String>) {
+    match &*state.lock().unwrap() {
+        Some((employee, id)) => (Some(employee.clone()), Some(id.clone())),
+        None => (None, None),
+    }
 }
 
 #[tauri::command]
-pub fn current_shift() -> Result<(String,Vec<String>),String> {
-  let now = get_relative_now();
-  let order = get_current_order(now);
-  match get_current_date(now) {
-    Some(date) => Ok((translate_order(&order),translate_date(date.to_string()))),
-    None       => Err("مشكلة داخلية في تحديث التاريخ".to_owned())
-  }
+pub fn current_shift() -> Result<(String, Vec<String>), String> {
+    let now = get_relative_now();
+    let order = get_current_order(now);
+    match get_current_date(now) {
+        Some(date) => Ok((translate_order(&order), translate_date(date.to_string()))),
+        None => Err("مشكلة داخلية في تحديث التاريخ".to_owned()),
+    }
 }
 
 #[tauri::command]
-pub fn logout(state : tauri::State<'_,Mutex<Option<(Employee<String>,String)>>>) {
-  *state.lock().unwrap() = None;
+pub fn logout(
+    state: tauri::State<'_, Mutex<Option<(Employee<String>, String)>>>,
+    window: Window,
+)  -> Result<(), String> {
+    *state.lock().unwrap() = None;
+    match window.emit("logout", None::<&str>){
+        Ok(_) => Ok(()),
+        Err(err) => Err(err.to_string())
+    }
 }

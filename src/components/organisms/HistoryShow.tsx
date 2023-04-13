@@ -1,17 +1,12 @@
-import { JSXElement } from "solid-js"
 import { css } from "solid-styled-components"
-import { ButtonsOrElement } from "../molecules/buttonsOrElement"
+import { ButtonsOrElementLite } from "../molecules/buttonsOrElement"
 import HistoryDays from "../molecules/historyDays"
 import HistoryEmployees from "../molecules/historyEmployees"
 import HistoryMachines from "../molecules/historyMachines"
 import HistoryParts from "../molecules/historyParts"
 import HistoryProblems from "../molecules/historyProblems"
 
-export default function HistoryShow({
-    department_id,
-    } : {
-    department_id : string,
-}){
+export default function HistoryShow(){
 
   const container = css({
    display: "block",
@@ -22,22 +17,17 @@ export default function HistoryShow({
   })
 
   return (
-      <section class={container}>
-      <ButtonsOrElement
+    <section class={container}>
+        <ButtonsOrElementLite
           returnButtonText="العودة لصفحة البحث"
-          buttonElementPairs={() => {
-            return [
-                ["ابحث عن يوم",
-                      () => <HistoryDays department_id={department_id}/>],
-                ["ابحث عن مشكلة",
-                      () => <HistoryProblems department_id={department_id}/>],
-                ["ابحث عن قطعة غيار", () => <HistoryParts/>],
-                ["ابحث عن ماكينة"   , () => <HistoryMachines/>],
-                ["ابحث عن موظف"   , () => <HistoryEmployees />]
-            ] as (string | (() => JSXElement))[][]
-          }}
-          num={[-1]}
-          fun={() => console.log("later")}/>
-      </section>
+          buttonElementPairs={() => [
+                ["ابحث عن يوم", <HistoryDays/>],
+                ["ابحث عن مشكلة", <HistoryProblems/>],
+                ["ابحث عن قطعة غيار", <HistoryParts/>],
+                ["ابحث عن ماكينة"   , <HistoryMachines/>],
+                ["ابحث عن موظف"   , <HistoryEmployees/>]
+            ]
+          }/>
+    </section>
   )
 }

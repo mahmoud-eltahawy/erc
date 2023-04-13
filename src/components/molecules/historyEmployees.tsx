@@ -1,9 +1,10 @@
 import { createEffect,createResource,Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { css } from "solid-styled-components"
-import { employees_names_fetcher, permissions } from '../..'
+import { employees_names_fetcher } from '../..'
+import { permissions } from "../../App"
 import ShowAllToggleButton from "../atoms/showAllToggleButton"
-import { ButtonsOrElement } from "./buttonsOrElement"
+import { ButtonsOrElementLite } from "./buttonsOrElement"
 
 export default function HistoryEmployees() {
   const [target,setTarget] = createStore<[string | null]>([null])
@@ -71,12 +72,10 @@ function ShowHistory({target} :{target : [string | null]}){
             when={employees()}
             fallback={<h1>جاري التحميل ...</h1>}>
           {notNullEmployees =>
-            <ButtonsOrElement
+            <ButtonsOrElementLite
               buttonElementPairs={() => notNullEmployees()
                 .filter(d => d.id !== "00000000-0000-0000-0000-000000000000")
-                .map(x => [x.name, () => <h1> employee profile </h1>])}
-              num={[-1]}
-              fun={() => console.log("fun")}
+                .map(x => [x.name,  <h1> employee profile </h1>])}
               returnButtonText="العودة لنتائج البحث"/>
           }
         </Show>

@@ -10,11 +10,10 @@ use tauri_manage::app;
 
 use dotenv::dotenv;
 
-
 #[tokio::main]
-async fn main() -> Result<(),Box<dyn Error>>{
-  dotenv().ok();
-  let app = app().await?;
-  let _ = app.run(tauri::generate_context!())?;
-  Ok(())
+async fn main() -> Result<(), Box<dyn Error>> {
+    dotenv().ok();
+    let app = app().await?;
+    let _ = app.run(tauri::generate_context!())?;
+    Ok(())
 }
