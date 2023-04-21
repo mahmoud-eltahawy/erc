@@ -1,25 +1,18 @@
-import { createEffect, createSignal } from "solid-js"
+import { createSignal } from "solid-js"
 import { Name } from "../.."
 import togglingButton from "./problemTogglingButton"
 
-export default function SparePartsList({parts} : {parts : Name[]}){
+export default function ToggelableList({elements} : {elements :() => Name[]}){
   const limit = 3
-  const [state,setState] = createSignal(parts)
-  const [tooLong,setTooLong] = createSignal(parts.length > limit)
-
-  createEffect(() => {
-    if(tooLong()) {
-       setState(parts.slice(0,limit))
-    } else {
-       setState(parts)
-    }
-  },[tooLong])
+  const [tooLong,setTooLong] = createSignal(elements().length > limit)
 
   return (
     <ul>
-      {state().map(part => <li>{part.name}</li>)}
+      {tooLong()
+        ? elements().slice(0, limit).map(element => <li>{element.name}</li>)
+        : elements().map(element => <li>{element.name}</li>)}
         {togglingButton({
-          showButton : () => parts.length > limit,
+          showButton : () => elements().length > limit,
           showMore   : () => tooLong(),
           doOnClick  : () => setTooLong(!tooLong())})}
 

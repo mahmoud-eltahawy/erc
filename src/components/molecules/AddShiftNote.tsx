@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/tauri"
 import { createSignal } from "solid-js"
-import { shiftId } from "../../App"
+import { employee, shiftId } from "../../App"
 import SubmitButton from "../atoms/submitButton"
 import { DescriptionInput } from "./defineProblem"
 
@@ -16,7 +16,7 @@ export default function AddShiftNote({
     toggle()
     try{
       await invoke('save_shift_note',
-            {shiftId : shiftId(),content : desc()})
+            {shiftId : shiftId(),writerId : employee()?.id,content : desc()})
         setDesc('')
     } catch(err){
       alert(err)

@@ -1,9 +1,10 @@
 mod api;
 mod memory;
 
-use crate::config::AppState;
+use crate::{config::AppState, memory::shift_problem::find_shift_problem_shift_id};
 use std::error::Error;
 
+use itertools::Itertools;
 use rec::{
     crud_sync::{Cud, CudVersion, Table},
     model::note::Note,
@@ -20,15 +21,21 @@ use self::memory::permissions;
 
 pub async fn continious_upgrade(app_state: AppState, window: Window) -> Result<(), Box<dyn Error>> {
     loop {
-        upgrade(&app_state, Some(&window)).await?
+        upgrade(&app_state, &window).await?
     }
 }
 
-pub async fn upgrade(app_state: &AppState, window: Option<&Window>) -> Result<(), Box<dyn Error>> {
+pub async fn upgrade(app_state: &AppState, window: &Window) -> Result<(), Box<dyn Error>> {
     let version = syncing::last_version(&app_state.pool).await?;
     let updates = api::updates(app_state, version as u64).await?;
+    let mut errors = Vec::new();
     for update in updates {
-        apply_update(app_state, update, window).await?
+        if let Err(err) = apply_update(app_state, update, window).await {
+            errors.push(err.to_string());
+        }
+    }
+    if !errors.is_empty() {
+        return Err(errors.into_iter().join(" \n ").into());
     }
     Ok(())
 }
@@ -36,10 +43,10 @@ pub async fn upgrade(app_state: &AppState, window: Option<&Window>) -> Result<()
 async fn apply_update(
     app_state: &AppState,
     cud_version: CudVersion,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     let CudVersion {
-        version_number: _,
+        version_number,
         cud,
         target_id,
         target_table,
@@ -53,23 +60,25 @@ async fn apply_update(
         Table::ShiftProblem => update_shift_problem(app_state, cud, target_id, window).await?,
         Table::Shift => update_shift(app_state, cud, target_id).await?,
         Table::Department => update_department(app_state, cud, target_id, window).await?,
-        Table::ShiftNote => update_shift_note(app_state, cud, target_id).await?,
-        Table::ShiftProblemNote => update_shift_problem_note(app_state, cud, target_id).await?,
+        Table::ShiftProblemNote => {
+            update_shift_problem_note(app_state, cud, target_id, window).await?
+        }
+        Table::ShiftNote => update_shift_note(app_state, cud, other_target_id, window).await?,
         Table::DepartmentShift => update_department_shift(app_state, cud, target_id).await?,
         Table::ShiftProblemProblem => {
-            update_shift_problem_problem(app_state, cud, target_id, other_target_id).await?
+            update_shift_problem_problem(app_state, cud, target_id, other_target_id, window).await?
         }
         Table::ShiftProblemSparePart => {
-            update_shift_problem_spare_part(app_state, cud, target_id, other_target_id).await?
+            update_shift_problem_spare_part(app_state, cud, target_id, other_target_id, window)
+                .await?
         }
         Table::Permissions => update_permissions(app_state, cud, target_id, window).await?,
         Table::DepartmentShiftEmployee => {
             update_department_shift_employee(app_state, cud, target_id, other_target_id, window)
                 .await?
         }
-        Table::Undefined => return Err("undefined table".into()),
     }
-    syncing::save_version(&app_state.pool, cud_version).await?;
+    syncing::save_version(&app_state.pool, version_number).await?;
     Ok(())
 }
 
@@ -78,7 +87,7 @@ async fn update_department_shift_employee(
     cud: Cud,
     target_id: Uuid,
     other_id: Option<Uuid>,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => match other_id {
@@ -91,12 +100,11 @@ async fn update_department_shift_employee(
             Some(id) => relations::shift_employee::delete(&app_state.pool, target_id, id).await?,
             None => return Err("the shift employee id is null".into()),
         },
-        _ => return Err("shift employee is only created or deleted".into()),
+        Cud::Update => return Err("shift employee is only created or deleted".into()),
     }
 
-    if let Some(window) = window {
-        window.emit("update_department_shift_employee", target_id)?;
-    }
+    window.emit("update_department_shift_employee", target_id)?;
+
     Ok(())
 }
 
@@ -104,7 +112,7 @@ async fn update_permissions(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
@@ -116,12 +124,9 @@ async fn update_permissions(
             permissions::update(&app_state.pool, per).await?;
         }
         Cud::Delete => return Err("permissions can not be deleted".into()),
-        Cud::Undefined => return Err("undefined department crud".into()),
     }
 
-    if let Some(window) = window {
-        window.emit("update_permissions", target_id)?;
-    }
+    window.emit("update_permissions", target_id)?;
 
     Ok(())
 }
@@ -130,23 +135,24 @@ async fn update_shift_problem(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
             let sp = api::shift_problem(app_state, target_id).await?;
-            shift_problem::save(&app_state.pool, sp).await?;
+            shift_problem::save(&app_state.pool, &sp).await?;
+            window.emit("create_shift_problem", (sp.shift_id, target_id))?;
         }
-        Cud::Delete => shift_problem::delete(&app_state.pool, target_id).await?,
+        Cud::Delete => {
+            let shift_id = find_shift_problem_shift_id(&app_state.pool, &target_id).await?;
+            shift_problem::delete(&app_state.pool, &target_id).await?;
+            window.emit("delete_shift_problem", (shift_id, target_id))?;
+        }
         Cud::Update => {
             let sp = api::shift_problem(app_state, target_id).await?;
-            shift_problem::update(&app_state.pool, sp).await?;
+            shift_problem::update(&app_state.pool, &sp).await?;
+            window.emit("update_shift_problem", (sp.shift_id, target_id))?;
         }
-        Cud::Undefined => return Err("undefined department crud".into()),
-    }
-
-    if let Some(window) = window {
-        window.emit("update_shift_problem", "hello")?;
     }
 
     Ok(())
@@ -156,7 +162,7 @@ async fn update_employee(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
@@ -168,11 +174,10 @@ async fn update_employee(
             let employee = api::employee(app_state, target_id).await?;
             employee::update(&app_state.pool, employee).await?
         }
-        Cud::Undefined => return Err("undefined employee crud".into()),
     }
-    if let Some(window) = window {
-        window.emit("update_employee", "hello")?;
-    }
+
+    window.emit("update_employee", "hello")?;
+
     Ok(())
 }
 
@@ -180,7 +185,7 @@ async fn update_problem(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
@@ -192,11 +197,10 @@ async fn update_problem(
             let problem = api::problem(app_state, target_id).await?;
             problem::update(&app_state.pool, problem).await?;
         }
-        Cud::Undefined => return Err("undefined employee crud".into()),
     }
-    if let Some(window) = window {
-        window.emit("update_problem", "hello")?;
-    }
+
+    window.emit("update_problem", "hello")?;
+
     Ok(())
 }
 
@@ -204,7 +208,7 @@ async fn update_spare_part(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
@@ -216,11 +220,10 @@ async fn update_spare_part(
             let part = api::spare_part(app_state, target_id).await?;
             spare_part::update(&app_state.pool, part).await?;
         }
-        Cud::Undefined => return Err("undefined employee crud".into()),
     }
-    if let Some(window) = window {
-        window.emit("update_spare_part", "hello")?;
-    }
+
+    window.emit("update_spare_part", "hello")?;
+
     Ok(())
 }
 
@@ -228,7 +231,7 @@ async fn update_machine(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
@@ -240,11 +243,10 @@ async fn update_machine(
             let mac = api::machine(app_state, target_id).await?;
             machine::update(&app_state.pool, mac).await?;
         }
-        Cud::Undefined => return Err("undefined department crud".into()),
     }
-    if let Some(window) = window {
-        window.emit("update_machine", "hello")?;
-    }
+
+    window.emit("update_machine", "hello")?;
+
     Ok(())
 }
 
@@ -252,7 +254,7 @@ async fn update_department(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
-    window: Option<&Window>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
@@ -264,12 +266,9 @@ async fn update_department(
             let dep = api::department(app_state, target_id).await?;
             department::update(&app_state.pool, dep).await?;
         }
-        Cud::Undefined => return Err("undefined department crud".into()),
     }
 
-    if let Some(window) = window {
-        window.emit("update_departments", target_id)?;
-    }
+    window.emit("update_departments", target_id)?;
 
     Ok(())
 }
@@ -277,17 +276,21 @@ async fn update_department(
 async fn update_shift_note(
     app_state: &AppState,
     cud: Cud,
-    target_id: Uuid,
+    target_id: Option<Uuid>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
+    let Some(target_id) = target_id else {
+        return Err("null id".into());
+    };
     match cud {
         Cud::Create => {
-            let note = api::note(app_state, target_id).await?;
+            let note = api::shift_note(app_state, target_id).await?;
             note::save_to_shift(&app_state.pool, note).await?;
         }
-        Cud::Delete => note::delete(&app_state.pool, target_id).await?,
+        Cud::Delete => note::delete_shift_note(&app_state.pool, target_id).await?,
         Cud::Update => {
-            let note = api::note(app_state, target_id).await?;
-            note::update(
+            let note = api::shift_note(app_state, target_id).await?;
+            note::update_shift_note(
                 &app_state.pool,
                 Note {
                     id: note.id,
@@ -296,8 +299,10 @@ async fn update_shift_note(
             )
             .await?;
         }
-        Cud::Undefined => return Err("undefined department crud".into()),
     }
+
+    window.emit("update_shift_note", target_id)?;
+
     Ok(())
 }
 
@@ -305,14 +310,22 @@ async fn update_shift_problem_note(
     app_state: &AppState,
     cud: Cud,
     target_id: Uuid,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => {
-            let note = api::note(app_state, target_id).await?;
+            let note = api::shift_problem_note(app_state, target_id).await?;
             note::save_to_shift_problem(&app_state.pool, note).await?;
         }
-        _ => return Err("note crud implemented in note section".into()),
+        Cud::Update => {
+            let note = api::shift_problem_note(app_state, target_id).await?;
+            note::update_shift_problem_note(&app_state.pool, note).await?;
+        }
+        Cud::Delete => note::delete_shift_problem_note(&app_state.pool, target_id).await?,
     }
+
+    window.emit("update_shift_problem_note", target_id)?;
+
     Ok(())
 }
 
@@ -326,7 +339,7 @@ async fn update_shift(
             let shift = api::shift(app_state, target_id).await?;
             shift::save(&app_state.pool, shift).await?
         }
-        _ => return Err("shift is only created table".into()),
+        Cud::Update | Cud::Delete => return Err("note crud implemented in note section".into()),
     }
     Ok(())
 }
@@ -342,7 +355,7 @@ async fn update_department_shift(
             shift::save_department_shift(&app_state.pool, ds).await?;
         }
         Cud::Delete => shift::delete_department_shift(&app_state.pool, target_id).await?,
-        _ => return Err("shift is only created or deleted table".into()),
+        Cud::Update => return Err("shift is only created or deleted table".into()),
     }
     Ok(())
 }
@@ -352,22 +365,24 @@ async fn update_shift_problem_problem(
     cud: Cud,
     target_id: Uuid,
     other_id: Option<Uuid>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => match other_id {
             Some(id) => {
-                relations::shift_problems::save_problem(&app_state.pool, target_id, id).await?;
+                relations::shift_problems::save_problem(&app_state.pool, id, target_id).await?;
             }
             None => return Err("the shift problem id is null".into()),
         },
         Cud::Delete => match other_id {
             Some(id) => {
-                relations::shift_problems::delete_problem(&app_state.pool, target_id, id).await?
+                relations::shift_problems::delete_problem(&app_state.pool, id, target_id).await?;
             }
             None => return Err("the shift problem id is null".into()),
         },
-        _ => return Err("shift is only created or deleted table".into()),
+        Cud::Update => return Err("shift is only created or deleted table".into()),
     }
+    window.emit("update_shift_problem_problem", target_id)?;
     Ok(())
 }
 
@@ -376,21 +391,23 @@ async fn update_shift_problem_spare_part(
     cud: Cud,
     target_id: Uuid,
     other_id: Option<Uuid>,
+    window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match cud {
         Cud::Create => match other_id {
             Some(id) => {
-                relations::shift_problems::save_spare_part(&app_state.pool, target_id, id).await?;
+                relations::shift_problems::save_spare_part(&app_state.pool, id, target_id).await?;
             }
             None => return Err("the shift problem id is null".into()),
         },
         Cud::Delete => match other_id {
             Some(id) => {
-                relations::shift_problems::delete_spare_part(&app_state.pool, target_id, id).await?
+                relations::shift_problems::delete_spare_part(&app_state.pool, id, target_id).await?
             }
             None => return Err("the shift problem id is null".into()),
         },
-        _ => return Err("shift is only created or deleted table".into()),
+        Cud::Update => return Err("shift is only created or deleted table".into()),
     }
+    window.emit("update_shift_problem_parts", target_id)?;
     Ok(())
 }

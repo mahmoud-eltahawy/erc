@@ -1,4 +1,4 @@
-use std::error::Error;
+use std::{error::Error, str::FromStr};
 
 use chrono::NaiveDate;
 use errc::{
@@ -97,7 +97,7 @@ pub async fn search_problem(
     app_state: tauri::State<'_, AppState>,
     department_id: Uuid,
     name: Option<String>,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Name<String>>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_department_all_problems(&app_state.pool, department_id.to_string())
@@ -142,6 +142,9 @@ pub async fn profile_problem(
       title,description}) = find_problem_by_id(&app_state.pool, id.to_string()).await else {
     return Err("err".to_string());
   };
+    let Ok(writer_id) = Uuid::from_str(&writer_id) else {
+      return Err("err".to_string());
+    };
     let Ok(writer_name) = find_employee_name_by_id(&app_state.pool, writer_id).await else {
     return Err("err".to_string());
   };
@@ -160,7 +163,7 @@ pub async fn profile_problem(
 pub async fn search_parts(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Name<String>>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_all_spare_parts(&app_state.pool).await {
@@ -184,7 +187,7 @@ pub async fn search_parts(
 pub async fn search_machines(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Name<String>>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_all_machines(&app_state.pool).await {
@@ -208,7 +211,7 @@ pub async fn search_machines(
 pub async fn search_employees(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Name<String>>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_all_employees_names(&app_state.pool).await {

@@ -3,8 +3,8 @@ use rec::{
     model::employee::Employee,
     timer::{get_current_date, get_current_order, get_relative_now},
 };
-use tauri::Window;
 use std::sync::Mutex;
+use tauri::Window;
 
 #[tauri::command]
 pub fn check_login(
@@ -30,10 +30,10 @@ pub fn current_shift() -> Result<(String, Vec<String>), String> {
 pub fn logout(
     state: tauri::State<'_, Mutex<Option<(Employee<String>, String)>>>,
     window: Window,
-)  -> Result<(), String> {
+) -> Result<(), String> {
     *state.lock().unwrap() = None;
-    match window.emit("logout", None::<&str>){
+    match window.emit("logout", None::<&str>) {
         Ok(_) => Ok(()),
-        Err(err) => Err(err.to_string())
+        Err(err) => Err(err.to_string()),
     }
 }

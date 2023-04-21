@@ -135,7 +135,7 @@ function ShowHistory({
           {notNullDays =>
             <ButtonsOrElementLite
               buttonElementPairs={() => notNullDays().
-                  map(x => [x.date.join(" / "), <Shifts shifts={() => x.shifts}/>])}
+              map(x => [x.date.reverse().join(" / "), <Shifts shifts={() => x.shifts}/>])}
               returnButtonText="يوم اخر"/>
           }
         </Show>
@@ -148,7 +148,8 @@ function Shifts({shifts} : {shifts : () => [string,string][]}){
       <div>
         <ButtonsOrElementLite
                 buttonElementPairs={() => shifts().
-                  map(x => [x[1], <ShiftWrittenShow shiftId={() => x[0]}/>])}
+                  map(x => [x[1], <ShiftWrittenShow
+                                   shiftId={() => x[0]}/>])}
                 returnButtonText="وردية اخري"/>
       </div>
     )

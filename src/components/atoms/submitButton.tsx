@@ -6,7 +6,7 @@ export default function SubmitButton({length} : {length : (() => number) | undef
 
   const style = () => css({
    display: "block",
-   width: "25%",
+   width: "40%",
    borderRadius: hover() ? "5px" : "20px",
    fontSize: hover() ? "24px" : "18px",
    border: "solid 3px",

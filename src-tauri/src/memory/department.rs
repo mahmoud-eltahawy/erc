@@ -1,7 +1,7 @@
 use rec::model::{department::Department, name::Name};
 use sqlx::{query, query_as, Error, Pool, Sqlite};
 
-pub async fn find_all_departments(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Error> {
+pub async fn find_all_departments(pool: &Pool<Sqlite>) -> Result<Vec<Name<String>>, Error> {
     match query_as!(
         Name,
         r#"

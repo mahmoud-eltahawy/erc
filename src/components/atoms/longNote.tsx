@@ -1,26 +1,15 @@
-import { createEffect, createSignal } from "solid-js"
-import { Note } from "../.."
+import { createSignal } from "solid-js"
 import togglingButton from "./problemTogglingButton"
 
-export default function LongNote({note} : {note : Note}){
-  const content = note.content
+export default function LongNote({content} : {content :() => string}){
   const limit = 15
-  const [state,setState]     = createSignal(content)
-  const [tooLong,setTooLong] = createSignal(note.content.length > limit)
-
-  createEffect(() => {
-    if(tooLong()) {
-      setState(state => state.slice(0,limit))
-    } else {
-      setState(content)
-    }
-  })
+  const [tooLong,setTooLong] = createSignal(content().length > limit)
 
   return (
     <section>
-      <p>{state}</p>
+      <p>{tooLong() ? content().slice(0,limit) : content()}</p>
         {togglingButton({
-          showButton : () => content.length > limit,
+          showButton : () => content().length > limit,
           showMore   : () => tooLong(),
           doOnClick  : () =>setTooLong(!tooLong())})}
     </section>

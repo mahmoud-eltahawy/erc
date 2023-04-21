@@ -6,7 +6,7 @@ import { ButtonsOrElement } from "../molecules/buttonsOrElement"
 import DefineProblem from "../molecules/defineProblem"
 import SetShiftEmployees from "../molecules/setShiftEmployees"
 import ShiftWrittenShow from "../molecules/shiftWrittenNote"
-import ProblemForm from "./ProblemForm"
+import { ProblemSaveForm } from "./ProblemForm"
 
 export default function CurrentShiftData() {
   const [last,setLast] = createStore([-1])
@@ -24,14 +24,15 @@ export default function CurrentShiftData() {
       <ButtonsOrElement
         returnButtonText="العودة لصفحة البحث"
         buttonElementPairs={() => [
-            ["اضافة عطل",<ProblemForm
+            ["اضافة عطل", <ProblemSaveForm
                                  toggle={() => setLast([0])}/>],
             ["تعريف مشكلة",<DefineProblem
                                   toggle={() => setLast([1])}/>],
             ["اضافة ملحوظة",<AddShiftNote
                                   toggle={() => setLast([2])}/>],
-            ["اليومية",<SetShiftEmployees />],
-            ["البيانات المسجلة",<ShiftWrittenShow shiftId={() => shiftId()!} />],
+            ["اليومية",<SetShiftEmployees/>],
+            ["البيانات المسجلة",<ShiftWrittenShow
+                                 shiftId={() => shiftId()!} />],
           ]
         }
         num={last}

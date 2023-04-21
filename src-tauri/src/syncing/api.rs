@@ -6,7 +6,7 @@ use rec::{
         department::Department,
         employee::Employee,
         machine::Machine,
-        note::DbNote,
+        note::{Note, ShiftNote},
         permissions::Permissions,
         problem::Problem,
         shift::{DepartmentShift, Shift},
@@ -138,13 +138,28 @@ pub async fn machine(app_state: &AppState, id: Uuid) -> Result<Machine<Uuid>, Bo
     Ok(result)
 }
 
-pub async fn note(app_state: &AppState, id: Uuid) -> Result<DbNote<Uuid>, Box<dyn Error>> {
+pub async fn shift_note(app_state: &AppState, id: Uuid) -> Result<ShiftNote<Uuid>, Box<dyn Error>> {
     let origin = &app_state.origin;
     let result = reqwest::Client::new()
-        .get(format!("{origin}/note/{id}"))
+        .get(format!("{origin}/note/{id}/shift"))
         .send()
         .await?
-        .json::<DbNote<Uuid>>()
+        .json::<ShiftNote<Uuid>>()
+        .await?;
+
+    Ok(result)
+}
+
+pub async fn shift_problem_note(
+    app_state: &AppState,
+    id: Uuid,
+) -> Result<Note<Uuid>, Box<dyn Error>> {
+    let origin = &app_state.origin;
+    let result = reqwest::Client::new()
+        .get(format!("{origin}/note/{id}/problem"))
+        .send()
+        .await?
+        .json::<Note<Uuid>>()
         .await?;
 
     Ok(result)

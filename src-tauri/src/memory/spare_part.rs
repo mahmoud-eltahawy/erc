@@ -1,7 +1,7 @@
 use rec::model::{name::Name, spare_part::SparePart};
 use sqlx::{query_as, Error, Pool, Sqlite};
 
-pub async fn find_all_spare_parts(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Error> {
+pub async fn find_all_spare_parts(pool: &Pool<Sqlite>) -> Result<Vec<Name<String>>, Error> {
     match query_as!(
         Name,
         r#"
@@ -20,7 +20,7 @@ pub async fn find_spare_parts_by_name(
     pool: &Pool<Sqlite>,
     target: &str,
     canceled: Vec<String>,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Name<String>>, Error> {
     let canceled = canceled
         .into_iter()
         .map(|x| format!("'{x}'"))
@@ -39,7 +39,7 @@ pub async fn find_spare_parts_by_name(
     WHERE name LIKE '%{target}%' AND name NOT IN ({canceled}) LIMIT 4;"
         )
     };
-    match query_as::<_, Name>(&query).fetch_all(pool).await {
+    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
         Ok(problems) => Ok(problems),
         Err(err) => Err(err),
     }
@@ -48,7 +48,7 @@ pub async fn find_spare_parts_by_name(
 pub async fn find_4_spare_parts(
     pool: &Pool<Sqlite>,
     canceled: Vec<String>,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Name<String>>, Error> {
     let canceled = canceled
         .into_iter()
         .map(|x| format!("'{x}'"))
@@ -66,13 +66,13 @@ pub async fn find_4_spare_parts(
     WHERE name NOT IN ({canceled}) LIMIT 4;"
         )
     };
-    match query_as::<_, Name>(&query).fetch_all(pool).await {
+    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
         Ok(problems) => Ok(problems),
         Err(err) => Err(err),
     }
 }
 
-pub async fn find_all_spare_parts_names(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Error> {
+pub async fn find_all_spare_parts_names(pool: &Pool<Sqlite>) -> Result<Vec<Name<String>>, Error> {
     match query_as!(
         Name,
         r#"

@@ -1,40 +1,29 @@
-use rec::crud_sync::CudVersion;
-use sqlx::{Error, Pool, Row, Sqlite};
+use sqlx::{query, Error, Pool, Sqlite};
 
-pub async fn last_version(pool: &Pool<Sqlite>) -> Result<i64, Error> {
-    match sqlx::query(
+pub async fn last_version(pool: &Pool<Sqlite>) -> Result<i32, Error> {
+    match query!(
         r#"
-      SELECT MAX(version_number) FROM cud_version;
+      SELECT the_value as last_version FROM key_value WHERE the_key = 'last_version';
     "#,
     )
     .fetch_one(pool)
     .await
     {
-        Ok(v) => Ok(v.get(0)),
+        Ok(rec) => Ok(rec.last_version),
         Err(err) => Err(err),
     }
 }
 
-pub async fn save_version(pool: &Pool<Sqlite>, version: CudVersion) -> Result<(), Error> {
-    let CudVersion {
-        version_number,
-        target_table,
-        target_id,
-        cud,
-        other_target_id,
-    } = version;
-    let other_target_id = other_target_id.map(|id| id.to_string());
-    match sqlx::query(
+pub async fn save_version(pool: &Pool<Sqlite>, version: u64) -> Result<(), Error> {
+    let version_number = version as i64;
+    match query!(
         r#"
-      INSERT INTO cud_version(version_number,target_table,target_id,cud,other_target_id)
-      VALUES($1,$2,$3,$4,$5) ON CONFLICT (version_number) DO NOTHING;
+      UPDATE key_value SET
+      the_value = MAX($1,(SELECT the_value from key_value WHERE the_key = 'last_version'))
+      WHERE the_key = 'last_version';
     "#,
+        version_number
     )
-    .bind(version_number as i64)
-    .bind(target_table as i16)
-    .bind(target_id.to_string())
-    .bind(cud as i16)
-    .bind(other_target_id)
     .execute(pool)
     .await
     {

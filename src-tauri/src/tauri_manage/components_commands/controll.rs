@@ -30,7 +30,7 @@ use uuid::Uuid;
 pub async fn search_non_admins(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Name<String>>, String> {
     if let Some(name) = name {
         match find_9_non_admins_by_name(&app_state.pool, &name.trim()).await {
             Ok(days) => Ok(days),
@@ -45,7 +45,9 @@ pub async fn search_non_admins(
 }
 
 #[tauri::command]
-pub async fn search_admins(app_state: tauri::State<'_, AppState>) -> Result<Vec<Name>, String> {
+pub async fn search_admins(
+    app_state: tauri::State<'_, AppState>,
+) -> Result<Vec<Name<String>>, String> {
     match find_admins(&app_state.pool).await {
         Ok(days) => Ok(days),
         Err(err) => Err(err.to_string()),
@@ -53,7 +55,9 @@ pub async fn search_admins(app_state: tauri::State<'_, AppState>) -> Result<Vec<
 }
 
 #[tauri::command]
-pub async fn list_departments(app_state: tauri::State<'_, AppState>) -> Result<Vec<Name>, String> {
+pub async fn list_departments(
+    app_state: tauri::State<'_, AppState>,
+) -> Result<Vec<Name<String>>, String> {
     match find_all_departments(&app_state.pool).await {
         Ok(days) => Ok(days),
         Err(err) => Err(err.to_string()),
@@ -64,7 +68,7 @@ pub async fn list_departments(app_state: tauri::State<'_, AppState>) -> Result<V
 pub async fn department_employees(
     app_state: tauri::State<'_, AppState>,
     id: Uuid,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Name<String>>, String> {
     match find_employees_by_department_id_except_boss(&app_state.pool, &id).await {
         Ok(days) => Ok(days),
         Err(err) => Err(err.to_string()),
@@ -81,7 +85,7 @@ pub async fn boss_employee(
     return Err("".to_string())
   };
 
-    let Ok(()) = upgrade(&app_state, Some(&window)).await else {
+    let Ok(()) = upgrade(&app_state, &window).await else {
     return Err("".to_string());
   };
 
@@ -104,7 +108,7 @@ pub async fn employee_name(
     app_state: tauri::State<'_, AppState>,
     id: Uuid,
 ) -> Result<String, String> {
-    match find_employee_name_by_id(&app_state.pool, id.to_string()).await {
+    match find_employee_name_by_id(&app_state.pool, id).await {
         Ok(days) => Ok(days),
         Err(err) => Err(err.to_string()),
     }
@@ -193,7 +197,7 @@ pub async fn permission_allow(
     let Ok(()) = allow_permission(&app_state, id, &permission).await else {
     return Err("".to_string());
   };
-    let Ok(()) = upgrade(&app_state, Some(&window)).await else {
+    let Ok(()) = upgrade(&app_state, &window).await else {
     return Err("".to_string());
   };
     Ok(())
@@ -209,7 +213,7 @@ pub async fn permission_forbid(
     let Ok(()) = forbid_permission(&app_state, id, &permission).await else {
     return Err("".to_string());
   };
-    let Ok(()) = upgrade(&app_state, Some(&window)).await else {
+    let Ok(()) = upgrade(&app_state, &window).await else {
     return Err("".to_string());
   };
     Ok(())
@@ -224,7 +228,7 @@ pub async fn admin_employee(
     let Ok(()) = up_employee(&app_state,&id).await else {
     return Err("".to_string());
   };
-    let Ok(()) = upgrade(&app_state, Some(&window)).await else {
+    let Ok(()) = upgrade(&app_state, &window).await else {
     return Err("".to_string());
   };
     Ok(())
@@ -239,7 +243,7 @@ pub async fn unadmin_employee(
     let Ok(()) = down_employee(&app_state,&id).await else {
     return Err("".to_string());
   };
-    let Ok(()) = upgrade(&app_state, Some(&window)).await else {
+    let Ok(()) = upgrade(&app_state, &window).await else {
     return Err("".to_string());
   };
     Ok(())
@@ -250,7 +254,7 @@ pub async fn search_department_employees(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
     department_id: Uuid,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Name<String>>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_employees_by_department_id_except_boss(

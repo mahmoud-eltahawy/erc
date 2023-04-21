@@ -19,7 +19,7 @@ pub async fn find_all_problems(pool: &Pool<Sqlite>) -> Result<Vec<Problem<String
 pub async fn find_department_all_problems(
     pool: &Pool<Sqlite>,
     department_id: String,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Name<String>>, Error> {
     match query_as!(
         Name,
         r#"
@@ -54,7 +54,7 @@ pub async fn find_problem_by_id(pool: &Pool<Sqlite>, id: String) -> Result<Probl
 pub async fn find_problems_by_department_id(
     pool: &Pool<Sqlite>,
     id: String,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Name<String>>, Error> {
     match query_as!(
         Name,
         r#"
@@ -75,7 +75,7 @@ pub async fn find_department_problems_by_name(
     department_id: String,
     target: &str,
     canceled: Vec<String>,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Name<String>>, Error> {
     let canceled = canceled
         .into_iter()
         .map(|x| format!("'{x}'"))
@@ -98,7 +98,7 @@ pub async fn find_department_problems_by_name(
     LIMIT 4;"
         )
     };
-    match query_as::<_, Name>(&query).fetch_all(pool).await {
+    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
         Ok(problems) => Ok(problems),
         Err(err) => Err(err),
     }
@@ -108,7 +108,7 @@ pub async fn find_department_full_problems_by_name(
     pool: &Pool<Sqlite>,
     department_id: String,
     target: &str,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Name<String>>, Error> {
     let target = format!("%{target}%");
     match query_as!(
         Name,
@@ -132,7 +132,7 @@ pub async fn find_department_4_problems(
     pool: &Pool<Sqlite>,
     department_id: String,
     canceled: Vec<String>,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Name<String>>, Error> {
     let canceled = canceled
         .into_iter()
         .map(|x| format!("'{x}'"))
@@ -154,7 +154,7 @@ pub async fn find_department_4_problems(
     LIMIT 4;"
         )
     };
-    match query_as::<_, Name>(&query).fetch_all(pool).await {
+    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
         Ok(problems) => Ok(problems),
         Err(err) => Err(err),
     }
