@@ -1,4 +1,4 @@
-use std::{error::Error, str::FromStr};
+use std::error::Error;
 
 use chrono::NaiveDate;
 use errc::{
@@ -22,7 +22,7 @@ use errc::{
     },
     translator::{translate_date, translate_order},
 };
-use rec::model::{name::Name, problem::Problem, shift::ClientDbShift};
+use rec::model::{name::Name, problem::Problem, shift::Shift};
 
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
@@ -33,25 +33,20 @@ use uuid::Uuid;
 pub struct Day {
     pub date: Vec<String>,
     //             shift_id  order
-    pub shifts: Vec<(String, String)>,
+    pub shifts: Vec<(Uuid, String)>,
 }
 
 impl Day {
-    fn new(shifts: Vec<ClientDbShift>) -> Vec<Self> {
+    fn new(shifts: Vec<Shift>) -> Vec<Self> {
         shifts
             .into_iter()
             .group_by(|shift| shift.shift_date.clone())
             .into_iter()
             .map(|day_shifts| Day {
-                date: translate_date(day_shifts.0),
+                date: translate_date(day_shifts.0.to_string()),
                 shifts: day_shifts
                     .1
-                    .map(|shift| {
-                        (
-                            shift.id,
-                            translate_order(&serde_json::from_str(&shift.shift_order).unwrap()),
-                        )
-                    })
+                    .map(|shift| (shift.id, translate_order(&shift.shift_order)))
                     .collect(),
             })
             .collect()
@@ -60,7 +55,7 @@ impl Day {
 
 async fn get_department_days(
     pool: &Pool<Sqlite>,
-    department_id: String,
+    department_id: Uuid,
     begin: Option<NaiveDate>,
     end: Option<NaiveDate>,
 ) -> Result<Vec<Day>, Box<dyn Error>> {
@@ -86,7 +81,7 @@ pub async fn search_shifts(
     begin: Option<NaiveDate>,
     end: Option<NaiveDate>,
 ) -> Result<Vec<Day>, String> {
-    match get_department_days(&app_state.pool, department_id.to_string(), begin, end).await {
+    match get_department_days(&app_state.pool, department_id, begin, end).await {
         Ok(days) => Ok(days),
         Err(err) => Err(err.to_string()),
     }
@@ -97,28 +92,22 @@ pub async fn search_problem(
     app_state: tauri::State<'_, AppState>,
     department_id: Uuid,
     name: Option<String>,
-) -> Result<Vec<Name<String>>, String> {
+) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
         if name == "*" {
-            return match find_department_all_problems(&app_state.pool, department_id.to_string())
-                .await
-            {
+            return match find_department_all_problems(&app_state.pool, department_id).await {
                 Ok(days) => Ok(days),
                 Err(err) => Err(err.to_string()),
             };
         }
-        match find_department_full_problems_by_name(
-            &app_state.pool,
-            department_id.to_string(),
-            &name.trim(),
-        )
-        .await
+        match find_department_full_problems_by_name(&app_state.pool, department_id, &name.trim())
+            .await
         {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_problems_by_department_id(&app_state.pool, department_id.to_string()).await {
+        match find_problems_by_department_id(&app_state.pool, department_id).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }
@@ -139,12 +128,9 @@ pub async fn profile_problem(
     id: Uuid,
 ) -> Result<ProblemProfile, String> {
     let Ok(Problem{id : _,department_id,writer_id,
-      title,description}) = find_problem_by_id(&app_state.pool, id.to_string()).await else {
+      title,description}) = find_problem_by_id(&app_state.pool, id).await else {
     return Err("err".to_string());
   };
-    let Ok(writer_id) = Uuid::from_str(&writer_id) else {
-      return Err("err".to_string());
-    };
     let Ok(writer_name) = find_employee_name_by_id(&app_state.pool, writer_id).await else {
     return Err("err".to_string());
   };
@@ -163,7 +149,7 @@ pub async fn profile_problem(
 pub async fn search_parts(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name<String>>, String> {
+) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_all_spare_parts(&app_state.pool).await {
@@ -187,7 +173,7 @@ pub async fn search_parts(
 pub async fn search_machines(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name<String>>, String> {
+) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_all_machines(&app_state.pool).await {
@@ -211,7 +197,7 @@ pub async fn search_machines(
 pub async fn search_employees(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name<String>>, String> {
+) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
         if name == "*" {
             return match find_all_employees_names(&app_state.pool).await {

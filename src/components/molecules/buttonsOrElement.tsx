@@ -1,83 +1,89 @@
-import { Show, createSignal,JSXElement, createEffect, For } from "solid-js";
-import { ToggleButton } from "../atoms/toggleButton";
+import { createEffect, createSignal, For, JSXElement, Show } from "solid-js";
+import { NavToggleButton } from "../../navBar";
 
 export function ButtonsOrElement({
-  returnButtonText  ,
+  rank,
   buttonElementPairs,
   num,
-  fun
-  } : {
-  returnButtonText   : string,
-  buttonElementPairs :() => [string , JSXElement][],
-  num : number[],
-  fun : Function}){
+  fun,
+}: {
+  rank: number;
+  buttonElementPairs: () => [string, JSXElement][];
+  num: number[];
+  fun: Function;
+}) {
+  const [buttonIndex, setButtonIndex] = createSignal(-1);
 
-  const [buttonIndex, setButtonIndex] = createSignal(-1)
-
-  const toggle = (id : number) => {
-      if(buttonIndex() === id){
-          setButtonIndex(-1)
-      } else {
-          setButtonIndex(id)
-      }
-  }
+  const toggle = (id: number) => {
+    if (buttonIndex() === id) {
+      setButtonIndex(-1);
+    } else {
+      setButtonIndex(id);
+    }
+  };
 
   createEffect(() => {
-    if(num[0] !== -1){
-      toggle(num[0])
-      fun()
+    if (num[0] !== -1) {
+      toggle(num[0]);
+      fun();
     }
-  })
+  });
 
-  const isChosen = (index : number) =>  buttonIndex() === index
+  const isChosen = (index: number) => buttonIndex() === index;
 
   return (
     <For each={buttonElementPairs()}>
-      {(item,index) => <>
-        <Show when={buttonIndex() === -1 || isChosen(index())}>
-          <ToggleButton
-            tButton={() => isChosen(index())}
-            defaultCont={returnButtonText}
-            cont={item[0] as string}
-            toggle={() => toggle(index())}/>
+      {(item, index) => (
+        <>
+          <Show when={buttonIndex() === -1 || isChosen(index())}>
+            <NavToggleButton
+              rank={rank}
+              transition={() => buttonIndex() !== -1}
+              cont={item[0] as string}
+              toggle={() => toggle(index())}
+            />
           </Show>
-        <Show when={isChosen(index())}>{item[1]}</Show>
-      </>}
+          <Show when={isChosen(index())}>{item[1]}</Show>
+        </>
+      )}
     </For>
-  )
+  );
 }
 
 export function ButtonsOrElementLite({
-  returnButtonText  ,
+  rank,
   buttonElementPairs,
-  } : {
-  returnButtonText   : string,
-  buttonElementPairs :() => [string , JSXElement][],
-}){
-  const [buttonIndex, setButtonIndex] = createSignal(-1)
+}: {
+  rank: number;
+  buttonElementPairs: () => [string, JSXElement][];
+}) {
+  const [buttonIndex, setButtonIndex] = createSignal(-1);
 
-  const toggle = (id : number) => {
-      if(buttonIndex() === id){
-          setButtonIndex(-1)
-      } else {
-          setButtonIndex(id)
-      }
-  }
+  const toggle = (id: number) => {
+    if (buttonIndex() === id) {
+      setButtonIndex(-1);
+    } else {
+      setButtonIndex(id);
+    }
+  };
 
-  const isChosen = (index : number) =>  buttonIndex() === index
+  const isChosen = (index: number) => buttonIndex() === index;
 
   return (
     <For each={buttonElementPairs()}>
-      {(item,index) => <>
-        <Show when={buttonIndex() === -1 || isChosen(index())}>
-          <ToggleButton
-            tButton={() => isChosen(index())}
-            defaultCont={returnButtonText}
-            cont={item[0] as string}
-            toggle={() => toggle(index())}/>
+      {(item, index) => (
+        <>
+          <Show when={buttonIndex() === -1 || isChosen(index())}>
+            <NavToggleButton
+              rank={rank}
+              transition={() => buttonIndex() !== -1}
+              cont={item[0] as string}
+              toggle={() => toggle(index())}
+            />
           </Show>
-        <Show when={isChosen(index())}>{item[1]}</Show>
-      </>}
+          <Show when={isChosen(index())}>{item[1]}</Show>
+        </>
+      )}
     </For>
-  )
+  );
 }

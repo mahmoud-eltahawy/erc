@@ -1,4 +1,4 @@
-use rec::model::shift::{ClientDbShift, ClientDepartmentShift, DepartmentShift, Shift};
+use rec::model::shift::{DepartmentShift, Shift};
 use sqlx::{query, Error, Pool, Sqlite};
 use uuid::Uuid;
 
@@ -22,11 +22,14 @@ pub async fn save_department_shift(
     pool: &Pool<Sqlite>,
     shift: DepartmentShift,
 ) -> Result<(), Error> {
-    let ClientDepartmentShift {
+    let DepartmentShift {
         id,
-        department_id,
         shift_id,
-    } = ClientDepartmentShift::new(shift);
+        department_id,
+    } = shift;
+    let id = id.to_string();
+    let shift_id = shift_id.to_string();
+    let department_id = department_id.to_string();
     match query!(
         r#"
     INSERT INTO department_shift(id,department_id,shift_id)
@@ -45,11 +48,14 @@ pub async fn save_department_shift(
 }
 
 pub async fn save(pool: &Pool<Sqlite>, shift: Shift) -> Result<(), Error> {
-    let ClientDbShift {
+    let Shift {
         id,
         shift_date,
         shift_order,
-    } = ClientDbShift::new(shift);
+    } = shift;
+    let id = id.to_string();
+    let shift_date = serde_json::json!(shift_date);
+    let shift_order = shift_order.stringify();
     match query!(
         r#"
     INSERT INTO shift(id,shift_date,shift_order)

@@ -18,8 +18,9 @@ pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     }
 }
 
-pub async fn save(pool: &Pool<Sqlite>, machine: Machine<Uuid>) -> Result<(), Error> {
-    let Machine { id, name } = machine.string_to_client();
+pub async fn save(pool: &Pool<Sqlite>, machine: Machine) -> Result<(), Error> {
+    let Machine { id, name } = machine;
+    let id = id.to_string();
     match query!(
         r#"
     INSERT INTO machine(id,name)
@@ -36,15 +37,19 @@ pub async fn save(pool: &Pool<Sqlite>, machine: Machine<Uuid>) -> Result<(), Err
     }
 }
 
-pub async fn update(pool: &Pool<Sqlite>, machine: Machine<Uuid>) -> Result<(), Error> {
-    let Machine { id, name } = machine.string_to_client();
+pub async fn update_name(
+    pool: &Pool<Sqlite>,
+    machine_id: &Uuid,
+    name: &String,
+) -> Result<(), Error> {
+    let machine_id = machine_id.to_string();
     match query!(
         r#"
   UPDATE machine SET
   name = $2
   WHERE id = $1;
   "#,
-        id,
+        machine_id,
         name
     )
     .execute(pool)

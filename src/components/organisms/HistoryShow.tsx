@@ -1,33 +1,31 @@
-import { css } from "solid-styled-components"
-import { ButtonsOrElementLite } from "../molecules/buttonsOrElement"
-import HistoryDays from "../molecules/historyDays"
-import HistoryEmployees from "../molecules/historyEmployees"
-import HistoryMachines from "../molecules/historyMachines"
-import HistoryParts from "../molecules/historyParts"
-import HistoryProblems from "../molecules/historyProblems"
+import { css } from "solid-styled-components";
+import { ButtonsOrElementLite } from "../molecules/buttonsOrElement";
+import HistoryDays from "../molecules/historyDays";
+import HistoryEmployees from "../molecules/historyEmployees";
+import HistoryMachines from "../molecules/historyMachines";
+import HistoryParts from "../molecules/historyParts";
+import HistoryProblems from "../molecules/historyProblems";
 
-export default function HistoryShow(){
-
+export default function HistoryShow({ rank }: { rank: number }) {
   const container = css({
-   display: "block",
-   fontSize: "18px",
-   border: "solid 3px",
-   margin: "2px auto",
-   padding: "2px",
-  })
+    display: "block",
+    fontSize: "18px",
+    margin: "2px auto",
+    padding: "2px",
+  });
 
   return (
     <section class={container}>
-        <ButtonsOrElementLite
-          returnButtonText="العودة لصفحة البحث"
-          buttonElementPairs={() => [
-                ["ابحث عن يوم", <HistoryDays/>],
-                ["ابحث عن مشكلة", <HistoryProblems/>],
-                ["ابحث عن قطعة غيار", <HistoryParts/>],
-                ["ابحث عن ماكينة"   , <HistoryMachines/>],
-                ["ابحث عن موظف"   , <HistoryEmployees/>]
-            ]
-          }/>
+      <ButtonsOrElementLite
+        rank={rank}
+        buttonElementPairs={() => [
+          ["ابحث عن يوم", <HistoryDays rank={rank + 1} />],
+          ["ابحث عن مشكلة", <HistoryProblems rank={rank + 1} />],
+          ["ابحث عن قطعة غيار", <HistoryParts rank={rank + 1} />],
+          ["ابحث عن ماكينة", <HistoryMachines rank={rank + 1} />],
+          ["ابحث عن موظف", <HistoryEmployees rank={rank + 1} />],
+        ]}
+      />
     </section>
-  )
+  );
 }

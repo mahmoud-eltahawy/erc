@@ -1,107 +1,112 @@
-use rec::model::{name::Name, spare_part::SparePart};
-use sqlx::{query_as, Error, Pool, Sqlite};
+use std::{error::Error, str::FromStr};
 
-pub async fn find_all_spare_parts(pool: &Pool<Sqlite>) -> Result<Vec<Name<String>>, Error> {
-    match query_as!(
-        Name,
+use itertools::Itertools;
+use rec::model::name::Name;
+use sqlx::{query, Pool, Sqlite};
+use uuid::Uuid;
+
+pub async fn find_all_spare_parts(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Box<dyn Error>> {
+    let records = query!(
         r#"
       select * from spare_part;
     "#
     )
     .fetch_all(pool)
-    .await
-    {
-        Ok(parts) => Ok(parts),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|x| match Uuid::from_str(&x.id) {
+            Ok(id) => Some(Name { id, name: x.name }),
+            Err(_) => None,
+        })
+        .collect_vec())
 }
 
 pub async fn find_spare_parts_by_name(
     pool: &Pool<Sqlite>,
     target: &str,
     canceled: Vec<String>,
-) -> Result<Vec<Name<String>>, Error> {
-    let canceled = canceled
+) -> Result<Vec<Name>, Box<dyn Error>> {
+    let target = format!("%{target}%");
+    let records = query!(
+        "
+    SELECT * FROM spare_part
+    WHERE name LIKE $1 LIMIT 4;",
+        target
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(records
         .into_iter()
-        .map(|x| format!("'{x}'"))
-        .collect::<Vec<String>>()
-        .join(",");
-    let query = if canceled.is_empty() {
-        format!(
-            "
-    SELECT * FROM spare_part
-    WHERE name LIKE '%{target}%' LIMIT 4;"
-        )
-    } else {
-        format!(
-            "
-    SELECT * FROM spare_part
-    WHERE name LIKE '%{target}%' AND name NOT IN ({canceled}) LIMIT 4;"
-        )
-    };
-    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
+        .flat_map(|x| match Uuid::from_str(&x.id) {
+            Ok(id) => {
+                if !canceled.contains(&x.name) {
+                    return Some(Name { id, name: x.name });
+                } else {
+                    return None;
+                }
+            }
+            Err(_) => None,
+        })
+        .collect_vec())
 }
 
 pub async fn find_4_spare_parts(
     pool: &Pool<Sqlite>,
     canceled: Vec<String>,
-) -> Result<Vec<Name<String>>, Error> {
-    let canceled = canceled
-        .into_iter()
-        .map(|x| format!("'{x}'"))
-        .collect::<Vec<String>>()
-        .join(",");
-    let query = if canceled.is_empty() {
-        format!(
-            "
-    SELECT * FROM spare_part LIMIT 4;"
-        )
-    } else {
-        format!(
-            "
-    SELECT * FROM spare_part
-    WHERE name NOT IN ({canceled}) LIMIT 4;"
-        )
-    };
-    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
-}
-
-pub async fn find_all_spare_parts_names(pool: &Pool<Sqlite>) -> Result<Vec<Name<String>>, Error> {
-    match query_as!(
-        Name,
-        r#"
-      select id,name from spare_part;
-    "#
+) -> Result<Vec<Name>, Box<dyn Error>> {
+    let limit = 4;
+    let limit = limit + canceled.len() as i64;
+    let records = query!(
+        "
+    SELECT * FROM spare_part LIMIT $1;",
+        limit
     )
     .fetch_all(pool)
-    .await
-    {
-        Ok(parts) => Ok(parts),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|x| match Uuid::from_str(&x.id) {
+            Ok(id) => {
+                if !canceled.contains(&x.name) {
+                    return Some(Name { id, name: x.name });
+                } else {
+                    return None;
+                }
+            }
+            Err(_) => None,
+        })
+        .collect_vec())
 }
 
-pub async fn find_spare_part_by_id(
+pub async fn find_all_spare_parts_names(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Box<dyn Error>> {
+    let records = query!(
+        "
+    SELECT * FROM spare_part;"
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|x| match Uuid::from_str(&x.id) {
+            Ok(id) => Some(Name { id, name: x.name }),
+            Err(_) => None,
+        })
+        .collect_vec())
+}
+
+pub async fn find_spare_part_name_by_id(
     pool: &Pool<Sqlite>,
-    id: String,
-) -> Result<SparePart<String>, Error> {
-    match query_as!(
-        SparePart,
+    id: Uuid,
+) -> Result<String, Box<dyn Error>> {
+    let id = id.to_string();
+    let record = query!(
         r#"
-      SELECT * FROM spare_part WHERE id = $1;
+      SELECT name FROM spare_part WHERE id = $1;
     "#,
         id
     )
     .fetch_one(pool)
-    .await
-    {
-        Ok(problem) => Ok(problem),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(record.name)
 }

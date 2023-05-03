@@ -1,6 +1,7 @@
 use rec::model::employee::Employee;
 use std::sync::Mutex;
 use tauri::{Builder, Wry};
+use uuid::Uuid;
 
 use super::models::TauriState;
 use super::{
@@ -12,7 +13,7 @@ pub fn build_tauri(state: TauriState) -> Builder<Wry> {
     let TauriState { app_state } = state;
     tauri::Builder::default()
         .manage(app_state)
-        .manage(Mutex::new(None::<(Employee<String>, String)>))
+        .manage(Mutex::new(None::<(Employee, Uuid)>))
         //is the update func invoked
         .manage(Mutex::new(false))
         .invoke_handler(tauri::generate_handler![
@@ -30,15 +31,16 @@ pub fn build_tauri(state: TauriState) -> Builder<Wry> {
             spare_parts_selection,
             save_problem_detail,
             update_problem_detail,
-            get_shift_problem_names_by_id,
+            get_shift_problem_by_id,
             get_shift_problems_ids_by_shift_id,
-            get_shift_problem_spare_parts_by_id,
-            get_shift_problem_problems_by_id,
+            get_shift_problem_spare_parts_ids_by_id,
+            get_shift_problem_problems_ids_by_id,
             get_shift_problem_note_by_id,
             get_employee_by_id,
-            get_problem_by_id,
-            get_spare_part_by_id,
-            get_machine_by_id,
+            employee_name,
+            get_problem_name_by_id,
+            get_spare_part_name_by_id,
+            get_machine_name_by_id,
             search_shifts,
             search_problem,
             profile_problem,
@@ -49,7 +51,6 @@ pub fn build_tauri(state: TauriState) -> Builder<Wry> {
             search_admins,
             search_non_admins,
             admin_employee,
-            employee_name,
             unadmin_employee,
             list_departments,
             find_department,
@@ -63,7 +64,10 @@ pub fn build_tauri(state: TauriState) -> Builder<Wry> {
             remove_shift_employee,
             add_shift_employee,
             save_shift_note,
-            fetch_shift_notes,
+            fetch_shift_notes_ids,
+            fetch_shift_note,
+            remove_shift_note,
+            upgrade_shift_note,
             shift_existing_employees,
             shift_non_existing_employees,
             remove_shift_problem,

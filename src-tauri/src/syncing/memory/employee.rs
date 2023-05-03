@@ -18,7 +18,7 @@ pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     }
 }
 
-pub async fn save(pool: &Pool<Sqlite>, employee: Employee<Uuid>) -> Result<(), Error> {
+pub async fn save(pool: &Pool<Sqlite>, employee: Employee) -> Result<(), Error> {
     let Employee {
         id,
         card_id,
@@ -28,7 +28,9 @@ pub async fn save(pool: &Pool<Sqlite>, employee: Employee<Uuid>) -> Result<(), E
         middle_name,
         position,
         password,
-    } = employee.string_to_client();
+    } = employee;
+    let id = id.to_string();
+    let department_id = department_id.to_string();
     match query!(r#"
     INSERT INTO employee(id,card_id,department_id,first_name,last_name,middle_name,position,password)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING;
@@ -39,37 +41,80 @@ pub async fn save(pool: &Pool<Sqlite>, employee: Employee<Uuid>) -> Result<(), E
   }
 }
 
-pub async fn update(pool: &Pool<Sqlite>, employee: Employee<Uuid>) -> Result<(), Error> {
-    let Employee {
-        id,
-        card_id,
-        department_id,
-        first_name,
-        last_name,
-        middle_name,
-        position,
-        password,
-    } = employee.string_to_client();
+pub async fn update_department(
+    pool: &Pool<Sqlite>,
+    employee_id: &Uuid,
+    department_id: &Uuid,
+) -> Result<(), Error> {
+    let employee_id = employee_id.to_string();
+    let department_id = department_id.to_string();
     match query!(
         r#"
   UPDATE employee SET
-  card_id       = $2,
-  department_id = $3,
-  position      = $4,
-  first_name    = $5,
-  last_name     = $6,
-  middle_name   = $7,
-  password      = $8
+  department_id = $2
   WHERE id = $1;
   "#,
-        id,
-        card_id,
+        employee_id,
         department_id,
-        position,
-        first_name,
-        last_name,
-        middle_name,
-        password
+    )
+    .execute(pool)
+    .await
+    {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err),
+    }
+}
+
+pub async fn update_password(
+    pool: &Pool<Sqlite>,
+    employee_id: &Uuid,
+    password: &String,
+) -> Result<(), Error> {
+    let employee_id = employee_id.to_string();
+    match query!(
+        r#"
+  UPDATE employee SET
+  password = $2
+  WHERE id = $1;
+  "#,
+        employee_id,
+        password,
+    )
+    .execute(pool)
+    .await
+    {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err),
+    }
+}
+
+pub async fn up(pool: &Pool<Sqlite>, employee_id: Uuid) -> Result<(), Error> {
+    let employee_id = employee_id.to_string();
+    match query!(
+        r#"
+  UPDATE employee SET
+  position = 'SUPER_USER'
+  WHERE id = $1;
+  "#,
+        employee_id,
+    )
+    .execute(pool)
+    .await
+    {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err),
+    }
+}
+
+pub async fn down(pool: &Pool<Sqlite>, employee_id: Uuid) -> Result<(), Error> {
+    let employee_id = employee_id.to_string();
+    match query!(
+        r#"
+  UPDATE employee SET
+  position = 'USER'
+  WHERE id = $1;
+  "#,
+        employee_id,
     )
     .execute(pool)
     .await

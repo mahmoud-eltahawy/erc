@@ -5,11 +5,9 @@ use sqlx::{query, Pool, Sqlite};
 use rec::model::note::{Note, ShiftNote};
 use uuid::Uuid;
 
-pub async fn save_to_shift_problem(
-    pool: &Pool<Sqlite>,
-    note: Note<Uuid>,
-) -> Result<(), Box<dyn Error>> {
-    let Note { id, content } = note.string_to_client();
+pub async fn save_to_shift_problem(pool: &Pool<Sqlite>, note: &Note) -> Result<(), Box<dyn Error>> {
+    let Note { id, content } = note;
+    let id = id.to_string();
     let row = query!(
         "
     INSERT INTO shift_problem_note(
@@ -26,16 +24,16 @@ pub async fn save_to_shift_problem(
     };
 }
 
-pub async fn save_to_shift(
-    pool: &Pool<Sqlite>,
-    note: ShiftNote<Uuid>,
-) -> Result<(), Box<dyn Error>> {
+pub async fn save_to_shift(pool: &Pool<Sqlite>, note: &ShiftNote) -> Result<(), Box<dyn Error>> {
     let ShiftNote {
         id,
         shift_id,
         writer_id,
         content,
-    } = note.string_to_client();
+    } = note;
+    let id = id.to_string();
+    let shift_id = shift_id.to_string();
+    let writer_id = writer_id.to_string();
     let row = query!(
         "
     INSERT INTO shift_note(
@@ -56,11 +54,9 @@ pub async fn save_to_shift(
     };
 }
 
-pub async fn update_shift_note(
-    pool: &Pool<Sqlite>,
-    note: Note<Uuid>,
-) -> Result<(), Box<dyn Error>> {
-    let Note { id, content } = note.string_to_client();
+pub async fn update_shift_note(pool: &Pool<Sqlite>, note: &Note) -> Result<(), Box<dyn Error>> {
+    let Note { id, content } = note;
+    let id = id.to_string();
     let row = query!(
         "
     UPDATE shift_note SET content = $2 WHERE id =$1;",
@@ -76,9 +72,10 @@ pub async fn update_shift_note(
 
 pub async fn update_shift_problem_note(
     pool: &Pool<Sqlite>,
-    note: Note<Uuid>,
+    note: &Note,
 ) -> Result<(), Box<dyn Error>> {
-    let Note { id, content } = note.string_to_client();
+    let Note { id, content } = note;
+    let id = id.to_string();
     let row = query!(
         "
     UPDATE shift_problem_note SET content = $2 WHERE id =$1;",

@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS key_value (
        the_value                   NUMERIC                            NOT NULL
 );
 
-INSERT INTO key_value(the_key,the_value) VALUES('last_version',1);
+INSERT INTO key_value(the_key,the_value) VALUES('last_cd_version',0);
+INSERT INTO key_value(the_key,the_value) VALUES('last_update_version',0);
 
 CREATE TABLE IF NOT EXISTS department(
        id                 VARCHAR(80)                                 NOT NULL        UNIQUE,
@@ -34,19 +35,10 @@ CREATE INDEX IF NOT EXISTS idx_emp_mn        ON employee(middle_name);
 CREATE INDEX IF NOT EXISTS idx_emp_ln        ON employee(last_name);
 
 CREATE TABLE IF NOT EXISTS permissions(
-       id                                                      VARCHAR(80)        NOT NULL UNIQUE,
-       write_department_problem                                BOOL               NOT NULL,
-       read_department_problems                                BOOL               NOT NULL,
-       modify_department_problems                              BOOL               NOT NULL,
-       define_problem                                          BOOL               NOT NULL,
-       access_history_department_problems                      BOOL               NOT NULL,
-       access_history_all_departments_problems                 BOOL               NOT NULL,
-       access_history_department_department_problems           BOOL               NOT NULL,
-       access_history_all_departments_department_problems      BOOL               NOT NULL,
-       access_history_machines                                 BOOL               NOT NULL,
-       access_history_spare_parts                              BOOL               NOT NULL,
-       access_history_employees                                BOOL               NOT NULL,
-       FOREIGN KEY(id) REFERENCES employee(id) ON DELETE CASCADE
+       employee_id          VARCHAR(80)        NOT NULL,
+       permission           VARCHAR(50)        NOT NULL,
+       CONSTRAINT unique_employee_permission UNIQUE(employee_id,permission),
+       FOREIGN KEY(employee_id) REFERENCES employee(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS machine(

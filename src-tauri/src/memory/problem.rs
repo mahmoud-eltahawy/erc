@@ -1,117 +1,152 @@
-use rec::model::{name::Name, problem::Problem};
-use sqlx::{query_as, Error, Pool, Sqlite};
+use std::str::FromStr;
 
-pub async fn find_all_problems(pool: &Pool<Sqlite>) -> Result<Vec<Problem<String>>, Error> {
-    match query_as!(
-        Problem,
+use itertools::Itertools;
+use rec::model::{name::Name, problem::Problem};
+use sqlx::{query, Pool, Sqlite};
+use uuid::Uuid;
+
+type Error = Box<dyn std::error::Error>;
+
+pub async fn find_all_problems(pool: &Pool<Sqlite>) -> Result<Vec<Problem>, Error> {
+    let records = query!(
         r#"
     select * from problem;
   "#
     )
     .fetch_all(pool)
-    .await
-    {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|record| {
+            match (
+                Uuid::from_str(&record.id),
+                Uuid::from_str(&record.department_id),
+                Uuid::from_str(&record.writer_id),
+            ) {
+                (Ok(id), Ok(department_id), Ok(writer_id)) => Some(Problem {
+                    id,
+                    department_id,
+                    writer_id,
+                    title: record.title,
+                    description: record.description,
+                }),
+                _ => None,
+            }
+        })
+        .collect_vec())
 }
 
 pub async fn find_department_all_problems(
     pool: &Pool<Sqlite>,
-    department_id: String,
-) -> Result<Vec<Name<String>>, Error> {
-    match query_as!(
-        Name,
+    department_id: Uuid,
+) -> Result<Vec<Name>, Error> {
+    let department_id = department_id.to_string();
+    let records = query!(
         r#"
     select id,title as name from problem WHERE department_id = $1;
   "#,
         department_id
     )
     .fetch_all(pool)
-    .await
-    {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|record| match Uuid::from_str(&record.id) {
+            Ok(id) => Some(Name {
+                id,
+                name: record.name,
+            }),
+            _ => None,
+        })
+        .collect_vec())
 }
 
-pub async fn find_problem_by_id(pool: &Pool<Sqlite>, id: String) -> Result<Problem<String>, Error> {
-    match query_as!(
-        Problem,
+pub async fn find_problem_name_by_id(pool: &Pool<Sqlite>, id: Uuid) -> Result<String, Error> {
+    let id = id.to_string();
+    let record = query!(
         r#"
-    SELECT * FROM problem WHERE id = $1;
+    SELECT title FROM problem WHERE id = $1;
   "#,
         id
     )
     .fetch_one(pool)
-    .await
-    {
-        Ok(problem) => Ok(problem),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(record.title)
 }
 
 pub async fn find_problems_by_department_id(
     pool: &Pool<Sqlite>,
-    id: String,
-) -> Result<Vec<Name<String>>, Error> {
-    match query_as!(
-        Name,
+    id: Uuid,
+) -> Result<Vec<Name>, Error> {
+    let id = id.to_string();
+    let records = query!(
         r#"
     SELECT id , title as name FROM problem WHERE department_id = $1 LIMIT 7;
   "#,
         id
     )
     .fetch_all(pool)
-    .await
-    {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|record| match Uuid::from_str(&record.id) {
+            Ok(id) => Some(Name {
+                id,
+                name: record.name,
+            }),
+            _ => None,
+        })
+        .collect_vec())
 }
 
 pub async fn find_department_problems_by_name(
     pool: &Pool<Sqlite>,
-    department_id: String,
+    department_id: Uuid,
     target: &str,
     canceled: Vec<String>,
-) -> Result<Vec<Name<String>>, Error> {
-    let canceled = canceled
+) -> Result<Vec<Name>, Error> {
+    let department_id = department_id.to_string();
+    let limit = 4;
+    let limit = limit + canceled.len() as i64;
+    let target = format!("%{target}%");
+    let records = query!(
+        "
+    SELECT id,title as name FROM problem
+    WHERE department_id = $1
+    AND title LIKE $2
+    LIMIT $3;",
+        department_id,
+        target,
+        limit
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(records
         .into_iter()
-        .map(|x| format!("'{x}'"))
-        .collect::<Vec<String>>()
-        .join(",");
-    let query = if canceled.is_empty() {
-        format!(
-            "
-    SELECT id,title as name FROM problem
-    WHERE department_id = '{department_id}'
-    AND title LIKE '%{target}%'
-    LIMIT 4;"
-        )
-    } else {
-        format!(
-            "
-    SELECT id,title as name FROM problem
-    WHERE department_id = '{department_id}'
-    AND (title LIKE '%{target}%' AND title NOT IN ({canceled}))
-    LIMIT 4;"
-        )
-    };
-    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
+        .flat_map(|record| match Uuid::from_str(&record.id) {
+            Ok(id) => {
+                if !canceled.contains(&record.name) {
+                    return Some(Name {
+                        id,
+                        name: record.name,
+                    });
+                } else {
+                    return None;
+                }
+            }
+            Err(_) => None,
+        })
+        .collect_vec())
 }
 
 pub async fn find_department_full_problems_by_name(
     pool: &Pool<Sqlite>,
-    department_id: String,
+    department_id: Uuid,
     target: &str,
-) -> Result<Vec<Name<String>>, Error> {
+) -> Result<Vec<Name>, Error> {
     let target = format!("%{target}%");
-    match query_as!(
-        Name,
+    let department_id = department_id.to_string();
+    let records = query!(
         r#"
     SELECT id ,title as name FROM problem
     WHERE department_id = $1
@@ -121,60 +156,111 @@ pub async fn find_department_full_problems_by_name(
         target
     )
     .fetch_all(pool)
-    .await
-    {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|record| match Uuid::from_str(&record.id) {
+            Ok(id) => Some(Name {
+                id,
+                name: record.name,
+            }),
+            Err(_) => None,
+        })
+        .collect_vec())
 }
 
 pub async fn find_department_4_problems(
     pool: &Pool<Sqlite>,
-    department_id: String,
+    department_id: Uuid,
     canceled: Vec<String>,
-) -> Result<Vec<Name<String>>, Error> {
-    let canceled = canceled
+) -> Result<Vec<Name>, Error> {
+    let department_id = department_id.to_string();
+    let limit = 4;
+    let limit = limit + canceled.len() as i64;
+    let records = query!(
+        "
+    SELECT id,title as name FROM problem
+    WHERE department_id = $1
+    LIMIT $2;",
+        department_id,
+        limit
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(records
         .into_iter()
-        .map(|x| format!("'{x}'"))
-        .collect::<Vec<String>>()
-        .join(",");
-    let query = if canceled.is_empty() {
-        format!(
-            "
-    SELECT id,title as name FROM problem
-    WHERE department_id = '{department_id}'
-    LIMIT 4;"
-        )
-    } else {
-        format!(
-            "
-    SELECT id,title as name FROM problem
-    WHERE department_id = '{department_id}'
-    AND title NOT IN ({canceled})
-    LIMIT 4;"
-        )
-    };
-    match query_as::<_, Name<String>>(&query).fetch_all(pool).await {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
-    }
+        .flat_map(|record| match Uuid::from_str(&record.id) {
+            Ok(id) => {
+                if !canceled.contains(&record.name) {
+                    Some(Name {
+                        id,
+                        name: record.name,
+                    })
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        })
+        .collect_vec())
 }
 
 pub async fn find_problems_by_writer_id(
     pool: &Pool<Sqlite>,
-    id: String,
-) -> Result<Vec<Problem<String>>, Error> {
-    match query_as!(
-        Problem,
+    id: Uuid,
+) -> Result<Vec<Problem>, Error> {
+    let id = id.to_string();
+    let records = query!(
         r#"
     SELECT * FROM problem WHERE writer_id = $1;
   "#,
         id
     )
     .fetch_all(pool)
-    .await
-    {
-        Ok(problems) => Ok(problems),
-        Err(err) => Err(err),
+    .await?;
+    Ok(records
+        .into_iter()
+        .flat_map(|record| {
+            match (
+                Uuid::from_str(&record.id),
+                Uuid::from_str(&record.department_id),
+                Uuid::from_str(&record.writer_id),
+            ) {
+                (Ok(id), Ok(department_id), Ok(writer_id)) => Some(Problem {
+                    id,
+                    department_id,
+                    writer_id,
+                    title: record.title,
+                    description: record.description,
+                }),
+                _ => None,
+            }
+        })
+        .collect_vec())
+}
+
+pub async fn find_problem_by_id(pool: &Pool<Sqlite>, id: Uuid) -> Result<Problem, Error> {
+    let id = id.to_string();
+    let record = query!(
+        r#"
+    SELECT * FROM problem WHERE id = $1;
+  "#,
+        id
+    )
+    .fetch_one(pool)
+    .await?;
+    match (
+        Uuid::from_str(&record.id),
+        Uuid::from_str(&record.department_id),
+        Uuid::from_str(&record.writer_id),
+    ) {
+        (Ok(id), Ok(department_id), Ok(writer_id)) => Ok(Problem {
+            id,
+            department_id,
+            writer_id,
+            title: record.title,
+            description: record.description,
+        }),
+        _ => Err("err".into()),
     }
 }

@@ -1,62 +1,26 @@
-use rec::model::permissions::Permissions;
-use sqlx::{query_as, Error, Pool, Sqlite};
+use itertools::Itertools;
+use rec::model::permissions::PermissionName;
+use sqlx::{query, Pool, Sqlite};
+use uuid::Uuid;
+
+type Error = Box<dyn std::error::Error>;
 
 pub async fn find_permissions_by_id(
     pool: &Pool<Sqlite>,
-    id: String,
-) -> Result<Permissions<String>, Error> {
-    match query_as!(
-        Permissions,
+    id: Uuid,
+) -> Result<Vec<PermissionName>, Error> {
+    let id = id.to_string();
+    let records = query!(
         r#"
-      SELECT * FROM permissions WHERE id = $1;
+      SELECT permission FROM permissions WHERE employee_id = $1;
     "#,
         id
     )
-    .fetch_one(pool)
-    .await
-    {
-        Ok(permissions) => Ok(permissions),
-        Err(err) => Err(err),
-    }
-}
+    .fetch_all(pool)
+    .await?;
 
-pub async fn find_department_permissions_by_id(
-    pool: &Pool<Sqlite>,
-    id: String,
-) -> Result<Permissions<String>, Error> {
-    match query_as!(
-        Permissions,
-        r#"
-      SELECT p.* FROM permissions p WHERE p.id =
-        (SELECT e.id FROM employee e WHERE e.id IN
-          (SELECT d.boss_id FROM department d WHERE d.id = $1 And d.id NOT NULL));
-    "#,
-        id
-    )
-    .fetch_one(pool)
-    .await
-    {
-        Ok(permissions) => Ok(permissions),
-        Err(err) => Err(err),
-    }
-}
-
-pub async fn find_employee_permissions_by_id(
-    pool: &Pool<Sqlite>,
-    id: String,
-) -> Result<Permissions<String>, Error> {
-    match query_as!(
-        Permissions,
-        r#"
-      SELECT p.* FROM permissions p WHERE p.id =
-        (SELECT e.id FROM employee e WHERE e.id = $1)
-    "#,
-        id
-    )
-    .fetch_one(pool)
-    .await
-    {
-        Ok(permissions) => Ok(permissions),
-        Err(err) => Err(err),
-    }
+    Ok(records
+        .into_iter()
+        .flat_map(|x| PermissionName::try_from(x.permission))
+        .collect_vec())
 }

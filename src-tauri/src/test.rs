@@ -1,32 +1,27 @@
 use std::{error::Error, str::FromStr};
 
+use chrono::{Local, NaiveDateTime};
 use rec::{
-    crud_sync::CudVersion,
+    crud_sync::Version,
     model::{
-        department::Department, employee::Employee, machine::Machine, permissions::Permissions,
+        department::{Department, UpdateDepartment},
+        employee::Employee,
+        machine::Machine,
         spare_part::SparePart,
+        Environment, TableCrud, TableRequest,
     },
 };
 use uuid::Uuid;
 
-use crate::{
-    api::{
-        department::{save_department, sets_department_boss},
-        employee::save_employee,
-        machine::save_machine,
-        permissions::save_permissions,
-        spare_parts::save_spare_part,
-    },
-    config::AppState,
-};
+use crate::{api, config::AppState};
 
 async fn is_first_shoot(app_state: &AppState) -> Result<bool, Box<dyn Error>> {
     let origin = &app_state.origin;
     let result = reqwest::Client::new()
-        .get(format!("{origin}/sync/1"))
+        .get(format!("{origin}/app/0/0"))
         .send()
         .await?
-        .json::<Vec<CudVersion>>()
+        .json::<Vec<Version>>()
         .await?;
 
     return Ok(result.is_empty());
@@ -37,7 +32,7 @@ pub async fn insert_basic_data(app_state: &AppState) -> Result<(), Box<dyn Error
         return Ok(());
     }
 
-    let zero_id = Uuid::from_str("00000000-0000-0000-0000-000000000000").expect("unvalid uuid");
+    let zero_id = Uuid::nil();
 
     let department = Department {
         id: zero_id,
@@ -45,7 +40,21 @@ pub async fn insert_basic_data(app_state: &AppState) -> Result<(), Box<dyn Error
         boss_id: None,
     };
 
-    save_department(app_state, &department).await?;
+    let now = Local::now().timestamp_millis();
+    let now = NaiveDateTime::from_timestamp_millis(now);
+    let Some(time_stamp) = now else {
+        return Err("unvalid time".to_string().into());
+    };
+
+    api::main_entry(
+        app_state,
+        TableRequest::Department(TableCrud::Create(Environment {
+            updater_id: zero_id,
+            target: department,
+            time_stamp,
+        })),
+    )
+    .await?;
 
     let employee = Employee {
         id: zero_id,
@@ -57,14 +66,25 @@ pub async fn insert_basic_data(app_state: &AppState) -> Result<(), Box<dyn Error
         department_id: zero_id,
         password: "1234".to_string(),
     };
+    api::main_entry(
+        app_state,
+        TableRequest::Employee(TableCrud::Create(Environment {
+            updater_id: zero_id,
+            target: employee,
+            time_stamp,
+        })),
+    )
+    .await?;
 
-    save_employee(app_state, &employee).await?;
-
-    let permissions = Permissions::default(zero_id);
-
-    save_permissions(app_state, &permissions).await?;
-
-    sets_department_boss(app_state, &zero_id).await?;
+    api::main_entry(
+        app_state,
+        TableRequest::Department(TableCrud::Update(Environment {
+            updater_id: zero_id,
+            target: UpdateDepartment::SetBoss(zero_id, zero_id),
+            time_stamp,
+        })),
+    )
+    .await?;
 
     insert_employees(app_state).await?; //TODO : remove this line in production
 
@@ -72,6 +92,14 @@ pub async fn insert_basic_data(app_state: &AppState) -> Result<(), Box<dyn Error
 }
 
 async fn insert_employees(app_state: &AppState) -> Result<(), Box<dyn Error>> {
+    let now = Local::now().timestamp_millis();
+    let now = NaiveDateTime::from_timestamp_millis(now);
+    let Some(time_stamp) = now else {
+        return Err("unvalid time".to_string().into());
+    };
+
+    let zero_id = Uuid::from_str("00000000-0000-0000-0000-000000000000").expect("unvalid uuid");
+
     let kilens_id = Uuid::new_v4();
     let drayers_id = Uuid::new_v4();
     let incjet_id = Uuid::new_v4();
@@ -93,8 +121,16 @@ async fn insert_employees(app_state: &AppState) -> Result<(), Box<dyn Error>> {
             boss_id: None,
         },
     ];
-    for d in departments {
-        save_department(app_state, &d).await?;
+    for target in departments {
+        api::main_entry(
+            app_state,
+            TableRequest::Department(TableCrud::Create(Environment {
+                updater_id: zero_id,
+                target,
+                time_stamp,
+            })),
+        )
+        .await?;
     }
 
     let employee1 = Employee {
@@ -147,7 +183,7 @@ async fn insert_employees(app_state: &AppState) -> Result<(), Box<dyn Error>> {
     let id24 = Uuid::new_v4();
     let id25 = Uuid::new_v4();
 
-    let employees: Vec<Employee<Uuid>> = vec![
+    let employees: Vec<Employee> = vec![
         Employee {
             id: id1,
             card_id: 1,
@@ -300,40 +336,16 @@ async fn insert_employees(app_state: &AppState) -> Result<(), Box<dyn Error>> {
         },
     ];
 
-    for e in employees {
-        save_employee(app_state, &e).await?;
-    }
-
-    let permissions = vec![
-        Permissions::default(id1),
-        Permissions::default(id2),
-        Permissions::default(id3),
-        Permissions::default(id4),
-        Permissions::default(id5),
-        Permissions::default(id6),
-        Permissions::default(id7),
-        Permissions::default(id8),
-        Permissions::default(id9),
-        Permissions::default(id10),
-        Permissions::default(id11),
-        Permissions::default(id12),
-        Permissions::default(id13),
-        Permissions::default(id14),
-        Permissions::default(id15),
-        Permissions::default(id16),
-        Permissions::default(id17),
-        Permissions::default(id18),
-        Permissions::default(id19),
-        Permissions::default(id20),
-        Permissions::default(id21),
-        Permissions::default(id22),
-        Permissions::default(id23),
-        Permissions::default(id24),
-        Permissions::default(id25),
-    ];
-
-    for p in permissions {
-        save_permissions(app_state, &p).await?;
+    for target in employees {
+        api::main_entry(
+            app_state,
+            TableRequest::Employee(TableCrud::Create(Environment {
+                updater_id: zero_id,
+                target,
+                time_stamp,
+            })),
+        )
+        .await?;
     }
 
     let spare_parts = vec![
@@ -431,8 +443,16 @@ async fn insert_employees(app_state: &AppState) -> Result<(), Box<dyn Error>> {
         },
     ];
 
-    for s in spare_parts {
-        save_spare_part(app_state, &s).await?;
+    for target in spare_parts {
+        api::main_entry(
+            app_state,
+            TableRequest::SparePart(TableCrud::Create(Environment {
+                updater_id: zero_id,
+                target,
+                time_stamp,
+            })),
+        )
+        .await?;
     }
 
     let machines = vec![
@@ -494,8 +514,16 @@ async fn insert_employees(app_state: &AppState) -> Result<(), Box<dyn Error>> {
         },
     ];
 
-    for m in machines {
-        save_machine(app_state, &m).await?;
+    for target in machines {
+        api::main_entry(
+            app_state,
+            TableRequest::Machine(TableCrud::Create(Environment {
+                updater_id: zero_id,
+                target,
+                time_stamp,
+            })),
+        )
+        .await?;
     }
 
     Ok(())

@@ -1,27 +1,30 @@
-import { listen } from '@tauri-apps/api/event';
-import { invoke } from '@tauri-apps/api/tauri'
-import { createResource } from 'solid-js';
-import { css } from 'solid-styled-components';
+import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/tauri";
+import { createResource } from "solid-js";
+import { css } from "solid-styled-components";
 
 const fetcher = async () => {
-  const [order,date] = await invoke('current_shift') as [string,[String, String, String]]
-  return [date.join(" / "),order]
-}
+  const [order, date] = await invoke("current_shift") as [
+    string,
+    [String, String, String],
+  ];
+  return [date.join(" / "), order];
+};
 
-export default function ShiftIdentity(){
-  const [shift,{refetch}] = createResource(fetcher)
+export default function ShiftIdentity() {
+  const [shift, { refetch }] = createResource(fetcher);
 
-  const date  = () => (shift() || []).at(0)
-  const order = () => (shift() || []).at(1)
+  const date = () => (shift() || []).at(0);
+  const order = () => (shift() || []).at(1);
 
-  listen("shift_ended", () => refetch())
+  listen("shift_ended", () => refetch());
 
   const container = css({
     margin: "0px",
     padding: "0px",
     display: "flex",
     fontSize: "large",
-  })
+  });
 
   const member = css({
     display: "inline-block",
@@ -29,12 +32,16 @@ export default function ShiftIdentity(){
     margin: "5px auto",
     padding: "5px",
     borderBottom: "2px solid",
-  })
+  });
 
-  return(
+  return (
     <section class={container}>
-      <div class={member}><span> التاريخ </span> : <span>{ date() }</span></div>
-      <div class={member}><span> الوردية </span> : <span>{order()}</span></div>
+      <div class={member}>
+        <span>التاريخ</span> : <span>{date()}</span>
+      </div>
+      <div class={member}>
+        <span>الوردية</span> : <span>{order()}</span>
+      </div>
     </section>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-use rec::{model::permissions::PermissionName, timer::ShiftOrder};
+use rec::model::{permissions::PermissionName, shift::ShiftOrder};
 
 pub fn translate_date(date: String) -> Vec<String> {
     let date = validate_date(date);
@@ -46,7 +46,8 @@ pub fn translate_num(num: char) -> char {
         '7' => '٧',
         '8' => '٨',
         '9' => '٩',
-        _ => '٠',
+        '0' => '٠',
+        _ => '_',
     }
 }
 

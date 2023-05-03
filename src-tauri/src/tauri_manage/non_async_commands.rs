@@ -5,11 +5,12 @@ use rec::{
 };
 use std::sync::Mutex;
 use tauri::Window;
+use uuid::Uuid;
 
 #[tauri::command]
 pub fn check_login(
-    state: tauri::State<'_, Mutex<Option<(Employee<String>, String)>>>,
-) -> (Option<Employee<String>>, Option<String>) {
+    state: tauri::State<'_, Mutex<Option<(Employee, Uuid)>>>,
+) -> (Option<Employee>, Option<Uuid>) {
     match &*state.lock().unwrap() {
         Some((employee, id)) => (Some(employee.clone()), Some(id.clone())),
         None => (None, None),
@@ -28,7 +29,7 @@ pub fn current_shift() -> Result<(String, Vec<String>), String> {
 
 #[tauri::command]
 pub fn logout(
-    state: tauri::State<'_, Mutex<Option<(Employee<String>, String)>>>,
+    state: tauri::State<'_, Mutex<Option<(Employee, Uuid)>>>,
     window: Window,
 ) -> Result<(), String> {
     *state.lock().unwrap() = None;

@@ -6,11 +6,11 @@ use sqlx::query;
 
 pub async fn save_problem(
     pool: &Pool<Sqlite>,
-    pid: Uuid,
     spid: Uuid,
+    pid: Uuid,
 ) -> Result<(), Box<dyn Error>> {
-    let problem_id = pid.to_string();
     let shift_problem_id = spid.to_string();
+    let problem_id = pid.to_string();
 
     let row = query!(
         "
@@ -30,11 +30,11 @@ pub async fn save_problem(
 
 pub async fn delete_problem(
     pool: &Pool<Sqlite>,
-    pid: Uuid,
     spid: Uuid,
+    pid: Uuid,
 ) -> Result<(), Box<dyn Error>> {
-    let problem_id = pid.to_string();
     let shift_problem_id = spid.to_string();
+    let problem_id = pid.to_string();
 
     let row = query!(
         "
@@ -52,11 +52,11 @@ pub async fn delete_problem(
 
 pub async fn save_spare_part(
     pool: &Pool<Sqlite>,
-    pid: Uuid,
     spid: Uuid,
+    pid: Uuid,
 ) -> Result<(), Box<dyn Error>> {
-    let spare_part_id = pid.to_string();
     let shift_problem_id = spid.to_string();
+    let spare_part_id = pid.to_string();
 
     let row = query!(
         "
@@ -76,11 +76,11 @@ pub async fn save_spare_part(
 
 pub async fn delete_spare_part(
     pool: &Pool<Sqlite>,
-    pid: Uuid,
     spid: Uuid,
+    pid: Uuid,
 ) -> Result<(), Box<dyn Error>> {
-    let spare_part_id = pid.to_string();
     let shift_problem_id = spid.to_string();
+    let spare_part_id = pid.to_string();
 
     let row = query!(
         "
