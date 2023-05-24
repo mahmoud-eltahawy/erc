@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use chrono::{Local, NaiveDateTime};
 use errc::{
     api::main_entry,
@@ -121,10 +123,13 @@ async fn boss_employee_helper(
 #[tauri::command]
 pub async fn boss_employee(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    updater_id: Uuid,
     new_boss_id: Uuid,
 ) -> Result<(), String> {
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let state = &*app_state;
     match boss_employee_helper(state, window, updater_id, new_boss_id).await {
         Ok(_) => Ok(()),
@@ -238,14 +243,17 @@ pub async fn employee_permissions(
 #[tauri::command]
 pub async fn permission_allow(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    updater_id: Uuid,
     employee_id: Uuid,
     permission: PermissionName,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::Employee(TableCrud::Update(Environment {
@@ -270,14 +278,17 @@ pub async fn permission_allow(
 #[tauri::command]
 pub async fn permission_forbid(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    updater_id: Uuid,
     employee_id: Uuid,
     permission: PermissionName,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::Employee(TableCrud::Update(Environment {
@@ -303,13 +314,16 @@ pub async fn permission_forbid(
 #[tauri::command]
 pub async fn admin_employee(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    updater_id: Uuid,
     employee_id: Uuid,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::Employee(TableCrud::Update(Environment {
@@ -335,13 +349,16 @@ pub async fn admin_employee(
 #[tauri::command]
 pub async fn unadmin_employee(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    updater_id: Uuid,
     employee_id: Uuid,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::Employee(TableCrud::Update(Environment {

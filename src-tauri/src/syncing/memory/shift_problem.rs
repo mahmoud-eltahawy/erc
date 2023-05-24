@@ -3,6 +3,8 @@ use rec::model::shift_problem::ShiftProblem;
 use sqlx::{query, Error, Pool, Sqlite};
 use uuid::Uuid;
 
+use crate::syncing::Env;
+
 pub async fn delete(pool: &Pool<Sqlite>, id: &Uuid) -> Result<(), Error> {
     let id = id.to_string();
     match query!(
@@ -19,35 +21,38 @@ pub async fn delete(pool: &Pool<Sqlite>, id: &Uuid) -> Result<(), Error> {
     }
 }
 
-pub async fn save(pool: &Pool<Sqlite>, problem: &ShiftProblem) -> Result<(), Error> {
+pub async fn save(pool: &Pool<Sqlite>, problem: &ShiftProblem, env: Env) -> Result<(), Error> {
     let ShiftProblem {
         id,
         shift_id,
-        writer_id,
         maintainer_id,
         machine_id,
         begin_time,
         end_time,
     } = problem;
+    let (updater_id, time_stamp) = env;
     let id = id.to_string();
     let shift_id = shift_id.to_string();
-    let writer_id = writer_id.to_string();
+    let updater_id = updater_id.to_string();
     let maintainer_id = maintainer_id.to_string();
     let machine_id = machine_id.to_string();
+    let time_stamp = serde_json::json!(time_stamp).to_string();
     let begin_time = serde_json::json!(begin_time).to_string();
     let end_time = serde_json::json!(end_time).to_string();
     match sqlx::query!(
         r#"
-    INSERT INTO shift_problem(id,shift_id,writer_id,maintainer_id,machine_id,begin_time,end_time)
-    VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING;
+    INSERT INTO shift_problem(id,shift_id,maintainer_id,
+        machine_id,begin_time,end_time,updater_id,time_stamp)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING;
   "#,
         id,
         shift_id,
-        writer_id,
         maintainer_id,
         machine_id,
         begin_time,
-        end_time
+        end_time,
+        updater_id,
+        time_stamp
     )
     .execute(pool)
     .await

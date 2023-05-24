@@ -31,9 +31,9 @@ pub async fn find_machines_by_name(
     pool: &Pool<Sqlite>,
     target: &str,
     canceled: Vec<String>,
+    limit: i64,
 ) -> Result<Vec<Name>, Error> {
     let target = format!("%{target}%");
-    let limit = 4;
     let limit = limit + canceled.len() as i64;
     let records = query!(
         "
@@ -62,11 +62,11 @@ pub async fn find_machines_by_name(
         .collect_vec())
 }
 
-pub async fn find_4_machines(
+pub async fn find_limit_of_machines(
     pool: &Pool<Sqlite>,
     canceled: Vec<String>,
+    limit: i64,
 ) -> Result<Vec<Name>, Error> {
-    let limit = 4;
     let limit = limit + canceled.len() as i64;
     let records = query!(
         "

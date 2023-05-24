@@ -111,8 +111,6 @@ function ExistingSection({
   const handler = async ({ employeeId }: { employeeId: string }) => {
     await invoke("remove_shift_employee", {
       employeeId,
-      shiftId: shiftId(),
-      updaterId: employee()!.id,
     });
   };
 
@@ -145,8 +143,6 @@ function NonExistingSection({
   const handler = async ({ employeeId }: { employeeId: string }) => {
     await invoke("add_shift_employee", {
       employeeId,
-      shiftId: shiftId(),
-      updaterId: employee()!.id,
     });
   };
 

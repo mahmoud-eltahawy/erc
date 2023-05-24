@@ -78,7 +78,7 @@ export function ProblemUpdateForm({
   toggle,
   id,
 }: {
-  toggle: Function;
+  toggle: () => void;
   id: string;
 }) {
   const [init] = createResource({ id }, init_fetcher);
@@ -128,7 +128,6 @@ export function ProblemUpdateForm({
       try {
         await invoke("update_problem_detail", {
           shiftProblemId: id,
-          updaterId: employee()!.id,
           core: [
             [maintainer.id, employeesI[0].id],
             [machine.id, machinesI[0].id],
@@ -203,7 +202,7 @@ export function ProblemUpdateForm({
 export function ProblemSaveForm({
   toggle,
 }: {
-  toggle: Function;
+  toggle: () => void;
 }) {
   const [beginTime, setBeginTime] = createSignal("");
   const [endTime, setEndTime] = createSignal("");
@@ -243,7 +242,6 @@ export function ProblemSaveForm({
     try {
       const problemDetail = {
         shift_id: shiftId(),
-        writer_id: employee()?.id,
         maintainer_id: employees.at(0)!.id,
         machine_id: machines.at(0)!.id,
         begin_time: beginTime().length === 8
@@ -256,7 +254,9 @@ export function ProblemSaveForm({
           : null,
         note: note() ? note().trim() : null,
       };
-      await invoke("save_problem_detail", { problemDetail });
+      await invoke("save_problem_detail", {
+        problemDetail,
+      });
       restore();
     } catch (err) {
       alert(err);
@@ -302,34 +302,48 @@ const [shiftBorders, { refetch }] = createResource(borders_fetcher);
 
 listen("shift_ended", () => refetch());
 
-const fetcher = async (
-  selection: string,
-  the_name: string | null,
-  canceled: () => string[],
-) => {
+type SearchDeps = {
+  command: string;
+  the_name: string | null;
+  canceled: () => string[];
+  limit: () => number;
+};
+
+const fetcher = async ({
+  limit,
+  command,
+  canceled,
+  the_name,
+}: SearchDeps) => {
   let name = null;
   if (the_name) {
     if (the_name !== " ") {
       name = the_name;
     }
   }
-  return (await invoke(selection, { name, canceled: canceled() })) as Name[];
+  return (await invoke(command, {
+    name,
+    canceled: canceled(),
+    limit: limit(),
+  })) as Name[];
 };
-const department_fetcher = async (
-  selection: string,
-  name: string | null,
-  canceled: () => string[],
-) => {
-  let the_name = null;
-  if (name) {
-    if (name !== " ") {
-      the_name = name;
+const department_fetcher = async ({
+  limit,
+  command,
+  canceled,
+  the_name,
+}: SearchDeps) => {
+  let name = null;
+  if (the_name) {
+    if (the_name !== " ") {
+      name = the_name;
     }
   }
-  return (await invoke(selection, {
+  return (await invoke(command, {
     departmentId: employee()!.department_id,
-    name: the_name,
+    name,
     canceled: canceled(),
+    limit: limit(),
   })) as Name[];
 };
 
@@ -388,9 +402,9 @@ function TimeConstraint({
   setBeginTime,
 }: {
   endTime: () => string;
-  setEndTime: Function;
+  setEndTime: (s: string) => void;
   beginTime: () => string;
-  setBeginTime: Function;
+  setBeginTime: (s: string) => void;
 }) {
   const timeLabel = css({
     display: "inline-block",
@@ -503,7 +517,7 @@ function NoteText(
 }
 
 function NoteButton(
-  { length, toggleNote }: { length: () => number; toggleNote: Function },
+  { length, toggleNote }: { length: () => number; toggleNote: () => void },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -550,6 +564,24 @@ function SearchBars({
   spareParts: Name[];
   setSpareParts: SetStoreFunction<Name[]>;
 }) {
+  function fetcher_object({
+    name,
+    command,
+    collection,
+  }: {
+    name: () => string | null;
+    command: string;
+    collection: () => string[];
+  }): SearchDeps {
+    const LIMIT = 5;
+    return {
+      command,
+      the_name: name(),
+      canceled: collection,
+      limit: () => collection().length > LIMIT ? collection().length : LIMIT,
+    } as SearchDeps;
+  }
+
   return (
     <section>
       <SearchBar
@@ -562,10 +594,11 @@ function SearchBars({
         defaultPlaceholder="ابحث عن الماكينة التي تمت عليها الصيانة"
         resultPlaceholder="الماكينة"
         selection_fetcher={(name: () => string | null) =>
-          fetcher("machines_selection", name(), () =>
-            machines.map((m) =>
-              m.name
-            ))}
+          fetcher(fetcher_object({
+            command: "machines_selection",
+            name,
+            collection: () => machines.map((m) => m.name),
+          }))}
         nyMessage={null}
       />
       <SearchBar
@@ -578,10 +611,11 @@ function SearchBars({
         defaultPlaceholder="ابحث عن الموظف الذي قام بالصيانة"
         resultPlaceholder="الموظف"
         selection_fetcher={(name: () => string | null) =>
-          fetcher("employees_selection", name(), () =>
-            employees.map((e) =>
-              e.id
-            ))}
+          fetcher(fetcher_object({
+            command: "employees_selection",
+            name,
+            collection: () => employees.map((m) => m.id),
+          }))}
         nyMessage={null}
       />
       <SearchBar
@@ -594,10 +628,11 @@ function SearchBars({
         defaultPlaceholder="ابحث عن مشكلة او مشاكل"
         resultPlaceholder="عدد المشاكل"
         selection_fetcher={(name: () => string | null) =>
-          department_fetcher("problems_selection", name(), () =>
-            problems.map((p) =>
-              p.name
-            ))}
+          department_fetcher(fetcher_object({
+            command: "problems_selection",
+            name,
+            collection: () => problems.map((m) => m.name),
+          }))}
         nyMessage={"لم يتم اختيار اي مشكلة حتي الان <اجباري> ا"}
       />
       <SearchBar
@@ -610,10 +645,11 @@ function SearchBars({
         defaultPlaceholder="ابحث عن قطع الغيار المستخدمة في الصيانة"
         resultPlaceholder="عدد قطع الغيار المستخدمة"
         selection_fetcher={(name: () => string | null) =>
-          fetcher("spare_parts_selection", name(), () =>
-            spareParts.map((s) =>
-              s.name
-            ))}
+          fetcher(fetcher_object({
+            command: "spare_parts_selection",
+            name,
+            collection: () => spareParts.map((m) => m.name),
+          }))}
         nyMessage={"لم يتم تسجيل اي قطع غيار <اختياري> ا"}
       />
     </section>
@@ -750,7 +786,11 @@ function SearchBar({
               </Show>
             </select>
           </Show>
-          <select multiple class={viewMember}>
+          <select
+            multiple
+            size={(optionsList() || []).length}
+            class={viewMember}
+          >
             {
               <For each={optionsList()}>
                 {(item) => (

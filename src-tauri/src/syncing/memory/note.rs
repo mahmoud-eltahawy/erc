@@ -5,17 +5,28 @@ use sqlx::{query, Pool, Sqlite};
 use rec::model::note::{Note, ShiftNote};
 use uuid::Uuid;
 
-pub async fn save_to_shift_problem(pool: &Pool<Sqlite>, note: &Note) -> Result<(), Box<dyn Error>> {
+use crate::syncing::Env;
+
+pub async fn save_to_shift_problem(
+    pool: &Pool<Sqlite>,
+    note: &Note,
+    env: Env,
+) -> Result<(), Box<dyn Error>> {
+    let (updater_id, time_stamp) = env;
     let Note { id, content } = note;
     let id = id.to_string();
+
+    let updater_id = updater_id.to_string();
+    let time_stamp = serde_json::json!(time_stamp).to_string();
     let row = query!(
         "
     INSERT INTO shift_problem_note(
-    id,
-    content)
-    VALUES($1,$2) ON CONFLICT (id) DO NOTHING;",
+    id,content,updater_id,time_stamp)
+    VALUES($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING;",
         id,
-        content
+        content,
+        updater_id,
+        time_stamp
     )
     .execute(pool);
     return match row.await {
@@ -24,28 +35,35 @@ pub async fn save_to_shift_problem(pool: &Pool<Sqlite>, note: &Note) -> Result<(
     };
 }
 
-pub async fn save_to_shift(pool: &Pool<Sqlite>, note: &ShiftNote) -> Result<(), Box<dyn Error>> {
+pub async fn save_to_shift(
+    pool: &Pool<Sqlite>,
+    note: &ShiftNote,
+    env: Env,
+) -> Result<(), Box<dyn Error>> {
     let ShiftNote {
         id,
         shift_id,
-        writer_id,
         content,
     } = note;
+    let (updater_id, time_stamp) = env;
     let id = id.to_string();
     let shift_id = shift_id.to_string();
-    let writer_id = writer_id.to_string();
+    let updater_id = updater_id.to_string();
+    let time_stamp = serde_json::json!(time_stamp).to_string();
     let row = query!(
         "
     INSERT INTO shift_note(
     id,
     shift_id,
-    writer_id,
-    content)
-    VALUES($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING;",
+    content,
+    updater_id,
+    time_stamp)
+    VALUES($1,$2,$3,$4,$5) ON CONFLICT (id) DO NOTHING;",
         id,
         shift_id,
-        writer_id,
-        content
+        content,
+        updater_id,
+        time_stamp
     )
     .execute(pool);
     return match row.await {

@@ -3,7 +3,6 @@ import { createResource, For, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { css } from "solid-styled-components";
 import { Name } from "../..";
-import { employee } from "../../App";
 
 const non_admins_fetcher = async ({ name }: { name: () => string | null }) => {
   return (await invoke("search_non_admins", {
@@ -83,7 +82,7 @@ const viewMember = css({
 
 function AdminsSection() {
   const handler = async (employeeId: string) => {
-    await invoke("unadmin_employee", { employeeId, updaterId: employee()!.id });
+    await invoke("unadmin_employee", { employeeId });
     refetch();
   };
 
@@ -105,7 +104,7 @@ function AdminsSection() {
 
 function NonAdminSection() {
   const handler = async (employeeId: string) => {
-    await invoke("admin_employee", { employeeId, updaterId: employee()!.id });
+    await invoke("admin_employee", { employeeId });
     refetch();
   };
 

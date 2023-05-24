@@ -26,13 +26,16 @@ pub async fn find_spare_parts_by_name(
     pool: &Pool<Sqlite>,
     target: &str,
     canceled: Vec<String>,
+    limit: i64,
 ) -> Result<Vec<Name>, Box<dyn Error>> {
     let target = format!("%{target}%");
+    let limit = limit + canceled.len() as i64;
     let records = query!(
         "
     SELECT * FROM spare_part
-    WHERE name LIKE $1 LIMIT 4;",
-        target
+    WHERE name LIKE $1 LIMIT $2;",
+        target,
+        limit
     )
     .fetch_all(pool)
     .await?;
@@ -51,11 +54,11 @@ pub async fn find_spare_parts_by_name(
         .collect_vec())
 }
 
-pub async fn find_4_spare_parts(
+pub async fn find_limit_of_spare_parts(
     pool: &Pool<Sqlite>,
     canceled: Vec<String>,
+    limit: i64,
 ) -> Result<Vec<Name>, Box<dyn Error>> {
-    let limit = 4;
     let limit = limit + canceled.len() as i64;
     let records = query!(
         "

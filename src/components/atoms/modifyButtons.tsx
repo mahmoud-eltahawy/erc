@@ -7,8 +7,8 @@ export default function ModfiyButtons({
   deleteFunc,
 }: {
   permission: () => boolean;
-  setUpdating: Function;
-  deleteFunc: Function;
+  setUpdating: () => void;
+  deleteFunc: () => void;
 }) {
   enum ModifyButton {
     MODIFY,

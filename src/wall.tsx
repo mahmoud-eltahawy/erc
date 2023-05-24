@@ -14,7 +14,6 @@ export default function Wall({ rank }: { rank: number }) {
   setInterval(() => {
     invoke("check_shift_time", {
       departmentId: employee()!.department_id,
-      updaterId: employee()!.id,
     })
       .catch((err) => console.log(err));
   }, 60000);

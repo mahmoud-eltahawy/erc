@@ -4,12 +4,8 @@ use chrono::NaiveDate;
 use errc::{
     config::AppState,
     memory::{
-        department::find_department_name_by_id,
-        employee::{
-            find_4_employees, find_all_employees_names, find_employee_name_by_id,
-            find_employees_by_name,
-        },
-        machine::{find_4_machines, find_all_machines, find_machines_by_name},
+        employee::{find_all_employees_names, find_employees_by_name, find_limit_of_employees},
+        machine::{find_all_machines, find_limit_of_machines, find_machines_by_name},
         problem::{
             find_department_all_problems, find_department_full_problems_by_name,
             find_problem_by_id, find_problems_by_department_id,
@@ -18,7 +14,7 @@ use errc::{
             find_department_shift_id, find_last_21_shifts, find_shifts_after, find_shifts_before,
             find_shifts_between,
         },
-        spare_part::{find_4_spare_parts, find_all_spare_parts, find_spare_parts_by_name},
+        spare_part::{find_all_spare_parts, find_limit_of_spare_parts, find_spare_parts_by_name},
     },
     translator::{translate_date, translate_order},
 };
@@ -114,35 +110,15 @@ pub async fn search_problem(
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct ProblemProfile {
-    writer_name: String,
-    department_name: String,
-    title: String,
-    description: String,
-}
-
 #[tauri::command]
-pub async fn profile_problem(
+pub async fn get_problem_problem_by_id(
     app_state: tauri::State<'_, AppState>,
     id: Uuid,
-) -> Result<ProblemProfile, String> {
-    let Ok(Problem{id : _,department_id,writer_id,
-      title,description}) = find_problem_by_id(&app_state.pool, id).await else {
-    return Err("err".to_string());
-  };
-    let Ok(writer_name) = find_employee_name_by_id(&app_state.pool, writer_id).await else {
-    return Err("err".to_string());
-  };
-    let Ok(department_name) = find_department_name_by_id(&app_state.pool, department_id).await else {
-    return Err("err".to_string());
-  };
-    Ok(ProblemProfile {
-        department_name,
-        writer_name,
-        title,
-        description,
-    })
+) -> Result<Problem, String> {
+    match find_problem_by_id(&app_state.pool, id).await {
+        Ok(p) => Ok(p),
+        Err(err) => Err(err.to_string()),
+    }
 }
 
 #[tauri::command]
@@ -150,6 +126,7 @@ pub async fn search_parts(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
 ) -> Result<Vec<Name>, String> {
+    let limit = 7;
     if let Some(name) = name {
         if name == "*" {
             return match find_all_spare_parts(&app_state.pool).await {
@@ -157,12 +134,12 @@ pub async fn search_parts(
                 Err(err) => Err(err.to_string()),
             };
         }
-        match find_spare_parts_by_name(&app_state.pool, &name.trim(), vec![]).await {
+        match find_spare_parts_by_name(&app_state.pool, &name.trim(), vec![], limit).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_4_spare_parts(&app_state.pool, vec![]).await {
+        match find_limit_of_spare_parts(&app_state.pool, vec![], limit).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }
@@ -174,6 +151,7 @@ pub async fn search_machines(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
 ) -> Result<Vec<Name>, String> {
+    let limit = 7;
     if let Some(name) = name {
         if name == "*" {
             return match find_all_machines(&app_state.pool).await {
@@ -181,12 +159,12 @@ pub async fn search_machines(
                 Err(err) => Err(err.to_string()),
             };
         }
-        match find_machines_by_name(&app_state.pool, &name.trim(), vec![]).await {
+        match find_machines_by_name(&app_state.pool, &name.trim(), vec![], 7).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_4_machines(&app_state.pool, vec![]).await {
+        match find_limit_of_machines(&app_state.pool, vec![], limit).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }
@@ -198,6 +176,7 @@ pub async fn search_employees(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
 ) -> Result<Vec<Name>, String> {
+    let limit = 7;
     if let Some(name) = name {
         if name == "*" {
             return match find_all_employees_names(&app_state.pool).await {
@@ -205,12 +184,12 @@ pub async fn search_employees(
                 Err(err) => Err(err.to_string()),
             };
         }
-        match find_employees_by_name(&app_state.pool, &name.trim(), vec![]).await {
+        match find_employees_by_name(&app_state.pool, &name.trim(), vec![], limit).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_4_employees(&app_state.pool, vec![]).await {
+        match find_limit_of_employees(&app_state.pool, vec![], limit).await {
             Ok(days) => Ok(days),
             Err(err) => Err(err.to_string()),
         }

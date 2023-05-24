@@ -61,7 +61,7 @@ export default function HistoryParts({ rank }: { rank: number }) {
 }
 
 function ShowAllToggleButton(
-  { toggle, target }: { toggle: Function; target: [string | null] },
+  { toggle, target }: { toggle: () => void; target: [string | null] },
 ) {
   const [hover, setHover] = createSignal(false);
 

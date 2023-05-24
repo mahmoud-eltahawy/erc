@@ -4,45 +4,57 @@ import { css } from "solid-styled-components";
 type NavButton = {
   rank: number;
   button: JSXElement;
-  toggle: Function;
+  toggle: () => void;
 };
 
 export const [buttons, setButtons] = createSignal<NavButton[]>([]);
 const [hoverNavBar, setHoverNavBar] = createSignal(false);
 
 export default function NavBar() {
+
+  const isEmpty = () => buttons().length === 0
+  const heights = () => {
+      if (isEmpty()) {
+          return `${(height + margin)}px`
+      }
+      return `${(height + margin) * buttons().length}px`
+  }
   const style = () =>
     css({
       position: "absolute",
       left: "0px",
-      width: hoverNavBar() ? "25%" : "5%",
-      height: "100%",
-    });
-  const mugStyle = () =>
-    css({
-      display: hoverNavBar() ? "block" : "none",
+      width: hoverNavBar() ? "25%" : "3%",
+      height: heights(),
+      display: "block",
       backgroundColor: "lightyellow",
       borderLeft: "2px solid",
       borderRight: "2px solid",
       borderBottom: "2px solid",
       borderBottomLeftRadius: "70px",
       borderBottomRightRadius: "70px",
-      margin: "5%",
+      margin: "1%",
     });
   return (
     <section
       onMouseOver={() => setHoverNavBar(true)}
       onMouseLeave={() => setHoverNavBar(false)}
-      class={style()}
     >
-      <ul class={mugStyle()}>
-        <For each={buttons()}>
-          {(item) => <li>{item.button}</li>}
-        </For>
-      </ul>
+      <Show
+          when={!isEmpty()}
+          fallback={<h1>الصفحة الرئيسية</h1>}
+      >
+        <ul class={style()}>
+          <For each={buttons()}>
+            {(item) => <li>{item.button}</li>}
+          </For>
+        </ul>
+      </Show>
     </section>
   );
 }
+
+const height = 50
+const margin = 10
 
 export function NavToggleButton({
   transition,
@@ -52,7 +64,7 @@ export function NavToggleButton({
 }: {
   transition: () => boolean;
   rank: number;
-  toggle: Function;
+  toggle: () => void;
   cont: string;
 }) {
   const [hover, setHover] = createSignal(false);
@@ -62,7 +74,8 @@ export function NavToggleButton({
       background: "inherit",
       display: transition() ? hoverNavBar() ? "block" : "none" : "inline-block",
       width: "70%",
-      margin: "10px auto",
+      height: `${height}px`,
+      margin: `${margin}px auto`,
       padding: "10px 30px",
       color: hover() ? "#0f0f0f" : "inherit",
       fontSize: hover() ? "20px" : "18px",
@@ -76,22 +89,15 @@ export function NavToggleButton({
 
   createEffect(() => {
     if (transition()) {
-      setButtons((buttons) => {
-        const newList = [{ rank, button: core, toggle: toggle }, ...buttons];
-        newList.sort((x, y) => y.rank - x.rank);
-        return newList;
-      });
+      setButtons((buttons) => [{ rank, button: core, toggle: toggle }, ...buttons]);
     } else {
       setButtons((buttons) => {
-        const newList = [];
         for (const x of buttons) {
           if (x.rank > rank) {
             x.toggle();
-          } else {
-            newList.push(x);
           }
         }
-        return newList;
+        return buttons.filter(x => x.rank < rank);
       });
     }
   });

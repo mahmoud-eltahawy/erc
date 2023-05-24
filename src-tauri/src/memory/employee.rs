@@ -252,7 +252,11 @@ pub async fn find_department_employees_by_name(
     }
 }
 
-async fn full_name_search(pool: &Pool<Sqlite>, target: &str) -> Result<Vec<Name>, Error> {
+async fn full_name_search(
+    pool: &Pool<Sqlite>,
+    target: &str,
+    limit: i64,
+) -> Result<Vec<Name>, Error> {
     let target = target.split(' ').collect::<Vec<&str>>();
 
     match target.len() {
@@ -261,9 +265,10 @@ async fn full_name_search(pool: &Pool<Sqlite>, target: &str) -> Result<Vec<Name>
             let records = query!(
                 r#"
              SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-             FROM employee WHERE first_name LIKE $1
+             FROM employee WHERE first_name LIKE $1 LIMIT $2
            "#,
-                name
+                name,
+                limit
             )
             .fetch_all(pool)
             .await?;
@@ -284,10 +289,11 @@ async fn full_name_search(pool: &Pool<Sqlite>, target: &str) -> Result<Vec<Name>
             let records = query!(
                 r#"
              SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-             FROM employee WHERE first_name = $1 AND middle_name LIKE $2
+             FROM employee WHERE first_name = $1 AND middle_name LIKE $2 LIMIT $3
            "#,
                 name0,
-                name1
+                name1,
+                limit,
             )
             .fetch_all(pool)
             .await?;
@@ -309,11 +315,13 @@ async fn full_name_search(pool: &Pool<Sqlite>, target: &str) -> Result<Vec<Name>
             let records = query!(
                 r#"
              SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-             FROM employee WHERE first_name = $1 AND (middle_name = $2 AND last_name LIKE $3)
+             FROM employee WHERE first_name = $1 AND
+             (middle_name = $2 AND last_name LIKE $3) LIMIT $4
            "#,
                 name0,
                 name1,
-                name2
+                name2,
+                limit,
             )
             .fetch_all(pool)
             .await?;
@@ -447,8 +455,10 @@ pub async fn find_employees_by_name(
     pool: &Pool<Sqlite>,
     target: &str,
     canceled_ids: Vec<Uuid>,
+    limit: i64,
 ) -> Result<Vec<Name>, Error> {
-    let list = full_name_search(pool, target).await?;
+    let limit = limit + canceled_ids.len() as i64;
+    let list = full_name_search(pool, target, limit).await?;
 
     if canceled_ids.is_empty() {
         Ok(list)
@@ -460,15 +470,21 @@ pub async fn find_employees_by_name(
     }
 }
 
-pub async fn find_4_employees(
+pub async fn find_limit_of_employees(
     pool: &Pool<Sqlite>,
     canceled: Vec<Uuid>,
+    limit: i64,
 ) -> Result<Vec<Name>, Error> {
-    let limit = 4;
     let limit = limit + canceled.len() as i64;
-    let records = query!("
-          SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name FROM employee LIMIT $1;
-      ",limit).fetch_all(pool).await?;
+    let records = query!(
+        "
+          SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
+          FROM employee WHERE card_id <> 0 LIMIT $1;
+      ",
+        limit
+    )
+    .fetch_all(pool)
+    .await?;
     Ok(records
         .into_iter()
         .flat_map(|record| match Uuid::from_str(&record.id) {
@@ -527,7 +543,7 @@ pub async fn find_admins(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Error> {
         .collect_vec())
 }
 
-pub async fn find_employee_by_id(pool: &Pool<Sqlite>, id: Uuid) -> Result<Employee, Error> {
+pub async fn find_employee_by_id(pool: &Pool<Sqlite>, id: &Uuid) -> Result<Employee, Error> {
     let id = id.to_string();
     let record = query!(
         r#"

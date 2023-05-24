@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { css } from "solid-styled-components";
 
 export default function ShowAllToggleButton(
-  { toggle, target }: { toggle: Function; target: [string | null] },
+  { toggle, target }: { toggle: () => void; target: [string | null] },
 ) {
   const [hover, setHover] = createSignal(false);
 

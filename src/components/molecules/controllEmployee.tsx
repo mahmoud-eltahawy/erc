@@ -3,7 +3,6 @@ import { createEffect, createResource, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { css } from "solid-styled-components";
 import { departmentsNames, Name, PermissionsClassified } from "../..";
-import { employee } from "../../App";
 import PermissionsTemplate from "../atoms/permissionsTemplate";
 import ShowAllToggleButton from "../atoms/showAllToggleButton";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
@@ -146,7 +145,6 @@ function EmployeePermissions({ employeeId }: { employeeId: string }) {
     await invoke("permission_forbid", {
       employeeId,
       permission,
-      updaterId: employee()!.id,
     });
     refetch();
   };
@@ -155,7 +153,6 @@ function EmployeePermissions({ employeeId }: { employeeId: string }) {
     await invoke("permission_allow", {
       employeeId,
       permission,
-      updaterId: employee()!.id,
     });
     refetch();
   };

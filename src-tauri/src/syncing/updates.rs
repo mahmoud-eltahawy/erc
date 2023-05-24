@@ -9,11 +9,15 @@ use std::error::Error;
 
 use crate::config::AppState;
 
-use super::memory::{relations::*, *};
+use super::{
+    memory::{relations::*, *},
+    Env,
+};
 
 pub async fn update_shift_problem(
     app_state: &AppState,
     sp: UpdateShiftProblem,
+    env: Env,
     window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match sp {
@@ -47,8 +51,13 @@ pub async fn update_shift_problem(
             )?
         }
         UpdateShiftProblem::AddProblem(shift_problem_id, problem_id) => {
-            relations::shift_problems::save_problem(&app_state.pool, shift_problem_id, problem_id)
-                .await?;
+            relations::shift_problems::save_problem(
+                &app_state.pool,
+                shift_problem_id,
+                problem_id,
+                env,
+            )
+            .await?;
             window.emit(
                 "update_shift_problem_add_problem",
                 (shift_problem_id, problem_id),
@@ -67,8 +76,13 @@ pub async fn update_shift_problem(
             )?
         }
         UpdateShiftProblem::AddSparePart(shift_problem_id, part_id) => {
-            relations::shift_problems::save_spare_part(&app_state.pool, shift_problem_id, part_id)
-                .await?;
+            relations::shift_problems::save_spare_part(
+                &app_state.pool,
+                shift_problem_id,
+                part_id,
+                env,
+            )
+            .await?;
             window.emit(
                 "update_shift_problem_add_spare_part",
                 (shift_problem_id, part_id),
@@ -87,7 +101,7 @@ pub async fn update_shift_problem(
             )?
         }
         UpdateShiftProblem::AddNote(note) => {
-            note::save_to_shift_problem(&app_state.pool, &note).await?;
+            note::save_to_shift_problem(&app_state.pool, &note, env).await?;
             let Note { id, content } = note;
             window.emit("update_shift_problem_add_note", (id, content))?
         }
@@ -157,11 +171,12 @@ pub async fn update_machine(
 pub async fn update_department_shift(
     app_state: &AppState,
     shift: UpdateDepartmentShift,
+    env: Env,
     window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match shift {
         UpdateDepartmentShift::SaveShiftEmployee(shift_id, employee_id) => {
-            shift_employee::save(&app_state.pool, shift_id, employee_id).await?;
+            shift_employee::save(&app_state.pool, shift_id, employee_id, env).await?;
             window.emit("update_shift_add_employee", (shift_id, employee_id))?
         }
         UpdateDepartmentShift::DeleteShiftEmployee(shift_id, employee_id) => {
@@ -169,7 +184,7 @@ pub async fn update_department_shift(
             window.emit("update_shift_delete_employee", (shift_id, employee_id))?
         }
         UpdateDepartmentShift::SaveNote(note) => {
-            note::save_to_shift(&app_state.pool, &note).await?;
+            note::save_to_shift(&app_state.pool, &note, env).await?;
             window.emit("update_shift_add_note", (note.shift_id, note.id))?
         }
         UpdateDepartmentShift::DeleteNote(shift_id, note_id) => {
@@ -178,7 +193,7 @@ pub async fn update_department_shift(
         }
         UpdateDepartmentShift::UpdateNote(note) => {
             note::update_shift_note(&app_state.pool, &note).await?;
-            window.emit("update_shift_update_note", note)?
+            window.emit("update_shift_update_note", (note.id, note.content))?
         }
     }
 
@@ -215,11 +230,12 @@ pub async fn update_department(
 pub async fn update_employee(
     app_state: &AppState,
     emp: UpdateEmployee,
+    env: Env,
     window: &Window,
 ) -> Result<(), Box<dyn Error>> {
     match emp {
         UpdateEmployee::AllowPermission(employee_id, permission) => {
-            permissions::allow_permission(&app_state.pool, &employee_id, &permission).await?;
+            permissions::allow_permission(&app_state.pool, &employee_id, &permission, env).await?;
             window.emit(
                 "update_employee_allow_permission",
                 (employee_id, permission),

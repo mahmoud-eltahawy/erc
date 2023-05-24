@@ -6,7 +6,7 @@ import { css } from "solid-styled-components";
 const fetcher = async () => {
   const [order, date] = await invoke("current_shift") as [
     string,
-    [String, String, String],
+    [string, string, string],
   ];
   return [date.join(" / "), order];
 };

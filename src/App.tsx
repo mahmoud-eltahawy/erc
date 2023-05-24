@@ -12,14 +12,14 @@ export const [shiftId, setShiftId] = createSignal<string | null>(null);
 export const [permissions, setPermissions] = createSignal<string[]>([]);
 
 listen("update_employee_allow_permission", (e) => {
-  let [id, permission] = e.payload as [string, string];
+  const [id, permission] = e.payload as [string, string];
   if (employee()?.id === id) {
     setPermissions((permissions) => [permission, ...permissions]);
   }
 });
 
 listen("update_employee_forbid_permission", (e) => {
-  let [id, permission] = e.payload as [string, string];
+  const [id, permission] = e.payload as [string, string];
   if (employee()?.id === id) {
     setPermissions((permissions) =>
       permissions.filter((x) => x !== permission)
@@ -28,14 +28,14 @@ listen("update_employee_forbid_permission", (e) => {
 });
 
 listen("update_employee_forbid_all_permissions", (e) => {
-  let id = e.payload as string;
+  const id = e.payload as string;
   if (employee()?.id === id) {
     setPermissions([]);
   }
 });
 
 listen("update_employee_up", (e) => {
-  let id = e.payload as string;
+  const id = e.payload as string;
   if (employee()?.id === id) {
     setEmployee((emp) => {
       return { ...emp!, position: "SUPER_USER" };
@@ -44,7 +44,7 @@ listen("update_employee_up", (e) => {
 });
 
 listen("update_employee_down", (e) => {
-  let id = e.payload as string;
+  const id = e.payload as string;
   if (employee()?.id === id) {
     setEmployee((emp) => {
       return { ...emp!, position: "USER" };
@@ -54,12 +54,15 @@ listen("update_employee_down", (e) => {
 
 const isLogedIn = async function () {
   try {
-    const [employee, shiftId] = await invoke("check_login") as [
-      Employee,
+    const [employeeId, shiftId] = await invoke("check_login") as [
+      string,
       string,
     ];
+    const employee = await invoke("get_employee_by_id", {
+      id: employeeId,
+    }) as Employee;
     const permissions = await invoke("employee_permissions", {
-      id: employee.id,
+      id: employeeId,
     }) as string[];
     setEmployee(employee);
     setShiftId(shiftId);
@@ -76,8 +79,6 @@ function App() {
   });
 
   listen("shift_ended", () => {
-    setEmployee(null);
-    setShiftId(null);
     setPermissions([]);
   });
 
@@ -91,7 +92,7 @@ function App() {
         when={shiftId() && employee()}
         fallback={<LoginForm />}
       >
-        <Wall rank={0} />
+        <Wall rank={1} />
       </Show>
     </section>
   );
@@ -100,23 +101,19 @@ function LoginForm() {
   let cardR: HTMLInputElement | undefined;
   let passwordR: HTMLInputElement | undefined;
 
-  function handleSubmit(e: any) {
+  async function handleSubmit(e: Event) {
     e.preventDefault();
-    invoke("login", { cardId: +cardR!.value, password: passwordR!.value })
-      .then(() =>
-        invoke("check_login")
-          .then((employee_and_id) => {
-            let [emp, id] = employee_and_id as [Employee, string];
-            setEmployee(emp);
-            setShiftId(id);
-          })
-          .catch((err) => {
-            alert(err);
-          })
-      )
-      .catch((err) => {
-        alert(err);
-      });
+    await invoke("login", {
+      cardId: +cardR!.value,
+      password: passwordR!.value,
+    });
+    const employee_and_id = await invoke("check_login");
+    const [employeeId, shift_id] = employee_and_id as [string, string];
+    const employee = await invoke("get_employee_by_id", {
+      id: employeeId,
+    }) as Employee;
+    setEmployee(employee);
+    setShiftId(shift_id);
     passwordR!.value = "";
     cardR!.value = "";
     cardR!.focus();

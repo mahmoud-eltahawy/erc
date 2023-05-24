@@ -1,16 +1,18 @@
+use std::sync::Mutex;
+
 use chrono::{Local, NaiveDateTime, NaiveTime};
 use errc::{
     api::main_entry,
     config::AppState,
     memory::{
         employee::{
-            find_4_employees, find_employees_by_name, find_shift_existing_employees_ids,
+            find_employees_by_name, find_limit_of_employees, find_shift_existing_employees_ids,
             find_shift_non_existing_employees_ids,
         },
-        machine::{find_4_machines, find_machines_by_name},
+        machine::{find_limit_of_machines, find_machines_by_name},
         note::{fetch_shift_note_by_id, fetch_shift_notes_ids_by_shift_id},
-        problem::{find_department_4_problems, find_department_problems_by_name},
-        spare_part::{find_4_spare_parts, find_spare_parts_by_name},
+        problem::{find_department_limit_of_problems, find_department_problems_by_name},
+        spare_part::{find_limit_of_spare_parts, find_spare_parts_by_name},
     },
     syncing::upgrade,
 };
@@ -32,6 +34,7 @@ pub async fn problems_selection(
     department_id: Uuid,
     name: Option<String>,
     canceled: Vec<String>,
+    limit: i64,
 ) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
         match find_department_problems_by_name(
@@ -39,6 +42,7 @@ pub async fn problems_selection(
             department_id,
             &name.trim(),
             canceled,
+            limit,
         )
         .await
         {
@@ -46,7 +50,9 @@ pub async fn problems_selection(
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_department_4_problems(&app_state.pool, department_id, canceled).await {
+        match find_department_limit_of_problems(&app_state.pool, department_id, canceled, limit)
+            .await
+        {
             Ok(p) => Ok(p),
             Err(err) => Err(err.to_string()),
         }
@@ -58,14 +64,15 @@ pub async fn employees_selection(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
     canceled: Vec<Uuid>,
+    limit: i64,
 ) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
-        match find_employees_by_name(&app_state.pool, &name.trim(), canceled).await {
+        match find_employees_by_name(&app_state.pool, &name.trim(), canceled, limit).await {
             Ok(e) => Ok(e),
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_4_employees(&app_state.pool, canceled).await {
+        match find_limit_of_employees(&app_state.pool, canceled, limit).await {
             Ok(e) => Ok(e),
             Err(err) => Err(err.to_string()),
         }
@@ -77,14 +84,15 @@ pub async fn machines_selection(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
     canceled: Vec<String>,
+    limit: i64,
 ) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
-        match find_machines_by_name(&app_state.pool, &name.trim(), canceled).await {
+        match find_machines_by_name(&app_state.pool, &name.trim(), canceled, limit).await {
             Ok(e) => Ok(e),
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_4_machines(&app_state.pool, canceled).await {
+        match find_limit_of_machines(&app_state.pool, canceled, limit).await {
             Ok(e) => Ok(e),
             Err(err) => Err(err.to_string()),
         }
@@ -96,14 +104,15 @@ pub async fn spare_parts_selection(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
     canceled: Vec<String>,
+    limit: i64,
 ) -> Result<Vec<Name>, String> {
     if let Some(name) = name {
-        match find_spare_parts_by_name(&app_state.pool, &name.trim(), canceled).await {
+        match find_spare_parts_by_name(&app_state.pool, &name.trim(), canceled, limit).await {
             Ok(e) => Ok(e),
             Err(err) => Err(err.to_string()),
         }
     } else {
-        match find_4_spare_parts(&app_state.pool, canceled).await {
+        match find_limit_of_spare_parts(&app_state.pool, canceled, limit).await {
             Ok(e) => Ok(e),
             Err(err) => Err(err.to_string()),
         }
@@ -146,14 +155,16 @@ pub fn current_shift_borders() -> Result<(NaiveTime, NaiveTime), String> {
 #[tauri::command]
 pub async fn add_shift_employee(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    updater_id: Uuid,
-    shift_id: Uuid,
     employee_id: Uuid,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, shift_id)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::DepartmentShift(TableCrud::Update(Environment {
@@ -179,13 +190,15 @@ pub async fn add_shift_employee(
 pub async fn remove_shift_employee(
     app_state: tauri::State<'_, AppState>,
     window: Window,
-    updater_id: Uuid,
-    shift_id: Uuid,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     employee_id: Uuid,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, shift_id)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::DepartmentShift(TableCrud::Update(Environment {
@@ -211,23 +224,24 @@ pub async fn remove_shift_employee(
 pub async fn save_shift_note(
     app_state: tauri::State<'_, AppState>,
     window: Window,
-    shift_id: Uuid,
-    writer_id: Uuid,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     content: String,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, shift_id)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::DepartmentShift(TableCrud::Update(Environment {
             target: UpdateDepartmentShift::SaveNote(ShiftNote {
                 id: Uuid::new_v4(),
                 shift_id,
-                writer_id,
                 content,
             }),
-            updater_id: writer_id,
+            updater_id,
             time_stamp,
         })),
     )
@@ -247,7 +261,7 @@ pub async fn save_shift_note(
 pub async fn upgrade_shift_note(
     app_state: tauri::State<'_, AppState>,
     window: Window,
-    updater_id: Uuid,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     note: Note,
     old_content: String,
 ) -> Result<(), String> {
@@ -257,6 +271,9 @@ pub async fn upgrade_shift_note(
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::DepartmentShift(TableCrud::Update(Environment {
@@ -303,13 +320,15 @@ pub async fn fetch_shift_note(
 pub async fn remove_shift_note(
     app_state: tauri::State<'_, AppState>,
     window: Window,
-    updater_id: Uuid,
-    shift_id: Uuid,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     note_id: Uuid,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, shift_id)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::DepartmentShift(TableCrud::Update(Environment {
@@ -333,13 +352,16 @@ pub async fn remove_shift_note(
 #[tauri::command]
 pub async fn remove_shift_problem(
     app_state: tauri::State<'_, AppState>,
-    updater_id: Uuid,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
     problem_id: Uuid,
 ) -> Result<(), String> {
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
        return Err("null time stamp".into());
    };
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     let res = match main_entry(
         &app_state,
         TableRequest::ShiftProblem(TableCrud::Delete(

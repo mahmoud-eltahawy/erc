@@ -1,4 +1,4 @@
-use std::{error::Error, str::FromStr, sync::Mutex};
+use std::{error::Error, sync::Mutex};
 
 use bcrypt::BcryptResult;
 use chrono::{Local, NaiveDateTime, NaiveTime};
@@ -6,6 +6,7 @@ use errc::{
     api::main_entry,
     config::AppState,
     memory::{
+        department::find_department_name_by_id,
         employee::{does_employee_exist, find_employee_by_card, find_employee_by_id},
         machine::find_machine_name_by_id,
         note::fetch_shift_problem_note,
@@ -37,7 +38,7 @@ fn verify_password(password: String, hash: &str) -> BcryptResult<bool> {
 
 async fn get_or_save_shift_id(
     app_state: &AppState,
-    updater_id: Uuid,
+    updater_id: &Uuid,
     department_id: &Uuid,
     window: &Window,
 ) -> Result<Uuid, Box<dyn Error>> {
@@ -52,7 +53,7 @@ async fn get_or_save_shift_id(
     main_entry(
         app_state,
         TableRequest::DepartmentShift(TableCrud::Create(Environment {
-            updater_id,
+            updater_id: *updater_id,
             time_stamp,
             target: DepartmentShift {
                 department_id: *department_id,
@@ -72,12 +73,13 @@ async fn get_or_save_shift_id(
 
 async fn helper(
     app_state: &AppState,
-    updater_id: Uuid,
     card_id: i64,
     password: String,
     window: &Window,
-) -> Result<(Employee, Uuid), Box<dyn Error>> {
+) -> Result<(Uuid, Uuid), Box<dyn Error>> {
     let employee = find_employee_by_card(&app_state.pool, card_id).await?;
+
+    let updater_id = Uuid::nil();
 
     let verified = match verify_password(password, &employee.password) {
         Ok(result) => result,
@@ -90,7 +92,7 @@ async fn helper(
 
     if verified {
         let shift_id =
-            get_or_save_shift_id(&app_state, updater_id, &employee.department_id, window).await?;
+            get_or_save_shift_id(&app_state, &updater_id, &employee.department_id, window).await?;
         let is_there = does_employee_exist(&app_state.pool, &shift_id, &employee.id).await?;
         if !is_there {
             main_entry(
@@ -103,23 +105,22 @@ async fn helper(
             )
             .await?;
         }
-        return Ok((employee, shift_id));
+        return Ok((employee.id, shift_id));
     }
     Err("".into())
 }
 
 #[tauri::command]
 pub async fn login(
-    emp_and_uuid: tauri::State<'_, Mutex<Option<(Employee, Uuid)>>>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     app_state: tauri::State<'_, AppState>,
     window: Window,
     card_id: i64,
     password: String,
 ) -> Result<(), String> {
-    let id = Uuid::from_str("00000000-0000-0000-0000-000000000000").unwrap(); //TODO remove later
-    match helper(&app_state, id, card_id, password, &window).await {
+    match helper(&app_state, card_id, password, &window).await {
         Ok(result) => {
-            let _ = window.emit("new_login", result.0.id.clone());
+            let _ = window.emit("new_login", result.0.clone());
             *emp_and_uuid.lock().unwrap() = Some(result);
             Ok(())
         }
@@ -145,29 +146,22 @@ pub async fn update(
 
 #[tauri::command]
 pub async fn check_shift_time(
-    emp_and_uuid: tauri::State<'_, Mutex<Option<(Employee, Uuid)>>>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     app_state: tauri::State<'_, AppState>,
-    updater_id: Uuid,
     window: Window,
     department_id: Uuid,
 ) -> Result<(), String> {
     let failure = Err("فشلت عملية تسجيل الدخول".to_string());
 
-    let nid = &mut get_or_save_shift_id(&app_state, updater_id, &department_id, &window).await;
-
-    let nid = match nid {
-        Ok(v) => v,
-        Err(_) => return failure,
+    let Some((employee_id, shift_id)) = *emp_and_uuid.lock().unwrap() else {
+        return failure;
     };
 
-    let l = &*emp_and_uuid.lock().unwrap();
-
-    let (_, cid) = match l {
-        Some(v) => v,
-        None => return failure,
+    let Ok(new_shift_id) = get_or_save_shift_id(&app_state, &employee_id, &department_id, &window).await else{
+        return failure;
     };
 
-    if cid == nid {
+    if shift_id == new_shift_id {
         Ok(())
     } else {
         match window.emit("shift_ended", None::<&str>) {
@@ -180,8 +174,8 @@ pub async fn check_shift_time(
 #[tauri::command]
 pub async fn define_problem(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    writer_id: Uuid,
     department_id: Uuid,
     title: String,
     description: String,
@@ -189,10 +183,13 @@ pub async fn define_problem(
     let id = Uuid::new_v4();
     let problem = Problem {
         id,
-        writer_id,
         department_id,
         title: title.trim().to_string(),
         description,
+    };
+
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
     };
 
     let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
@@ -202,7 +199,7 @@ pub async fn define_problem(
     let Ok(TableResponse::Done) = main_entry(&*app_state,
                TableRequest::Problem(
                    TableCrud::Create(Environment {
-                       updater_id : writer_id,
+                       updater_id,
                        time_stamp,
                        target: problem
                    }))).await else{
@@ -214,8 +211,9 @@ pub async fn define_problem(
 
 async fn save_minimal_shift_problem(
     app_state: &AppState,
-    minimal_shift_problem: MinimamlShiftProblem,
     window: &Window,
+    minimal_shift_problem: MinimamlShiftProblem,
+    updater_id: Uuid,
 ) -> Result<(), Box<dyn Error>> {
     let (shift_problem, problems, parts, note) = minimal_shift_problem.destruct();
 
@@ -223,7 +221,6 @@ async fn save_minimal_shift_problem(
         return Err("null time stamp".into());
     };
     let shift_problem_id = shift_problem.id.clone();
-    let updater_id = shift_problem.writer_id.clone();
 
     main_entry(
         app_state,
@@ -471,11 +468,15 @@ async fn update_minimal_shift_problem(
 #[tauri::command]
 pub async fn save_problem_detail(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
     problem_detail: ProblemDetail,
 ) -> Result<(), String> {
     let shift_problem = MinimamlShiftProblem::new(problem_detail);
-    match save_minimal_shift_problem(&app_state, shift_problem, &window).await {
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
+    match save_minimal_shift_problem(&app_state, &window, shift_problem, updater_id).await {
         Ok(_) => Ok(()),
         Err(err) => return Err(err.to_string()),
     }
@@ -484,8 +485,8 @@ pub async fn save_problem_detail(
 #[tauri::command]
 pub async fn update_problem_detail(
     app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
     window: Window,
-    updater_id: Uuid,
     shift_problem_id: Uuid,
     core: (
         (Uuid, Uuid),           //maintainer
@@ -497,6 +498,9 @@ pub async fn update_problem_detail(
     spare_parts: (Vec<Uuid>, Vec<Uuid>),
     note: (Option<String>, Option<String>),
 ) -> Result<(), String> {
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
     match update_minimal_shift_problem(
         &app_state,
         window,
@@ -581,6 +585,17 @@ pub async fn get_machine_name_by_id(
 }
 
 #[tauri::command]
+pub async fn get_department_name_by_id(
+    app_state: tauri::State<'_, AppState>,
+    id: Uuid,
+) -> Result<String, String> {
+    match find_department_name_by_id(&app_state.pool, id).await {
+        Ok(name) => Ok(name),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+#[tauri::command]
 pub async fn get_spare_part_name_by_id(
     app_state: tauri::State<'_, AppState>,
     id: Uuid,
@@ -607,7 +622,7 @@ pub async fn get_employee_by_id(
     app_state: tauri::State<'_, AppState>,
     id: Uuid,
 ) -> Result<Employee, String> {
-    match find_employee_by_id(&app_state.pool, id).await {
+    match find_employee_by_id(&app_state.pool, &id).await {
         Ok(e) => Ok(e),
         Err(err) => Err(err.to_string()),
     }

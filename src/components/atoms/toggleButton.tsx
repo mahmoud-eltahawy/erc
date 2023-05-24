@@ -1,6 +1,5 @@
-import { createEffect, createSignal, Show } from "solid-js";
+import { createSignal } from "solid-js";
 import { css } from "solid-styled-components";
-import { setButtons } from "../../navBar";
 
 export function ToggleButton({
   toggle,
@@ -8,10 +7,10 @@ export function ToggleButton({
   defaultCont,
   tButton,
 }: {
-  toggle: Function;
+  toggle: () => void;
   cont: string;
   defaultCont: string;
-  tButton: Function;
+  tButton: () => boolean;
 }) {
   const [hover, setHover] = createSignal(false);
 

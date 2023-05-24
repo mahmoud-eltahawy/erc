@@ -1,6 +1,5 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { createSignal } from "solid-js";
-import { employee, shiftId } from "../../App";
 import SubmitButton from "../atoms/submitButton";
 import { ToggleButton } from "../atoms/toggleButton";
 import { DescriptionInput } from "./defineProblem";
@@ -9,7 +8,7 @@ import { ShiftNote } from "./shiftWrittenNote";
 export default function AddShiftNote({
   toggle,
 }: {
-  toggle: Function;
+  toggle: () => void;
 }) {
   const [desc, setDesc] = createSignal("");
 
@@ -18,8 +17,6 @@ export default function AddShiftNote({
     toggle();
     try {
       await invoke("save_shift_note", {
-        shiftId: shiftId(),
-        writerId: employee()?.id,
         content: desc(),
       });
       setDesc("");
@@ -40,9 +37,9 @@ export function UpdateShiftNote({
   note,
 }: {
   note: () => ShiftNote;
-  toggle: Function;
+  toggle: () => void;
 }) {
-  const { id, shift_id, writer_id, content } = note();
+  const { id, shift_id, content } = note();
   const [desc, setDesc] = createSignal(content.trim());
 
   async function handleSubmit(e: Event) {
@@ -50,7 +47,7 @@ export function UpdateShiftNote({
     toggle();
     try {
       await invoke("upgrade_shift_note", {
-        note: { id, shift_id, writer_id, content: desc().trim() },
+        note: { id, shift_id, content: desc().trim() },
         oldContent: content.trim(),
       });
       setDesc("");

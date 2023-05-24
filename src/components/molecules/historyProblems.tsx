@@ -4,6 +4,7 @@ import { createStore } from "solid-js/store";
 import { css } from "solid-styled-components";
 import { departmentsNames, Name } from "../..";
 import { employee, permissions } from "../../App";
+import Namer from "../atoms/Namer";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
 export default function HistoryProblems({ rank }: { rank: number }) {
@@ -76,7 +77,7 @@ export default function HistoryProblems({ rank }: { rank: number }) {
 }
 
 function ShowAllToggleButton(
-  { toggle, target }: { toggle: Function; target: [string | null] },
+  { toggle, target }: { toggle: () => void; target: [string | null] },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -172,19 +173,19 @@ function ShowHistory(
   );
 }
 
-export type Profile = {
-  department_name: string;
-  writer_name: string;
+export type Problem = {
+  id: string;
+  department_id: string;
   title: string;
   description: string;
 };
 
-const profiler = async ({ id }: { id: string }) => {
-  return (await invoke("profile_problem", { id })) as Profile;
+const problem_fetcher = async ({ id }: { id: string }) => {
+  return (await invoke("get_problem_problem_by_id", { id })) as Problem;
 };
 
 function Profile({ id }: { id: string }) {
-  const [profile] = createResource({ id }, profiler);
+  const [profile] = createResource({ id }, problem_fetcher);
 
   const tableStyle = css({
     width: "95%",
@@ -198,7 +199,6 @@ function Profile({ id }: { id: string }) {
           <tr>
             <th>الاسم</th>
             <th>القسم</th>
-            <th>المؤلف</th>
             <th>الوصف</th>
           </tr>
         </thead>
@@ -207,8 +207,12 @@ function Profile({ id }: { id: string }) {
             {(notNullProfile) => (
               <tr>
                 <td>{notNullProfile().title}</td>
-                <td>{notNullProfile().department_name}</td>
-                <td>{notNullProfile().writer_name}</td>
+                <td>
+                  <Namer
+                    command="get_department_name_by_id"
+                    id={() => notNullProfile()!.department_id}
+                  />
+                </td>
                 <td>
                   <p>{notNullProfile().description}</p>
                 </td>

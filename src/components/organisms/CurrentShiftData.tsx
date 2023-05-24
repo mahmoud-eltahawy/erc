@@ -45,7 +45,7 @@ export default function CurrentShiftData({ rank }: { rank: number }) {
           [
             "البيانات المسجلة",
             <ShiftWrittenShow
-              rank={rank + 1}
+              rank={rank + 2}
               shiftId={() => shiftId()!}
             />,
           ],

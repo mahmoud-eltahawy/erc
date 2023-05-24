@@ -1,4 +1,3 @@
-use rec::model::employee::Employee;
 use std::sync::Mutex;
 use tauri::{Builder, Wry};
 use uuid::Uuid;
@@ -13,7 +12,8 @@ pub fn build_tauri(state: TauriState) -> Builder<Wry> {
     let TauriState { app_state } = state;
     tauri::Builder::default()
         .manage(app_state)
-        .manage(Mutex::new(None::<(Employee, Uuid)>))
+        //employee_id and shift_id
+        .manage(Mutex::new(None::<(Uuid, Uuid)>))
         //is the update func invoked
         .manage(Mutex::new(false))
         .invoke_handler(tauri::generate_handler![
@@ -41,9 +41,10 @@ pub fn build_tauri(state: TauriState) -> Builder<Wry> {
             get_problem_name_by_id,
             get_spare_part_name_by_id,
             get_machine_name_by_id,
+            get_department_name_by_id,
             search_shifts,
             search_problem,
-            profile_problem,
+            get_problem_problem_by_id,
             search_parts,
             search_machines,
             search_employees,

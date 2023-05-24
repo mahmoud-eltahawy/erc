@@ -8,7 +8,7 @@ export default function togglingButton({
 }: {
   showButton: () => boolean;
   showMore: () => boolean;
-  doOnClick: Function;
+  doOnClick: () => void;
 }) {
   const [hover, setHover] = createSignal(false);
 

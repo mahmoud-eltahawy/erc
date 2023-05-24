@@ -2,6 +2,8 @@ use rec::model::department::Department;
 use sqlx::{query, Error, Pool, Sqlite};
 use uuid::Uuid;
 
+use crate::syncing::Env;
+
 pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     let id = id.to_string();
     match query!(
@@ -18,18 +20,24 @@ pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     }
 }
 
-pub async fn save(pool: &Pool<Sqlite>, dep: Department) -> Result<(), Error> {
+pub async fn save(pool: &Pool<Sqlite>, dep: Department, env: Env) -> Result<(), Error> {
     let Department { id, boss_id, name } = dep;
+    let (updater_id, time_stamp) = env;
     let id = id.to_string();
     let boss_id = boss_id.map(|id| id.to_string());
+
+    let updater_id = updater_id.to_string();
+    let time_stamp = serde_json::json!(time_stamp).to_string();
     match query!(
         r#"
-    INSERT INTO department(id,boss_id,name)
-    VALUES($1,$2,$3) ON CONFLICT (id) DO NOTHING;
+    INSERT INTO department(id,boss_id,name,updater_id,time_stamp)
+    VALUES($1,$2,$3,$4,$5) ON CONFLICT (id) DO NOTHING;
   "#,
         id,
         boss_id,
-        name
+        name,
+        updater_id,
+        time_stamp
     )
     .execute(pool)
     .await

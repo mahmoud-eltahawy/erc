@@ -2,6 +2,8 @@ use rec::model::employee::Employee;
 use sqlx::{query, Error, Pool, Sqlite};
 use uuid::Uuid;
 
+use crate::syncing::Env;
+
 pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     let id = id.to_string();
     match query!(
@@ -18,7 +20,7 @@ pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     }
 }
 
-pub async fn save(pool: &Pool<Sqlite>, employee: Employee) -> Result<(), Error> {
+pub async fn save(pool: &Pool<Sqlite>, employee: Employee, env: Env) -> Result<(), Error> {
     let Employee {
         id,
         card_id,
@@ -29,16 +31,34 @@ pub async fn save(pool: &Pool<Sqlite>, employee: Employee) -> Result<(), Error> 
         position,
         password,
     } = employee;
+    let (updater_id, time_stamp) = env;
     let id = id.to_string();
     let department_id = department_id.to_string();
-    match query!(r#"
-    INSERT INTO employee(id,card_id,department_id,first_name,last_name,middle_name,position,password)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING;
-  "#,id,card_id,department_id,first_name,last_name,middle_name,position,password)
-  .execute(pool).await {
-    Ok(_) => Ok(()),
-    Err(err) => Err(err)
-  }
+    let updater_id = updater_id.to_string();
+    let time_stamp = serde_json::json!(time_stamp).to_string();
+    match query!(
+        r#"
+    INSERT INTO employee(id,card_id,department_id,first_name,
+        last_name,middle_name,position,password,updater_id,time_stamp)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING;
+  "#,
+        id,
+        card_id,
+        department_id,
+        first_name,
+        last_name,
+        middle_name,
+        position,
+        password,
+        updater_id,
+        time_stamp
+    )
+    .execute(pool)
+    .await
+    {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err),
+    }
 }
 
 pub async fn update_department(

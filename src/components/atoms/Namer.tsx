@@ -13,7 +13,7 @@ export default function Namer({
       .catch((err) => console.log(err))) as string;
   };
 
-  let [name] = createResource(fetcher);
+  const [name] = createResource(fetcher);
 
   return <p>{name()}</p>;
 }

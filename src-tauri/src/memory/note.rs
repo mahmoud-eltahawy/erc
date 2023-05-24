@@ -9,20 +9,15 @@ pub async fn fetch_shift_note_by_id(pool: &Pool<Sqlite>, id: Uuid) -> Option<Shi
     let id = id.to_string();
     let row = query!(
         r#"
-    SELECT * FROM shift_note WHERE id = $1;"#,
+    SELECT id,shift_id,content FROM shift_note WHERE id = $1;"#,
         id
     )
     .fetch_one(pool);
     match row.await {
-        Ok(record) => match (
-            Uuid::from_str(&record.id),
-            Uuid::from_str(&record.shift_id),
-            Uuid::from_str(&record.writer_id),
-        ) {
-            (Ok(id), Ok(shift_id), Ok(writer_id)) => Some(ShiftNote {
+        Ok(record) => match (Uuid::from_str(&record.id), Uuid::from_str(&record.shift_id)) {
+            (Ok(id), Ok(shift_id)) => Some(ShiftNote {
                 id,
                 shift_id,
-                writer_id,
                 content: record.content,
             }),
             _ => None,

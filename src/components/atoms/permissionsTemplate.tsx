@@ -7,8 +7,8 @@ export default function PermissionsTemplate({
   forbiddenHandler,
   permissions,
 }: {
-  allowedHandler: Function;
-  forbiddenHandler: Function;
+  allowedHandler: (s: string, b: string) => void;
+  forbiddenHandler: (s: string, b: string) => void;
   permissions: () => PermissionsClassified;
 }) {
   const viewContainer = css({

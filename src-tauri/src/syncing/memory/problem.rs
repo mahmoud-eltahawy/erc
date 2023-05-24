@@ -2,6 +2,8 @@ use rec::model::problem::Problem;
 use sqlx::{query, Error, Pool, Sqlite};
 use uuid::Uuid;
 
+use crate::syncing::Env;
+
 pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     let id = id.to_string();
     match query!(
@@ -18,27 +20,29 @@ pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     }
 }
 
-pub async fn save(pool: &Pool<Sqlite>, problem: Problem) -> Result<(), Error> {
+pub async fn save(pool: &Pool<Sqlite>, problem: Problem, env: Env) -> Result<(), Error> {
     let Problem {
         id,
-        writer_id,
         department_id,
         title,
         description,
     } = problem;
+    let (updater_id, time_stamp) = env;
     let id = id.to_string();
-    let writer_id = writer_id.to_string();
     let department_id = department_id.to_string();
+    let updater_id = updater_id.to_string();
+    let time_stamp = serde_json::json!(time_stamp).to_string();
     match query!(
         r#"
-    INSERT INTO problem(id,writer_id,department_id,title,description)
-    VALUES($1,$2,$3,$4,$5) ON CONFLICT (id) DO NOTHING;
+    INSERT INTO problem(id,department_id,title,description,updater_id,time_stamp)
+    VALUES($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING;
   "#,
         id,
-        writer_id,
         department_id,
         title,
-        description
+        description,
+        updater_id,
+        time_stamp
     )
     .execute(pool)
     .await

@@ -13,7 +13,7 @@ export default function TableHead() {
   return (
     <thead>
       <tr>
-        <th class={style}>مسجل العطل</th>
+        <th class={style}>تعديل</th>
         <th class={style}>ملحوظة جانبية</th>
         <th class={style}>(24)التوقيت</th>
         <th class={style}>قطع الغيار</th>

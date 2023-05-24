@@ -7,7 +7,6 @@ import {
   NativeDepartment,
   PermissionsClassified,
 } from "../..";
-import { employee } from "../../App";
 import PermissionsTemplate from "../atoms/permissionsTemplate";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
@@ -59,14 +58,14 @@ const department_fetcher = async (
   { departmentId }: { departmentId: string },
 ) => {
   let department: Department;
-  let nd =
+  const nd =
     (await invoke("find_department", { id: departmentId })) as NativeDepartment;
-  let employees =
+  const employees =
     (await invoke("department_employees", { id: departmentId })) as Name[];
   if (nd.boss_id) {
-    let name: string =
+    const name: string =
       (await invoke("employee_name", { id: nd.boss_id })) as string;
-    let boss: Name = { id: nd.boss_id, name };
+    const boss: Name = { id: nd.boss_id, name };
     department = { id: nd.id, boss, name: nd.name, employees };
   } else {
     department = { id: nd.id, name: nd.name, boss: null, employees };
@@ -106,7 +105,6 @@ function DepartmentSettings(
     await invoke("permission_forbid", {
       employeeId,
       permission,
-      updaterId: employee()!.id,
     })
       .catch((err) => console.log(err));
     dbf.refetch();
@@ -116,7 +114,6 @@ function DepartmentSettings(
     await invoke("permission_allow", {
       employeeId,
       permission,
-      updaterId: employee()!.id,
     })
       .catch((err) => console.log(err));
     dbf.refetch();
@@ -159,12 +156,15 @@ function DepartmentSettings(
 }
 
 function ChooseBoss(
-  { department, refetch }: { department: () => Department; refetch: Function },
+  { department, refetch }: {
+    department: () => Department;
+    refetch: () => void;
+  },
 ) {
   const [target, setTarget] = createSignal<string>("");
 
   const optionHandler = async (newBossId: string) => {
-    await invoke("boss_employee", { newBossId, updaterId: employee()!.id });
+    await invoke("boss_employee", { newBossId });
     refetch();
   };
 

@@ -23,7 +23,7 @@ pub async fn find_shift_shift_problems_ids(
     .await?;
     Ok(records
         .into_iter()
-        .flat_map(|r| Uuid::from_str(r.id.as_str()))
+        .flat_map(|r| Uuid::from_str(&r.id))
         .collect_vec())
 }
 
@@ -48,7 +48,7 @@ pub async fn find_shift_problem_by_id(
     let id = id.to_string();
     let record = query!(
         r#"
-      SELECT * FROM shift_problem WHERE id = $1;
+      SELECT id,machine_id,maintainer_id,shift_id,begin_time,end_time FROM shift_problem WHERE id = $1;
     "#,
         id
     )
@@ -57,14 +57,12 @@ pub async fn find_shift_problem_by_id(
     let id = Uuid::from_str(&record.id)?;
     let machine_id = Uuid::from_str(&record.machine_id)?;
     let maintainer_id = Uuid::from_str(&record.maintainer_id)?;
-    let writer_id = Uuid::from_str(&record.writer_id)?;
     let shift_id = Uuid::from_str(&record.shift_id)?;
     let begin_time = serde_json::from_str(&record.begin_time)?;
     let end_time = serde_json::from_str(&record.end_time)?;
     Ok(ShiftProblem {
         id,
         shift_id,
-        writer_id,
         maintainer_id,
         machine_id,
         begin_time,

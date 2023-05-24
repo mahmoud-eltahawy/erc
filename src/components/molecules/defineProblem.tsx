@@ -7,7 +7,7 @@ import SubmitButton from "../atoms/submitButton";
 export default function DefineProblem({
   toggle,
 }: {
-  toggle: Function;
+  toggle: () => void;
 }) {
   const [title, setTitle] = createSignal("");
   const [desc, setDesc] = createSignal("");
@@ -17,7 +17,6 @@ export default function DefineProblem({
     toggle();
     try {
       await invoke("define_problem", {
-        writerId: employee()?.id,
         departmentId: employee()?.department_id,
         title: title(),
         description: desc(),

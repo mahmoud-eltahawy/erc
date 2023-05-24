@@ -2,8 +2,8 @@ import { invoke } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
 import { createResource, createSignal, Show } from "solid-js";
 import { css } from "solid-styled-components";
-import { Note, ShiftProblem } from "../..";
-import { employee, permissions } from "../../App";
+import { ShiftProblem } from "../..";
+import { permissions } from "../../App";
 import LongNote from "./longNote";
 import ModfiyButtons from "./modifyButtons";
 import Namer from "./Namer";
@@ -21,7 +21,6 @@ async function shift_problem_fetcher({
     machine_id,
     maintainer_id,
     shift_id,
-    writer_id,
   } = await invoke("get_shift_problem_by_id", { id: the_id })
     .catch((err) => console.log(err)) as ShiftProblem;
 
@@ -39,7 +38,6 @@ async function shift_problem_fetcher({
   return {
     id,
     shift_id,
-    writer_id,
     machine_id,
     maintainer_id,
     begin_time,
@@ -53,7 +51,6 @@ async function shift_problem_fetcher({
 type SpreadedProblem = {
   id: string;
   shift_id: string;
-  writer_id: string;
   machine_id: string;
   maintainer_id: string;
   begin_time: string;
@@ -86,7 +83,7 @@ function Core({
   init: SpreadedProblem;
   problemUpdating: (id: string) => void;
 }) {
-  let id = init.id;
+  const id = init.id;
   const [begin_time, set_begin_time] = createSignal(init.begin_time);
   const [end_time, set_end_time] = createSignal(init.end_time);
   const [machine_id, set_machine_id] = createSignal(init.machine_id);
@@ -96,73 +93,73 @@ function Core({
   const [note, set_note] = createSignal(init.note);
 
   listen("update_shift_problem_begin_time", (e) => {
-    let [problemId, begin_time] = e.payload as [string, string];
+    const [problemId, begin_time] = e.payload as [string, string];
     if (id === problemId) {
       set_begin_time(begin_time);
     }
   });
   listen("update_shift_problem_end_time", (e) => {
-    let [problemId, end_time] = e.payload as [string, string];
+    const [problemId, end_time] = e.payload as [string, string];
     if (id === problemId) {
       set_end_time(end_time);
     }
   });
   listen("update_shift_problem_maintainer", (e) => {
-    let [problemId, maintainer_id] = e.payload as [string, string];
+    const [problemId, maintainer_id] = e.payload as [string, string];
     if (id === problemId) {
       set_maintainer_id(maintainer_id);
     }
   });
   listen("update_shift_problem_machine", (e) => {
-    let [problemId, machine_id] = e.payload as [string, string];
+    const [problemId, machine_id] = e.payload as [string, string];
     if (id === problemId) {
       set_machine_id(machine_id);
     }
   });
   listen("update_shift_problem_add_problem", (e) => {
-    let [sp_id, problem_id] = e.payload as [string, string];
+    const [sp_id, problem_id] = e.payload as [string, string];
     if (id === sp_id) {
       set_problems((prs) => [problem_id, ...prs]);
     }
   });
   listen("update_shift_problem_delete_problem", (e) => {
-    let [sp_id, problem_id] = e.payload as [string, string];
+    const [sp_id, problem_id] = e.payload as [string, string];
     if (id === sp_id) {
       set_problems((prs) => prs.filter((x) => x !== problem_id));
     }
   });
   listen("update_shift_problem_add_spare_part", (e) => {
-    let [sp_id, part_id] = e.payload as [string, string];
+    const [sp_id, part_id] = e.payload as [string, string];
     if (id === sp_id) {
       set_spare_parts((prs) => [part_id, ...prs]);
     }
   });
   listen("update_shift_problem_delete_spare_part", (e) => {
-    let [sp_id, part_id] = e.payload as [string, string];
+    const [sp_id, part_id] = e.payload as [string, string];
     if (id === sp_id) {
       set_spare_parts((prs) => prs.filter((x) => x !== part_id));
     }
   });
   listen("update_shift_problem_add_note", (e) => {
-    let [sp_id, note] = e.payload as [string, string];
+    const [sp_id, note] = e.payload as [string, string];
     if (id === sp_id) {
       set_note(note);
     }
   });
   listen("update_shift_problem_update_note", (e) => {
-    let [sp_id, note] = e.payload as [string, string];
+    const [sp_id, note] = e.payload as [string, string];
     if (id === sp_id) {
       set_note(note);
     }
   });
   listen("update_shift_problem_delete_note", (e) => {
-    let sp_id = e.payload as string;
+    const sp_id = e.payload as string;
     if (id === sp_id) {
       set_note("");
     }
   });
   const machine_name = () => {
-    let id = machine_id();
+    const id = machine_id();
     return (
       <Namer
         command="get_machine_name_by_id"
@@ -171,7 +168,7 @@ function Core({
     );
   };
   const maintainer_name = () => {
-    let id = maintainer_id();
+    const id = maintainer_id();
     return (
       <Namer
         command="employee_name"
@@ -210,18 +207,13 @@ function Core({
                 permissions()?.includes("ModifyDepartmentProblems")}
               setUpdating={() => problemUpdating(id)}
               deleteFunc={async () =>
-                invoke("remove_shift_problem", {
+                await invoke("remove_shift_problem", {
                   problemId: init.id,
-                  updaterId: employee()?.id,
                 })
                   .catch((err) => console.log(err))}
             />
           )
-          : (
-            <p>
-              <Namer command="employee_name" id={() => init.writer_id} />
-            </p>
-          )}
+          : <p>#</p>}
       </td>
       <Show
         when={note()}

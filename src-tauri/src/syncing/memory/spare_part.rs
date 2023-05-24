@@ -2,6 +2,8 @@ use rec::model::spare_part::SparePart;
 use sqlx::{query, Error, Pool, Sqlite};
 use uuid::Uuid;
 
+use crate::syncing::Env;
+
 pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     let id = id.to_string();
     match query!(
@@ -18,16 +20,21 @@ pub async fn delete(pool: &Pool<Sqlite>, id: Uuid) -> Result<(), Error> {
     }
 }
 
-pub async fn save(pool: &Pool<Sqlite>, part: SparePart) -> Result<(), Error> {
+pub async fn save(pool: &Pool<Sqlite>, part: SparePart, env: Env) -> Result<(), Error> {
     let SparePart { id, name } = part;
+    let (updater_id, time_stamp) = env;
     let id = id.to_string();
+    let updater_id = updater_id.to_string();
+    let time_stamp = serde_json::json!(time_stamp).to_string();
     match query!(
         r#"
-    INSERT INTO spare_part(id,name)
-    VALUES($1,$2) ON CONFLICT (id) DO NOTHING;
+    INSERT INTO spare_part(id,name,updater_id,time_stamp)
+    VALUES($1,$2,$3,$4) ON CONFLICT (id) DO NOTHING;
   "#,
         id,
-        name
+        name,
+        updater_id,
+        time_stamp
     )
     .execute(pool)
     .await

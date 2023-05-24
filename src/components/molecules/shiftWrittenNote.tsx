@@ -8,9 +8,9 @@ import {
   Show,
 } from "solid-js";
 import { css } from "solid-styled-components";
-import { Employee } from "../..";
-import { employee, permissions } from "../../App";
+import { permissions } from "../../App";
 import ModfiyButtons from "../atoms/modifyButtons";
+import Namer from "../atoms/Namer";
 import ProblemRow from "../atoms/problemRow";
 import TableHead from "../atoms/problemTableHead";
 import togglingButton from "../atoms/problemTogglingButton";
@@ -67,12 +67,23 @@ function ExistingEmployees({
 }: {
   shiftId: string;
 }) {
-  const [existing, { refetch }] = createResource(
+  const [existing, { mutate }] = createResource(
     { shift_id: () => shiftId },
     existing_employees_fetcher,
   );
 
-  listen("update_department_shift_employee", () => refetch());
+  listen("update_shift_add_employee", (e) => {
+    const [shift_id, employee_id] = e.payload as [string, string];
+    if (shiftId === shift_id) {
+      mutate((xs) => [employee_id, ...(xs || [])]);
+    }
+  });
+  listen("update_shift_delete_employee", (e) => {
+    const [shift_id, employee_id] = e.payload as [string, string];
+    if (shiftId === shift_id) {
+      mutate((xs) => xs?.filter((x) => x !== employee_id));
+    }
+  });
 
   const viewMember = css({
     display: "block",
@@ -85,7 +96,11 @@ function ExistingEmployees({
   return (
     <ol class={viewMember}>
       <For each={existing()}>
-        {(item) => <li>{item.name}</li>}
+        {(item) => (
+          <li>
+            <Namer command="employee_name" id={() => item} />
+          </li>
+        )}
       </For>
       <Show when={!(existing() || []).length}>
         <li>لا يوجد موظفين مسجلين</li>
@@ -97,7 +112,6 @@ function ExistingEmployees({
 export type ShiftNote = {
   id: string;
   shift_id: string;
-  writer_id: string;
   content: string;
 };
 
@@ -110,7 +124,7 @@ function ShiftNotes({
     return (await invoke("fetch_shift_notes_ids", { shiftId })
       .catch((err) => console.log(err))) as string[];
   };
-  const [notesIds, { refetch, mutate }] = createResource(
+  const [notesIds, { mutate }] = createResource(
     { shiftId },
     notes_ids_fetcher,
   );
@@ -120,40 +134,32 @@ function ShiftNotes({
   let the_shift_note: ShiftNote | undefined = undefined;
   const get_the_shift_note = () => the_shift_note;
 
-  const [state, setState] = createSignal<string[] | undefined>([]);
+  const [state, setState] = createSignal<string[]>([]);
   const [tooLong, setTooLong] = createSignal((state() || []).length < LIMIT);
   const [updating, setUpdating] = createSignal(false);
 
   createEffect(() => {
     if (tooLong()) {
       if (notesIds()) {
-        setState(notesIds()!.slice(0, LIMIT));
+        setState((notesIds() || []).slice(0, LIMIT));
       } else {
-        setState(undefined);
+        setState([]);
       }
     } else {
-      setState(notesIds());
+      setState(notesIds() || []);
     }
   });
 
-  listen("create_shift_note", (e) => {
-    let [shift_id, note_id] = e.payload as [string, string];
+  listen("update_shift_add_note", (e) => {
+    const [shift_id, note_id] = e.payload as [string, string];
     if (shift_id === shiftId) {
-      if (tooLong()) {
-        mutate((ids) => [note_id, ...(ids || [])]);
-      } else {
-        refetch();
-      }
+      mutate((ids) => [note_id, ...(ids || [])]);
     }
   });
-  listen("delete_shift_note", (e) => {
-    let [shift_id, note_id] = e.payload as [string, string];
+  listen("update_shift_delete_note", (e) => {
+    const [shift_id, note_id] = e.payload as [string, string];
     if (shift_id === shiftId) {
-      if (tooLong()) {
-        mutate((ids) => [...(ids || []).filter((id) => id !== note_id)]);
-      } else {
-        refetch();
-      }
+      mutate((ids) => [...(ids || []).filter((id) => id !== note_id)]);
     }
   });
 
@@ -163,11 +169,14 @@ function ShiftNotes({
         .catch((err) => console.log(err))) as ShiftNote;
     };
 
-    const [note, { refetch }] = createResource({ id }, note_fetcher);
+    const [note, { mutate }] = createResource({ id }, note_fetcher);
 
-    listen("update_shift_note", (e) => {
-      if (e.payload === id) {
-        refetch();
+    listen("update_shift_update_note", (e) => {
+      const [note_id, content] = e.payload as [string, string];
+      if (note()?.id === note_id) {
+        mutate((n) => {
+          return { ...n!, content };
+        });
       }
     });
 
@@ -185,20 +194,6 @@ function ShiftNotes({
       borderBottom: "2px solid",
     });
 
-    function EmployeeName({ id }: { id: string }) {
-      const fetcher = async ({ id }: { id: string }) => {
-        return (await invoke("get_employee_by_id", { id })
-          .catch((err) => console.log(err))) as Employee;
-      };
-      const [employee] = createResource({ id }, fetcher);
-
-      return (
-        <Show when={employee()}>
-          {(e) => <p>{e().first_name} {e().middle_name} {e().last_name}</p>}
-        </Show>
-      );
-    }
-
     return (
       <Show when={note()}>
         {(n) => (
@@ -210,17 +205,12 @@ function ShiftNotes({
                   setUpdating(true);
                 }}
                 deleteFunc={async () =>
-                  invoke("remove_shift_note", {
-                    shiftId,
+                  await invoke("remove_shift_note", {
                     noteId: n().id,
-                    updaterId: employee()!.id,
                   })
                     .catch((err) => console.log(err))}
                 permission={() => true}
               />
-            </td>
-            <td class={style}>
-              <EmployeeName id={n().writer_id} />
             </td>
             <td class={noteStyle}>{n().content}</td>
           </tr>
@@ -249,7 +239,6 @@ function ShiftNotes({
           <thead>
             <tr>
               <th>تغيير</th>
-              <th>الكاتب</th>
               <th>الملحوظة</th>
             </tr>
           </thead>
@@ -312,7 +301,7 @@ function ShiftProblems({
   });
 
   listen("delete_shift_problem", (e) => {
-    let [shift_id, problemId] = e.payload as [string, string];
+    const [shift_id, problemId] = e.payload as [string, string];
     if (shift_id === shiftId) {
       if ((shiftProblemsIds() || []).length > limit) {
         mutate((list) => list!.filter((x) => x !== problemId));
@@ -322,7 +311,7 @@ function ShiftProblems({
     }
   });
   listen("create_shift_problem", (e) => {
-    let [shift_id, problemId] = e.payload as [string, string];
+    const [shift_id, problemId] = e.payload as [string, string];
     if (shift_id === shiftId) {
       setTimeout(() => {
         if ((shiftProblemsIds() || []).length > limit) {

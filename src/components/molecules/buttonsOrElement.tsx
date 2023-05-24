@@ -10,7 +10,7 @@ export function ButtonsOrElement({
   rank: number;
   buttonElementPairs: () => [string, JSXElement][];
   num: number[];
-  fun: Function;
+  fun: () => void;
 }) {
   const [buttonIndex, setButtonIndex] = createSignal(-1);
 
