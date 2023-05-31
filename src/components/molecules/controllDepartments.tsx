@@ -10,7 +10,7 @@ import {
 import PermissionsTemplate from "../atoms/permissionsTemplate";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
-export default function ControllDepartments({ rank }: { rank: number }) {
+export default function ControllDepartments(props: { rank: number }) {
   const container = css({
     display: "block",
     fontSize: "18px",
@@ -24,7 +24,7 @@ export default function ControllDepartments({ rank }: { rank: number }) {
         <section class={container}>
           {
             <ButtonsOrElementLite
-              rank={rank}
+              rank={props.rank}
               buttonElementPairs={() =>
                 notNullDepartments()
                   .filter((d) =>
@@ -34,7 +34,7 @@ export default function ControllDepartments({ rank }: { rank: number }) {
                     (d) => [
                       d.name,
                       <DepartmentSettings
-                        rank={rank + 1}
+                        rank={props.rank + 1}
                         departmentId={d.id}
                       />,
                     ],
@@ -90,14 +90,14 @@ const department_permissions_fetcher = async (
   return { id, allowed, forbidden } as PermissionsClassified;
 };
 function DepartmentSettings(
-  { departmentId, rank }: { departmentId: string; rank: number },
+  props: { departmentId: string; rank: number },
 ) {
   const [permissions, dbf] = createResource(
-    { departmentId },
+    { departmentId:props.departmentId },
     department_permissions_fetcher,
   );
   const [department, { refetch }] = createResource(
-    { departmentId },
+    { departmentId:props.departmentId },
     department_fetcher,
   );
 
@@ -130,7 +130,7 @@ function DepartmentSettings(
       <Show when={department()}>
         {(notNullDepartment) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() => [
               [
                 "اختيار رئيس القسم",
@@ -155,8 +155,7 @@ function DepartmentSettings(
   );
 }
 
-function ChooseBoss(
-  { department, refetch }: {
+function ChooseBoss(props: {
     department: () => Department;
     refetch: () => void;
   },
@@ -165,7 +164,7 @@ function ChooseBoss(
 
   const optionHandler = async (newBossId: string) => {
     await invoke("boss_employee", { newBossId });
-    refetch();
+    props.refetch();
   };
 
   const viewMember = css({
@@ -192,13 +191,13 @@ function ChooseBoss(
   });
 
   const filtered = () =>
-    department().employees.filter((m) => m.name.includes(target()!));
+    props.department().employees.filter((m) => m.name.includes(target()!));
 
   return (
     <section>
       <h1 class={css({ fontSize: "20px" })}>
         رئيس القسم :{" "}
-        {department().boss?.name ? department().boss?.name : "لا يوجد"}
+        {props.department().boss?.name ? props.department().boss?.name : "لا يوجد"}
       </h1>
       <input
         class={inputStyle}

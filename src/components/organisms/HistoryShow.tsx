@@ -6,7 +6,7 @@ import HistoryMachines from "../molecules/historyMachines";
 import HistoryParts from "../molecules/historyParts";
 import HistoryProblems from "../molecules/historyProblems";
 
-export default function HistoryShow({ rank }: { rank: number }) {
+export default function HistoryShow(props: { rank: number }) {
   const container = css({
     display: "block",
     fontSize: "18px",
@@ -17,13 +17,13 @@ export default function HistoryShow({ rank }: { rank: number }) {
   return (
     <section class={container}>
       <ButtonsOrElementLite
-        rank={rank}
+        rank={props.rank}
         buttonElementPairs={() => [
-          ["ابحث عن يوم", <HistoryDays rank={rank + 1} />],
-          ["ابحث عن مشكلة", <HistoryProblems rank={rank + 1} />],
-          ["ابحث عن قطعة غيار", <HistoryParts rank={rank + 1} />],
-          ["ابحث عن ماكينة", <HistoryMachines rank={rank + 1} />],
-          ["ابحث عن موظف", <HistoryEmployees rank={rank + 1} />],
+          ["ابحث عن يوم", <HistoryDays rank={props.rank + 1} />],
+          ["ابحث عن مشكلة", <HistoryProblems rank={props.rank + 1} />],
+          ["ابحث عن قطعة غيار", <HistoryParts rank={props.rank + 1} />],
+          ["ابحث عن ماكينة", <HistoryMachines rank={props.rank + 1} />],
+          ["ابحث عن موظف", <HistoryEmployees rank={props.rank + 1} />],
         ]}
       />
     </section>

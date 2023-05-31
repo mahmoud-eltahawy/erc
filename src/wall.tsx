@@ -10,7 +10,7 @@ import { ButtonsOrElementLite } from "./components/molecules/buttonsOrElement";
 import { listen } from "@tauri-apps/api/event";
 import NavBar, { setButtons } from "./navBar";
 
-export default function Wall({ rank }: { rank: number }) {
+export default function Wall(props: { rank: number }) {
   setInterval(() => {
     invoke("check_shift_time", {
       departmentId: employee()!.department_id,
@@ -24,14 +24,14 @@ export default function Wall({ rank }: { rank: number }) {
       <LogoutButton />
       <NavBar />
       {employee()?.card_id === 0
-        ? <Controlling rank={rank} />
+        ? <Controlling rank={props.rank} />
         : (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() => [
-              ["التحكم", <Controlling rank={rank + 1} />],
-              ["بيانات الوردية الحالية", <CurrentShiftData rank={rank + 1} />],
-              ["السجل", <HistoryShow rank={rank + 1} />],
+              ["التحكم", <Controlling rank={props.rank + 1} />],
+              ["بيانات الوردية الحالية", <CurrentShiftData rank={props.rank + 1} />],
+              ["السجل", <HistoryShow rank={props.rank + 1} />],
             ]}
           />
         )}

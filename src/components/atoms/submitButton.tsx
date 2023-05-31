@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { css } from "solid-styled-components";
 
 export default function SubmitButton(
-  { length }: { length: (() => number) | undefined },
+  props: { length: (() => number) | undefined },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -24,7 +24,7 @@ export default function SubmitButton(
       onMouseLeave={() => setHover(false)}
       type="submit"
     >
-      تاكيد {length ? length() : ""}
+      تاكيد {props.length ? props.length() : ""}
     </button>
   );
 }

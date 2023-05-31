@@ -4,7 +4,6 @@ import { render } from "solid-js/web";
 import App from "./App";
 import { invoke } from "@tauri-apps/api";
 import { createResource } from "solid-js";
-import { listen } from "@tauri-apps/api/event";
 
 render(() => <App />, document.getElementById("root") as HTMLElement);
 
@@ -21,11 +20,7 @@ export const employees_names_fetcher = async (
   })) as Name[];
 };
 
-export const [departmentsNames, dr] = createResource(departments_fetcher);
-
-listen("update_departments", () => {
-  dr.refetch();
-});
+export const [departmentsNames] = createResource(departments_fetcher);
 
 export type ShiftProblem = {
   id: string;

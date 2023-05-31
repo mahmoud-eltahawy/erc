@@ -25,14 +25,12 @@ type InitType = {
   note: string | null;
 };
 
-async function init_fetcher({
-  id,
-}: {
+async function init_fetcher(props: {
   id: string;
 }): Promise<InitType> {
   const { begin_time, end_time, machine_id, maintainer_id } = await invoke(
     "get_shift_problem_by_id",
-    { id },
+    { id:props.id },
   )
     .catch((err) => console.log(err)) as ShiftProblem;
   console.log(begin_time);
@@ -42,15 +40,15 @@ async function init_fetcher({
     id: machine_id,
   }) as string;
   const machine = { id: machine_id, name: m_name } as Name;
-  const note = await invoke("get_shift_problem_note_by_id", { id }) as
+  const note = await invoke("get_shift_problem_note_by_id", { id:props.id }) as
     | string
     | null;
   const problems_ids = await invoke("get_shift_problem_problems_ids_by_id", {
-    id,
+    id:props.id,
   }) as string[];
   const spare_parts_ids = await invoke(
     "get_shift_problem_spare_parts_ids_by_id",
-    { id },
+    { id:props.id },
   ) as string[];
   const problems: Name[] = [];
   for (const id of problems_ids) {
@@ -74,14 +72,11 @@ async function init_fetcher({
   };
 }
 
-export function ProblemUpdateForm({
-  toggle,
-  id,
-}: {
+export function ProblemUpdateForm(props: {
   toggle: () => void;
   id: string;
 }) {
-  const [init] = createResource({ id }, init_fetcher);
+  const [init] = createResource({ id:props.id }, init_fetcher);
 
   function Core({
     init,
@@ -124,10 +119,10 @@ export function ProblemUpdateForm({
         alert("يجب تحديد مشكلة واحدة علي الاقل");
         return;
       }
-      toggle();
+      props.toggle();
       try {
         await invoke("update_problem_detail", {
-          shiftProblemId: id,
+          shiftProblemId: props.id,
           core: [
             [maintainer.id, employeesI[0].id],
             [machine.id, machinesI[0].id],
@@ -182,7 +177,7 @@ export function ProblemUpdateForm({
             <ExtraNote note={() => noteI() || ""} setNote={setNote} />
             <SubmitButton length={undefined} />
             <ToggleButton
-              toggle={toggle}
+              toggle={props.toggle}
               cont=""
               defaultCont="الغاء"
               tButton={() => true}
@@ -199,9 +194,7 @@ export function ProblemUpdateForm({
   );
 }
 
-export function ProblemSaveForm({
-  toggle,
-}: {
+export function ProblemSaveForm(props: {
   toggle: () => void;
 }) {
   const [beginTime, setBeginTime] = createSignal("");
@@ -238,7 +231,7 @@ export function ProblemSaveForm({
       alert("يجب تحديد مشكلة واحدة علي الاقل");
       return;
     }
-    toggle();
+    props.toggle();
     try {
       const problemDetail = {
         shift_id: shiftId(),
@@ -395,12 +388,7 @@ const container = css({
   padding: "1%",
 });
 
-function TimeConstraint({
-  endTime,
-  setEndTime,
-  beginTime,
-  setBeginTime,
-}: {
+function TimeConstraint(props: {
   endTime: () => string;
   setEndTime: (s: string) => void;
   beginTime: () => string;
@@ -434,11 +422,11 @@ function TimeConstraint({
     <section>
       <div class={timeContainer}>
         <input
-          value={endTime()}
-          onChange={(e) => setEndTime(e.currentTarget.value)}
+          value={props.endTime()}
+          onChange={(e) => props.setEndTime(e.currentTarget.value)}
           class={timeInput}
           type="time"
-          min={beginTime()}
+          min={props.beginTime()}
           max={shiftBorders()!.at(1)!.slice(0, 5)}
           required
         />
@@ -448,12 +436,12 @@ function TimeConstraint({
       </div>
       <div class={timeContainer}>
         <input
-          value={beginTime()}
-          onChange={(e) => setBeginTime(e.currentTarget.value)}
+          value={props.beginTime()}
+          onChange={(e) => props.setBeginTime(e.currentTarget.value)}
           class={timeInput}
           type="time"
           min={shiftBorders()!.at(0)!.slice(0, 5)}
-          max={endTime()}
+          max={props.endTime()}
           required
         />
         <label class={timeLabel}>
@@ -464,8 +452,7 @@ function TimeConstraint({
   );
 }
 
-function ExtraNote(
-  { note, setNote }: { note: () => string | null; setNote: Setter<string> },
+function ExtraNote(props: { note: () => string | null; setNote: Setter<string> },
 ) {
   const [displayNote, setDisplayNote] = createSignal(false);
 
@@ -480,21 +467,20 @@ function ExtraNote(
   return (
     <section>
       <NoteButton
-        length={() => note()?.length || 0}
+        length={() => props.note()?.length || 0}
         toggleNote={toggleNote}
       />
       <Show when={displayNote()}>
         <NoteText
-          note={() => note() || ""}
-          setNote={setNote}
+          note={() => props.note() || ""}
+          setNote={props.setNote}
         />
       </Show>
     </section>
   );
 }
 
-function NoteText(
-  { note, setNote }: { note: () => string; setNote: Setter<string> },
+function NoteText(props: { note: () => string; setNote: Setter<string> },
 ) {
   const style = css({
     fontSize: "x-large",
@@ -504,8 +490,8 @@ function NoteText(
 
   return (
     <textarea
-      value={note()}
-      onInput={(e) => setNote(e.currentTarget.value)}
+      value={props.note()}
+      onInput={(e) => props.setNote(e.currentTarget.value)}
       class={style}
       cols={30}
       rows={4}
@@ -516,8 +502,7 @@ function NoteText(
   );
 }
 
-function NoteButton(
-  { length, toggleNote }: { length: () => number; toggleNote: () => void },
+function NoteButton(props: { length: () => number; toggleNote: () => void },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -535,26 +520,17 @@ function NoteButton(
   return (
     <button
       type="button"
-      onClick={() => toggleNote()}
+      onClick={() => props.toggleNote()}
       class={style()}
       onMouseOver={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      اضافة ملحوظة {length()}
+      اضافة ملحوظة {props.length()}
     </button>
   );
 }
 
-function SearchBars({
-  machines,
-  setMachines,
-  employees,
-  setEmployees,
-  problems,
-  setProblems,
-  spareParts,
-  setSpareParts,
-}: {
+function SearchBars(props: {
   machines: Name[];
   setMachines: SetStoreFunction<Name[]>;
   employees: Name[];
@@ -587,8 +563,8 @@ function SearchBars({
       <SearchBar
         subject="Machine"
         updates={updates}
-        chosens={machines}
-        setChosens={setMachines}
+        chosens={props.machines}
+        setChosens={props.setMachines}
         isMulti={false}
         mtMessage="لا يوجد ماكينة بهذا الاسم"
         defaultPlaceholder="ابحث عن الماكينة التي تمت عليها الصيانة"
@@ -597,15 +573,15 @@ function SearchBars({
           fetcher(fetcher_object({
             command: "machines_selection",
             name,
-            collection: () => machines.map((m) => m.name),
+            collection: () => props.machines.map((m) => m.name),
           }))}
         nyMessage={null}
       />
       <SearchBar
         subject="Employee"
         updates={updates}
-        chosens={employees}
-        setChosens={setEmployees}
+        chosens={props.employees}
+        setChosens={props.setEmployees}
         isMulti={false}
         mtMessage="لا يوجد موظف بهذا الاسم"
         defaultPlaceholder="ابحث عن الموظف الذي قام بالصيانة"
@@ -614,15 +590,15 @@ function SearchBars({
           fetcher(fetcher_object({
             command: "employees_selection",
             name,
-            collection: () => employees.map((m) => m.id),
+            collection: () => props.employees.map((m) => m.id),
           }))}
         nyMessage={null}
       />
       <SearchBar
         subject="Problem"
         updates={updates}
-        chosens={problems}
-        setChosens={setProblems}
+        chosens={props.problems}
+        setChosens={props.setProblems}
         isMulti={true}
         mtMessage="لا يوجد مشكلة بهذا الاسم"
         defaultPlaceholder="ابحث عن مشكلة او مشاكل"
@@ -631,15 +607,15 @@ function SearchBars({
           department_fetcher(fetcher_object({
             command: "problems_selection",
             name,
-            collection: () => problems.map((m) => m.name),
+            collection: () => props.problems.map((m) => m.name),
           }))}
         nyMessage={"لم يتم اختيار اي مشكلة حتي الان <اجباري> ا"}
       />
       <SearchBar
         subject="SparePart"
         updates={updates}
-        chosens={spareParts}
-        setChosens={setSpareParts}
+        chosens={props.spareParts}
+        setChosens={props.setSpareParts}
         isMulti={true}
         mtMessage="لا توجد قطعة غيار بهذا الاسم"
         defaultPlaceholder="ابحث عن قطع الغيار المستخدمة في الصيانة"
@@ -648,7 +624,7 @@ function SearchBars({
           fetcher(fetcher_object({
             command: "spare_parts_selection",
             name,
-            collection: () => spareParts.map((m) => m.name),
+            collection: () => props.spareParts.map((m) => m.name),
           }))}
         nyMessage={"لم يتم تسجيل اي قطع غيار <اختياري> ا"}
       />
@@ -656,18 +632,7 @@ function SearchBars({
   );
 }
 
-function SearchBar({
-  defaultPlaceholder,
-  resultPlaceholder,
-  mtMessage,
-  nyMessage = null,
-  isMulti,
-  chosens,
-  setChosens,
-  selection_fetcher,
-  subject,
-  updates,
-}: {
+function SearchBar(props: {
   subject: string;
   updates: [string];
   defaultPlaceholder: string;
@@ -682,26 +647,26 @@ function SearchBar({
   const [target, setTarget] = createSignal<string | null>(null);
   const [optionsList, { refetch }] = createResource(
     () => target,
-    selection_fetcher,
+    props.selection_fetcher,
   );
 
   createEffect(() => {
-    if (updates[0] === subject || target()) {
+    if (updates[0] === props.subject || target()) {
       refetch();
     }
   });
 
   const getChosenOne = () => {
-    if (chosens.at(0)) {
-      return resultPlaceholder + " : " + chosens.at(0)!.name;
+    if (props.chosens.at(0)) {
+      return props.resultPlaceholder + " : " + props.chosens.at(0)!.name;
     } else {
-      return defaultPlaceholder;
+      return props.defaultPlaceholder;
     }
   };
 
   const choiceOptionHandler = (member: Name) => {
-    setChosens((prev) => {
-      if (isMulti) {
+    props.setChosens((prev) => {
+      if (props.isMulti) {
         if (!prev.includes(member)) {
           return [member, ...prev];
         }
@@ -709,14 +674,14 @@ function SearchBar({
       }
       return [member];
     });
-    if (!isMulti) {
+    if (!props.isMulti) {
       setTarget("");
     }
     refetch();
   };
 
   const resultOptionHandler = (chosen: Name) => {
-    setChosens((prev) => prev.filter((c) => c.id !== chosen.id));
+    props.setChosens((prev) => prev.filter((c) => c.id !== chosen.id));
     refetch();
   };
 
@@ -757,8 +722,8 @@ function SearchBar({
   return (
     <div class={container}>
       <input
-        placeholder={isMulti
-          ? `${resultPlaceholder} : ${chosens.length}`
+        placeholder={props.isMulti
+          ? `${props.resultPlaceholder} : ${props.chosens.length}`
           : getChosenOne()}
         class={inputStyle}
         type="text"
@@ -770,10 +735,10 @@ function SearchBar({
       />
       <Show when={(target() || "").length > 0}>
         <section class={viewContainer}>
-          <Show when={isMulti}>
-            <select multiple size={chosens.length} class={viewMember}>
+          <Show when={props.isMulti}>
+            <select multiple size={props.chosens.length} class={viewMember}>
               {
-                <For each={chosens}>
+                <For each={props.chosens}>
                   {(item) => (
                     <option onClick={() => resultOptionHandler(item)}>
                       {item.name}
@@ -781,8 +746,8 @@ function SearchBar({
                   )}
                 </For>
               }
-              <Show when={!chosens.length}>
-                <option disabled>{nyMessage}</option>
+              <Show when={!props.chosens.length}>
+                <option disabled>{props.nyMessage}</option>
               </Show>
             </select>
           </Show>
@@ -801,7 +766,7 @@ function SearchBar({
               </For>
             }
             <Show when={!(optionsList() || []).length}>
-              <option disabled>{mtMessage}</option>
+              <option disabled>{props.mtMessage}</option>
             </Show>
           </select>
         </section>

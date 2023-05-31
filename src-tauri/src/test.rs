@@ -1,4 +1,4 @@
-use std::{error::Error, str::FromStr};
+use std::error::Error;
 
 use chrono::{Local, NaiveDateTime};
 use rec::{
@@ -98,7 +98,7 @@ async fn insert_employees(app_state: &AppState) -> Result<(), Box<dyn Error>> {
         return Err("unvalid time".to_string().into());
     };
 
-    let zero_id = Uuid::from_str("00000000-0000-0000-0000-000000000000").expect("unvalid uuid");
+    let zero_id = Uuid::nil();
 
     let kilens_id = Uuid::new_v4();
     let drayers_id = Uuid::new_v4();

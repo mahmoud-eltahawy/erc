@@ -1,15 +1,15 @@
 import { createSignal } from "solid-js";
 import togglingButton from "./problemTogglingButton";
 
-export default function LongNote({ content }: { content: () => string }) {
+export default function LongNote(props: { content: () => string }) {
   const limit = 15;
-  const [tooLong, setTooLong] = createSignal(content().length > limit);
+  const [tooLong, setTooLong] = createSignal(props.content().length > limit);
 
   return (
     <section>
-      <p>{tooLong() ? content().slice(0, limit) : content()}</p>
+      <p>{tooLong() ? props.content().slice(0, limit) : props.content()}</p>
       {togglingButton({
-        showButton: () => content().length > limit,
+        showButton: () => props.content().length > limit,
         showMore: () => tooLong(),
         doOnClick: () => setTooLong(!tooLong()),
       })}

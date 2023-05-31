@@ -1,11 +1,7 @@
 import { createSignal } from "solid-js";
 import { css } from "solid-styled-components";
 
-export default function togglingButton({
-  showButton,
-  showMore,
-  doOnClick,
-}: {
+export default function togglingButton(props: {
   showButton: () => boolean;
   showMore: () => boolean;
   doOnClick: () => void;
@@ -29,15 +25,15 @@ export default function togglingButton({
       borderTopRightRadius: "3px",
     });
   return (
-    showButton()
+    props.showButton()
       ? (
         <button
           class={style()}
-          onClick={() => doOnClick()}
+          onClick={() => props.doOnClick()}
           onMouseOver={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
         >
-          {showMore() ? "شاهد اكثر" : "شاهد اقل"}
+          {props.showMore() ? "شاهد اكثر" : "شاهد اقل"}
         </button>
       )
       : <></>

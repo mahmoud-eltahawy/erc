@@ -4,9 +4,7 @@ import { css } from "solid-styled-components";
 import { employee, permissions } from "../../App";
 import SubmitButton from "../atoms/submitButton";
 
-export default function DefineProblem({
-  toggle,
-}: {
+export default function DefineProblem(props: {
   toggle: () => void;
 }) {
   const [title, setTitle] = createSignal("");
@@ -14,7 +12,7 @@ export default function DefineProblem({
 
   async function handleSubmit(e: Event) {
     e.preventDefault();
-    toggle();
+    props.toggle();
     try {
       await invoke("define_problem", {
         departmentId: employee()?.department_id,
@@ -52,8 +50,8 @@ export default function DefineProblem({
   );
 }
 
-export function DescriptionInput(
-  { desc, setDesc }: { desc: () => string; setDesc: Setter<string> },
+export function DescriptionInput(props: {
+    desc: () => string; setDesc: Setter<string> },
 ) {
   const style = css({
     display: "block",
@@ -66,8 +64,8 @@ export function DescriptionInput(
   });
   return (
     <textarea
-      value={desc()}
-      onInput={(e) => setDesc(e.currentTarget.value)}
+      value={props.desc()}
+      onInput={(e) => props.setDesc(e.currentTarget.value)}
       maxLength={349}
       cols={30}
       rows={5}
@@ -79,8 +77,7 @@ export function DescriptionInput(
   );
 }
 
-function TitleInput(
-  { title, setTitle }: { title: () => string; setTitle: Setter<string> },
+function TitleInput(props: { title: () => string; setTitle: Setter<string> },
 ) {
   const style = css({
     display: "block",
@@ -94,9 +91,9 @@ function TitleInput(
 
   return (
     <input
-      value={title()}
+      value={props.title()}
       class={style}
-      onInput={(e) => setTitle(e.currentTarget.value)}
+      onInput={(e) => props.setTitle(e.currentTarget.value)}
       type="text"
       placeholder="اسم المشكلة"
       required

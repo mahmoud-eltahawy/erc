@@ -4,9 +4,9 @@ import { createStore } from "solid-js/store";
 import { css } from "solid-styled-components";
 import { Name } from "../..";
 
-const non_admins_fetcher = async ({ name }: { name: () => string | null }) => {
+const non_admins_fetcher = async (props: { name: () => string | null }) => {
   return (await invoke("search_non_admins", {
-    name: name() !== " " ? name() : null,
+    name: props.name() !== " " ? props.name() : null,
   })) as Name[];
 };
 

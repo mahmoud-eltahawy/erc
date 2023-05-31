@@ -14,10 +14,10 @@ const non_existing_fetcher = async () => {
 };
 
 export const existing_employees_fetcher = async (
-  { shift_id }: { shift_id: () => string | null },
+  props: { shift_id: () => string | null },
 ) => {
   return (await invoke("shift_existing_employees", {
-    shiftId: shift_id(),
+    shiftId: props.shift_id(),
   })) as string[];
 };
 
@@ -103,9 +103,7 @@ const viewMember = css({
   borderBottomRightRadius: "20px",
 });
 
-function ExistingSection({
-  existing,
-}: {
+function ExistingSection(props: {
   existing: () => string[];
 }) {
   const handler = async ({ employeeId }: { employeeId: string }) => {
@@ -115,9 +113,9 @@ function ExistingSection({
   };
 
   return (
-    <select multiple size={existing().length} class={viewMember}>
+    <select multiple size={props.existing().length} class={viewMember}>
       {
-        <For each={existing()}>
+        <For each={props.existing()}>
           {(item) => (
             <option onClick={() => handler({ employeeId: item })}>
               <Namer
@@ -128,16 +126,14 @@ function ExistingSection({
           )}
         </For>
       }
-      <Show when={!(existing() || []).length}>
+      <Show when={!(props.existing() || []).length}>
         <option disabled>لا يوجد موظفين مسجلين</option>
       </Show>
     </select>
   );
 }
 
-function NonExistingSection({
-  nonExisting,
-}: {
+function NonExistingSection(props: {
   nonExisting: () => string[];
 }) {
   const handler = async ({ employeeId }: { employeeId: string }) => {
@@ -147,9 +143,9 @@ function NonExistingSection({
   };
 
   return (
-    <select multiple size={nonExisting().length} class={viewMember}>
+    <select multiple size={props.nonExisting().length} class={viewMember}>
       {
-        <For each={nonExisting()}>
+        <For each={props.nonExisting()}>
           {(item) => (
             <option onClick={() => handler({ employeeId: item })}>
               <Namer command="employee_name" id={() => item} />
@@ -157,7 +153,7 @@ function NonExistingSection({
           )}
         </For>
       }
-      <Show when={!(nonExisting() || []).length}>
+      <Show when={!(props.nonExisting() || []).length}>
         <option disabled>لا يوجد موظفين</option>
       </Show>
     </select>

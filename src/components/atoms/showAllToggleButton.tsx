@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import { css } from "solid-styled-components";
 
 export default function ShowAllToggleButton(
-  { toggle, target }: { toggle: () => void; target: [string | null] },
+  props: { toggle: () => void; target: [string | null] },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -19,13 +19,13 @@ export default function ShowAllToggleButton(
 
   return (
     <button
-      onClick={() => toggle()}
+      onClick={() => props.toggle()}
       class={style()}
       onMouseOver={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       type="submit"
     >
-      {target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
+      {props.target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
     </button>
   );
 }

@@ -7,7 +7,7 @@ import { employee, permissions } from "../../App";
 import Namer from "../atoms/Namer";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
-export default function HistoryProblems({ rank }: { rank: number }) {
+export default function HistoryProblems(props: { rank: number }) {
   const [target, setTarget] = createStore<[string | null]>([null]);
 
   const toggle = () => {
@@ -62,22 +62,21 @@ export default function HistoryProblems({ rank }: { rank: number }) {
             <div>
               <h1>مسموح لك بالاطلاع علي مشكلات قسمك فقط</h1>
               <ShowHistory
-                rank={rank + 1}
+                rank={props.rank + 1}
                 target={target}
                 departmentId={employee()!.department_id}
               />
             </div>
           }
         >
-          <ShowAllHistory rank={rank + 1} target={() => target} />
+          <ShowAllHistory rank={props.rank + 1} target={() => target} />
         </Show>
       </Show>
     </section>
   );
 }
 
-function ShowAllToggleButton(
-  { toggle, target }: { toggle: () => void; target: [string | null] },
+function ShowAllToggleButton(props: { toggle: () => void; target: [string | null] },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -94,43 +93,41 @@ function ShowAllToggleButton(
 
   return (
     <button
-      onClick={() => toggle()}
+      onClick={() => props.toggle()}
       class={style()}
       onMouseOver={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       type="submit"
     >
-      {target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
+      {props.target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
     </button>
   );
 }
 
-const fetcher = async (
-  { departmentId, name }: { departmentId: string; name: () => string | null },
+const fetcher = async (props: { departmentId: string; name: () => string | null },
 ) => {
   return (await invoke("search_problem", {
-    name: name() !== " " ? name() : null,
-    departmentId,
+    name: props.name() !== " " ? props.name() : null,
+    departmentId:props.departmentId,
   })) as Name[];
 };
 
-function ShowAllHistory(
-  { target, rank }: { target: () => [string | null]; rank: number },
+function ShowAllHistory(props: { target: () => [string | null]; rank: number },
 ) {
   return (
     <Show when={departmentsNames()}>
       {(notNullDepartments) => (
         <ButtonsOrElementLite
-          rank={rank}
+          rank={props.rank}
           buttonElementPairs={() =>
             notNullDepartments()
               .filter((d) => d.id !== "00000000-0000-0000-0000-000000000000")
               .map((d) => [
                 d.name,
                 <ShowHistory
-                  rank={rank + 1}
+                  rank={props.rank + 1}
                   departmentId={d.id}
-                  target={target()}
+                  target={props.target()}
                 />,
               ])}
         />
@@ -139,20 +136,19 @@ function ShowAllHistory(
   );
 }
 
-function ShowHistory(
-  { target, departmentId, rank }: {
+function ShowHistory(props: {
     rank: number;
     departmentId: string;
     target: [string | null];
   },
 ) {
   const [problems, { refetch }] = createResource({
-    departmentId,
-    name: () => target[0],
+    departmentId: props.departmentId,
+    name: () => props.target[0],
   }, fetcher);
 
   createEffect(() => {
-    if (target[0]) {
+    if (props.target[0]) {
       refetch();
     }
   });
@@ -162,7 +158,7 @@ function ShowHistory(
       <Show when={problems()} fallback={<h1>جاري التحميل ...</h1>}>
         {(notNullProblems) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() =>
               notNullProblems()
                 .map((x) => [x.name, <Profile id={x.id} />])}
@@ -184,8 +180,8 @@ const problem_fetcher = async ({ id }: { id: string }) => {
   return (await invoke("get_problem_problem_by_id", { id })) as Problem;
 };
 
-function Profile({ id }: { id: string }) {
-  const [profile] = createResource({ id }, problem_fetcher);
+function Profile(props: { id: string }) {
+  const [profile] = createResource({ id:props.id }, problem_fetcher);
 
   const tableStyle = css({
     width: "95%",

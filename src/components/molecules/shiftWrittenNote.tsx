@@ -19,10 +19,7 @@ import { UpdateShiftNote } from "./AddShiftNote";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 import { existing_employees_fetcher } from "./setShiftEmployees";
 
-export default function ShiftWrittenShow({
-  rank,
-  shiftId,
-}: {
+export default function ShiftWrittenShow(props : {
   rank: number;
   shiftId: () => string;
 }) {
@@ -36,24 +33,24 @@ export default function ShiftWrittenShow({
   return (
     <section class={container}>
       <ButtonsOrElementLite
-        rank={rank}
+        rank={props.rank}
         buttonElementPairs={() => [
           [
             "اظهار الاعطال",
             <ShiftProblems
-              shiftId={shiftId()}
+              shiftId={props.shiftId()}
             />,
           ],
           [
             "اظهار الملحوظات",
             <ShiftNotes
-              shiftId={shiftId()}
+              shiftId={props.shiftId()}
             />,
           ],
           [
             "اظهار الموظفين",
             <ExistingEmployees
-              shiftId={shiftId()}
+              shiftId={props.shiftId()}
             />,
           ],
         ]}
@@ -262,19 +259,15 @@ function ShiftNotes({
   );
 }
 
-export const shift_shift_problems_ids_fetcher = async ({
-  id,
-}: {
+export const shift_shift_problems_ids_fetcher = async (props: {
   id: string;
 }) => {
   return (await invoke("get_shift_problems_ids_by_shift_id", {
-    id,
+    id:props.id,
   })) as string[];
 };
 
-function ShiftProblems({
-  shiftId,
-}: {
+function ShiftProblems(props: {
   shiftId: string;
 }) {
   const limit = 4;
@@ -283,7 +276,7 @@ function ShiftProblems({
 
   const [updatating, setUpdating] = createSignal(false);
   const [shiftProblemsIds, { refetch, mutate }] = createResource({
-    id: shiftId,
+    id: props.shiftId,
   }, shift_shift_problems_ids_fetcher);
   const [state, setState] = createSignal<string[]>([]);
   const [tooLong, setTooLong] = createSignal((state() || []).length < limit);
@@ -302,7 +295,7 @@ function ShiftProblems({
 
   listen("delete_shift_problem", (e) => {
     const [shift_id, problemId] = e.payload as [string, string];
-    if (shift_id === shiftId) {
+    if (shift_id === props.shiftId) {
       if ((shiftProblemsIds() || []).length > limit) {
         mutate((list) => list!.filter((x) => x !== problemId));
       } else {
@@ -312,7 +305,7 @@ function ShiftProblems({
   });
   listen("create_shift_problem", (e) => {
     const [shift_id, problemId] = e.payload as [string, string];
-    if (shift_id === shiftId) {
+    if (shift_id === props.shiftId) {
       setTimeout(() => {
         if ((shiftProblemsIds() || []).length > limit) {
           mutate((list) => [problemId, ...(list || [])]);

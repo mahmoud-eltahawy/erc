@@ -4,18 +4,18 @@ import Namer from "./Namer";
 import togglingButton from "./problemTogglingButton";
 
 export default function ToggelableList(
-  { elements }: { elements: () => Name[] },
+  props: { elements: () => Name[] },
 ) {
   const limit = 3;
-  const [tooLong, setTooLong] = createSignal(elements().length > limit);
+  const [tooLong, setTooLong] = createSignal(props.elements().length > limit);
 
   return (
     <ul>
       {tooLong()
-        ? elements().slice(0, limit).map((element) => <li>{element.name}</li>)
-        : elements().map((element) => <li>{element.name}</li>)}
+        ? props.elements().slice(0, limit).map((element) => <li>{element.name}</li>)
+        : props.elements().map((element) => <li>{element.name}</li>)}
       {togglingButton({
-        showButton: () => elements().length > limit,
+        showButton: () => props.elements().length > limit,
         showMore: () => tooLong(),
         doOnClick: () => setTooLong(!tooLong()),
       })}
@@ -23,31 +23,28 @@ export default function ToggelableList(
   );
 }
 
-export function ReliableToggelableList({
-  ids,
-  command,
-}: {
+export function ReliableToggelableList(props: {
   ids: () => string[];
   command: string;
 }) {
   const limit = 3;
-  const [tooLong, setTooLong] = createSignal(ids().length > limit);
+  const [tooLong, setTooLong] = createSignal(props.ids().length > limit);
 
   return (
     <ul>
       {tooLong()
-        ? ids().slice(0, limit).map((id) => (
+        ? props.ids().slice(0, limit).map((id) => (
           <li>
-            <Namer id={() => id} command={command} />
+            <Namer id={() => id} command={props.command} />
           </li>
         ))
-        : ids().map((id) => (
+        : props.ids().map((id) => (
           <li>
-            <Namer id={() => id} command={command} />
+            <Namer id={() => id} command={props.command} />
           </li>
         ))}
       {togglingButton({
-        showButton: () => ids().length > limit,
+        showButton: () => props.ids().length > limit,
         showMore: () => tooLong(),
         doOnClick: () => setTooLong(!tooLong()),
       })}

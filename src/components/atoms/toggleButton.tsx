@@ -1,12 +1,7 @@
 import { createSignal } from "solid-js";
 import { css } from "solid-styled-components";
 
-export function ToggleButton({
-  toggle,
-  cont,
-  defaultCont,
-  tButton,
-}: {
+export function ToggleButton(props: {
   toggle: () => void;
   cont: string;
   defaultCont: string;
@@ -33,11 +28,11 @@ export function ToggleButton({
   return (
     <button
       class={style()}
-      onClick={() => toggle()}
+      onClick={() => props.toggle()}
       onMouseOver={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
     >
-      {tButton() ? defaultCont : cont}
+      {props.tButton() ? props.defaultCont : props.cont}
     </button>
   );
 }

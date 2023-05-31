@@ -1,12 +1,7 @@
 import { createEffect, createSignal, For, JSXElement, Show } from "solid-js";
 import { NavToggleButton } from "../../navBar";
 
-export function ButtonsOrElement({
-  rank,
-  buttonElementPairs,
-  num,
-  fun,
-}: {
+export function ButtonsOrElement(props: {
   rank: number;
   buttonElementPairs: () => [string, JSXElement][];
   num: number[];
@@ -23,21 +18,21 @@ export function ButtonsOrElement({
   };
 
   createEffect(() => {
-    if (num[0] !== -1) {
-      toggle(num[0]);
-      fun();
+    if (props.num[0] !== -1) {
+      toggle(props.num[0]);
+      props.fun();
     }
   });
 
   const isChosen = (index: number) => buttonIndex() === index;
 
   return (
-    <For each={buttonElementPairs()}>
+    <For each={props.buttonElementPairs()}>
       {(item, index) => (
         <>
           <Show when={buttonIndex() === -1 || isChosen(index())}>
             <NavToggleButton
-              rank={rank}
+              rank={props.rank}
               transition={() => buttonIndex() !== -1}
               cont={item[0] as string}
               toggle={() => toggle(index())}
@@ -50,10 +45,7 @@ export function ButtonsOrElement({
   );
 }
 
-export function ButtonsOrElementLite({
-  rank,
-  buttonElementPairs,
-}: {
+export function ButtonsOrElementLite(props: {
   rank: number;
   buttonElementPairs: () => [string, JSXElement][];
 }) {
@@ -70,12 +62,12 @@ export function ButtonsOrElementLite({
   const isChosen = (index: number) => buttonIndex() === index;
 
   return (
-    <For each={buttonElementPairs()}>
+    <For each={props.buttonElementPairs()}>
       {(item, index) => (
         <>
           <Show when={buttonIndex() === -1 || isChosen(index())}>
             <NavToggleButton
-              rank={rank}
+              rank={props.rank}
               transition={() => buttonIndex() !== -1}
               cont={item[0] as string}
               toggle={() => toggle(index())}

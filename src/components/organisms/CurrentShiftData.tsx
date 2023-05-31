@@ -8,7 +8,7 @@ import SetShiftEmployees from "../molecules/setShiftEmployees";
 import ShiftWrittenShow from "../molecules/shiftWrittenNote";
 import { ProblemSaveForm } from "./ProblemForm";
 
-export default function CurrentShiftData({ rank }: { rank: number }) {
+export default function CurrentShiftData(props: { rank: number }) {
   const [last, setLast] = createStore([-1]);
 
   const container = css({
@@ -21,7 +21,7 @@ export default function CurrentShiftData({ rank }: { rank: number }) {
   return (
     <section class={container}>
       <ButtonsOrElement
-        rank={rank + 1}
+        rank={props.rank + 1}
         buttonElementPairs={() => [
           [
             "اضافة عطل",
@@ -45,7 +45,7 @@ export default function CurrentShiftData({ rank }: { rank: number }) {
           [
             "البيانات المسجلة",
             <ShiftWrittenShow
-              rank={rank + 2}
+              rank={props.rank + 2}
               shiftId={() => shiftId()!}
             />,
           ],

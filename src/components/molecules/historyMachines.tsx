@@ -6,7 +6,7 @@ import { Name } from "../..";
 import { permissions } from "../../App";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
-export default function HistoryMachines({ rank }: { rank: number }) {
+export default function HistoryMachines(props: { rank: number }) {
   const [target, setTarget] = createStore<[string | null]>([null]);
 
   const toggle = () => {
@@ -54,14 +54,13 @@ export default function HistoryMachines({ rank }: { rank: number }) {
           />
         </div>
         <ShowAllToggleButton target={target} toggle={toggle} />
-        <ShowHistory rank={rank} target={target} />
+        <ShowHistory rank={props.rank} target={target} />
       </Show>
     </section>
   );
 }
 
-function ShowAllToggleButton(
-  { toggle, target }: { toggle: () => void; target: [string | null] },
+function ShowAllToggleButton(props: { toggle: () => void; target: [string | null] },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -78,13 +77,13 @@ function ShowAllToggleButton(
 
   return (
     <button
-      onClick={() => toggle()}
+      onClick={() => props.toggle()}
       class={style()}
       onMouseOver={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       type="submit"
     >
-      {target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
+      {props.target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
     </button>
   );
 }
@@ -95,16 +94,15 @@ const fetcher = async ({ name }: { name: () => string | null }) => {
   })) as Name[];
 };
 
-function ShowHistory(
-  { rank, target }: { rank: number; target: [string | null] },
+function ShowHistory(props: { rank: number; target: [string | null] },
 ) {
   const [machines, { refetch }] = createResource(
-    { name: () => target[0] },
+    { name: () => props.target[0] },
     fetcher,
   );
 
   createEffect(() => {
-    if (target[0]) {
+    if (props.target[0]) {
       refetch();
     }
   });
@@ -117,7 +115,7 @@ function ShowHistory(
       >
         {(notNullMachines) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() =>
               notNullMachines()
                 .map((x) => [x.name, <h1>machine profile</h1>])}

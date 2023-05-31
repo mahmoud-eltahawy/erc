@@ -9,9 +9,7 @@ import ModfiyButtons from "./modifyButtons";
 import Namer from "./Namer";
 import { ReliableToggelableList } from "./sparePartsList";
 
-async function shift_problem_fetcher({
-  the_id,
-}: {
+async function shift_problem_fetcher(props: {
   the_id: string;
 }): Promise<SpreadedProblem> {
   const {
@@ -21,7 +19,7 @@ async function shift_problem_fetcher({
     machine_id,
     maintainer_id,
     shift_id,
-  } = await invoke("get_shift_problem_by_id", { id: the_id })
+  } = await invoke("get_shift_problem_by_id", { id: props.the_id })
     .catch((err) => console.log(err)) as ShiftProblem;
 
   const note = await invoke("get_shift_problem_note_by_id", { id })
@@ -59,38 +57,32 @@ type SpreadedProblem = {
   spare_parts: string[] | null;
   note: string | null;
 };
-export default function ProblemRow({
-  id,
-  problemUpdating,
-}: {
+export default function ProblemRow(props: {
   id: string;
   problemUpdating: (id: string) => void;
 }) {
-  const [init] = createResource({ the_id: id }, shift_problem_fetcher);
+  const [init] = createResource({ the_id: props.id }, shift_problem_fetcher);
   return (
     <Show when={init()}>
       {(notNullInit) => (
-        <Core init={notNullInit()} problemUpdating={problemUpdating} />
+        <Core init={notNullInit()} problemUpdating={props.problemUpdating} />
       )}
     </Show>
   );
 }
 
-function Core({
-  init,
-  problemUpdating,
-}: {
+function Core(props: {
   init: SpreadedProblem;
   problemUpdating: (id: string) => void;
 }) {
-  const id = init.id;
-  const [begin_time, set_begin_time] = createSignal(init.begin_time);
-  const [end_time, set_end_time] = createSignal(init.end_time);
-  const [machine_id, set_machine_id] = createSignal(init.machine_id);
-  const [maintainer_id, set_maintainer_id] = createSignal(init.maintainer_id);
-  const [problems, set_problems] = createSignal(init.problems);
-  const [spare_parts, set_spare_parts] = createSignal(init.spare_parts || []);
-  const [note, set_note] = createSignal(init.note);
+  const id = props.init.id;
+  const [begin_time, set_begin_time] = createSignal(props.init.begin_time);
+  const [end_time, set_end_time] = createSignal(props.init.end_time);
+  const [machine_id, set_machine_id] = createSignal(props.init.machine_id);
+  const [maintainer_id, set_maintainer_id] = createSignal(props.init.maintainer_id);
+  const [problems, set_problems] = createSignal(props.init.problems);
+  const [spare_parts, set_spare_parts] = createSignal(props.init.spare_parts || []);
+  const [note, set_note] = createSignal(props.init.note);
 
   listen("update_shift_problem_begin_time", (e) => {
     const [problemId, begin_time] = e.payload as [string, string];
@@ -205,10 +197,10 @@ function Core({
             <ModfiyButtons
               permission={() =>
                 permissions()?.includes("ModifyDepartmentProblems")}
-              setUpdating={() => problemUpdating(id)}
+              setUpdating={() => props.problemUpdating(id)}
               deleteFunc={async () =>
                 await invoke("remove_shift_problem", {
-                  problemId: init.id,
+                  problemId: props.init.id,
                 })
                   .catch((err) => console.log(err))}
             />

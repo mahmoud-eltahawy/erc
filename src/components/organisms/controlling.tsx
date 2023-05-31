@@ -6,7 +6,7 @@ import { Show } from "solid-js";
 import { employee } from "../../App";
 import { ButtonsOrElementLite } from "../molecules/buttonsOrElement";
 
-export default function Controlling({ rank }: { rank: number }) {
+export default function Controlling(props : { rank: number }) {
   const container = css({
     display: "block",
     fontSize: "18px",
@@ -27,11 +27,11 @@ export default function Controlling({ rank }: { rank: number }) {
         }
       >
         <ButtonsOrElementLite
-          rank={rank}
+          rank={props.rank}
           buttonElementPairs={() => [
             ["تعيين مشرف", <ControllAdmins />],
-            ["اعدادات الاقسام", <ControllDepartments rank={rank + 1} />],
-            ["صلاحيات الموظفين", <ControllEmployees rank={rank + 1} />],
+            ["اعدادات الاقسام", <ControllDepartments rank={props.rank + 1} />],
+            ["صلاحيات الموظفين", <ControllEmployees rank={props.rank + 1} />],
           ]}
         />
       </Show>

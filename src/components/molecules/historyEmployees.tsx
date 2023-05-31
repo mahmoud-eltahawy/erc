@@ -6,7 +6,7 @@ import { permissions } from "../../App";
 import ShowAllToggleButton from "../atoms/showAllToggleButton";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
-export default function HistoryEmployees({ rank }: { rank: number }) {
+export default function HistoryEmployees(props: { rank: number }) {
   const [target, setTarget] = createStore<[string | null]>([null]);
 
   const toggle = () => {
@@ -54,22 +54,21 @@ export default function HistoryEmployees({ rank }: { rank: number }) {
           />
         </div>
         <ShowAllToggleButton target={target} toggle={toggle} />
-        <ShowHistory rank={rank + 1} target={target} />
+        <ShowHistory rank={props.rank + 1} target={target} />
       </Show>
     </section>
   );
 }
 
-function ShowHistory(
-  { rank, target }: { rank: number; target: [string | null] },
+function ShowHistory(props: { rank: number; target: [string | null] },
 ) {
   const [employees, { refetch }] = createResource(
-    { name: () => target[0] },
+    { name: () => props.target[0] },
     employees_names_fetcher,
   );
 
   createEffect(() => {
-    if (target[0]) {
+    if (props.target[0]) {
       refetch();
     }
   });
@@ -82,7 +81,7 @@ function ShowHistory(
       >
         {(notNullEmployees) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() =>
               notNullEmployees()
                 .filter((d) => d.id !== "00000000-0000-0000-0000-000000000000")

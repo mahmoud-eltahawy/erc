@@ -7,7 +7,7 @@ import PermissionsTemplate from "../atoms/permissionsTemplate";
 import ShowAllToggleButton from "../atoms/showAllToggleButton";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
-export default function ControllEmployees({ rank }: { rank: number }) {
+export default function ControllEmployees(props: { rank: number }) {
   const [target, setTarget] = createStore<[string | null]>([null]);
 
   const toggle = () => {
@@ -54,13 +54,13 @@ export default function ControllEmployees({ rank }: { rank: number }) {
       <Show when={departmentsNames()}>
         {(notNullDepartments) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() =>
               notNullDepartments()
                 .map((d) => [
                   d.name,
                   <DepartmentEmployees
-                    rank={rank + 1}
+                    rank={props.rank + 1}
                     target={target}
                     departmentId={d.id}
                   />,
@@ -81,20 +81,19 @@ const department_employees_names_fetcher = async (
   })) as Name[];
 };
 
-function DepartmentEmployees(
-  { target, departmentId, rank }: {
+function DepartmentEmployees(props: {
     target: [string | null];
     departmentId: string;
     rank: number;
   },
 ) {
   const [employees, { refetch }] = createResource({
-    name: () => target[0],
-    departmentId,
+    name: () => props.departmentId[0],
+    departmentId:props.departmentId,
   }, department_employees_names_fetcher);
 
   createEffect(() => {
-    if (target[0]) {
+    if (props.target[0]) {
       refetch();
     }
   });
@@ -104,7 +103,7 @@ function DepartmentEmployees(
       <Show when={employees()} fallback={<h1>جاري التحميل ...</h1>}>
         {(notNullEmployees) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() =>
               notNullEmployees()
                 .map(
@@ -117,12 +116,12 @@ function DepartmentEmployees(
   );
 }
 
-const employee_permissions_fetcher = async (
-  { employeeId }: { employeeId: string },
-) => {
+const employee_permissions_fetcher = async (props: {
+    employeeId: string
+}) => {
   const [id, allowed, forbidden] = await invoke(
     "employee_permissions_classified",
-    { employeeId },
+    { employeeId:props.employeeId },
   )
     .catch((err) => {
       console.log(err);
@@ -135,9 +134,9 @@ const employee_permissions_fetcher = async (
   return { id, allowed, forbidden } as PermissionsClassified;
 };
 
-function EmployeePermissions({ employeeId }: { employeeId: string }) {
+function EmployeePermissions(props: { employeeId: string }) {
   const [permissions, { refetch }] = createResource(
-    { employeeId },
+    { employeeId:props.employeeId },
     employee_permissions_fetcher,
   );
 

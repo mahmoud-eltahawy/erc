@@ -1,11 +1,7 @@
 import { createSignal, Show } from "solid-js";
 import { css } from "solid-styled-components";
 
-export default function ModfiyButtons({
-  permission,
-  setUpdating,
-  deleteFunc,
-}: {
+export default function ModfiyButtons(props: {
   permission: () => boolean;
   setUpdating: () => void;
   deleteFunc: () => void;
@@ -66,14 +62,14 @@ export default function ModfiyButtons({
   return (
     <div>
       <Show
-        when={permission()}
+        when={props.permission()}
         fallback={<p>ليس لديك صلاحية التعديل</p>}
       >
         <button
           class={modifyStyle()}
           onMouseOver={() => setHover(ModifyButton.MODIFY)}
           onMouseLeave={onLeave}
-          onclick={() => setUpdating()}
+          onclick={() => props.setUpdating()}
         >
           تعديل
         </button>
@@ -81,7 +77,7 @@ export default function ModfiyButtons({
           class={deleteStyle()}
           onMouseOver={() => setHover(ModifyButton.DELETE)}
           onMouseLeave={onLeave}
-          onClick={() => deleteFunc()}
+          onClick={() => props.deleteFunc()}
         >
           حذف
         </button>

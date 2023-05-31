@@ -2,11 +2,7 @@ import { For, Show } from "solid-js";
 import { css } from "solid-styled-components";
 import { PermissionsClassified } from "../..";
 
-export default function PermissionsTemplate({
-  allowedHandler,
-  forbiddenHandler,
-  permissions,
-}: {
+export default function PermissionsTemplate(props: {
   allowedHandler: (s: string, b: string) => void;
   forbiddenHandler: (s: string, b: string) => void;
   permissions: () => PermissionsClassified;
@@ -30,12 +26,12 @@ export default function PermissionsTemplate({
     borderBottomRightRadius: "20px",
   });
 
-  const allowed = () => permissions().allowed;
-  const forbidden = () => permissions().forbidden;
+  const allowed = () => props.permissions().allowed;
+  const forbidden = () => props.permissions().forbidden;
 
   return (
     <Show
-      when={permissions()}
+      when={props.permissions()}
       fallback={<h1>يجب تعيين رئيس قسم قبل اضافة صلاحيات</h1>}
     >
       <section class={viewContainer}>
@@ -44,7 +40,7 @@ export default function PermissionsTemplate({
             <For each={allowed()}>
               {(item) => (
                 <option
-                  onClick={() => allowedHandler(permissions()!.id, item[1])}
+                  onClick={() => props.allowedHandler(props.permissions()!.id, item[1])}
                 >
                   {item[0]}
                 </option>
@@ -64,7 +60,7 @@ export default function PermissionsTemplate({
             <For each={forbidden()}>
               {(item) => (
                 <option
-                  onClick={() => forbiddenHandler(permissions()!.id, item[1])}
+                  onClick={() => props.forbiddenHandler(props.permissions()!.id, item[1])}
                 >
                   {item[0]}
                 </option>

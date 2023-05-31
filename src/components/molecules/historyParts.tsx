@@ -6,7 +6,7 @@ import { Name } from "../..";
 import { permissions } from "../../App";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
-export default function HistoryParts({ rank }: { rank: number }) {
+export default function HistoryParts(props: { rank: number }) {
   const [target, setTarget] = createStore<[string | null]>([null]);
 
   const toggle = () => {
@@ -54,14 +54,13 @@ export default function HistoryParts({ rank }: { rank: number }) {
           />
         </div>
         <ShowAllToggleButton target={target} toggle={toggle} />
-        <ShowHistory rank={rank} target={target} />
+        <ShowHistory rank={props.rank} target={target} />
       </Show>
     </section>
   );
 }
 
-function ShowAllToggleButton(
-  { toggle, target }: { toggle: () => void; target: [string | null] },
+function ShowAllToggleButton(props: { toggle: () => void; target: [string | null] },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -78,33 +77,32 @@ function ShowAllToggleButton(
 
   return (
     <button
-      onClick={() => toggle()}
+      onClick={() => props.toggle()}
       class={style()}
       onMouseOver={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       type="submit"
     >
-      {target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
+      {props.target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
     </button>
   );
 }
 
-const fetcher = async ({ name }: { name: () => string | null }) => {
+const fetcher = async (props: { name: () => string | null }) => {
   return (await invoke("search_parts", {
-    name: name() !== " " ? name() : null,
+    name: props.name() !== " " ? props.name() : null,
   })) as Name[];
 };
 
-function ShowHistory(
-  { target, rank }: { rank: number; target: [string | null] },
+function ShowHistory(props: { rank: number; target: [string | null] },
 ) {
   const [parts, { refetch }] = createResource(
-    { name: () => target[0] },
+    { name: () => props.target[0] },
     fetcher,
   );
 
   createEffect(() => {
-    if (target[0]) {
+    if (props.target[0]) {
       refetch();
     }
   });
@@ -114,7 +112,7 @@ function ShowHistory(
       <Show when={parts()} fallback={<h1>جاري التحميل ...</h1>}>
         {(notNullParts) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() =>
               notNullParts()
                 .map((x) => [x.name, <h1>spare part profile</h1>])}

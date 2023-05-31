@@ -14,7 +14,7 @@ type Day = {
 const [begin, setBegin] = createSignal<string | null>();
 const [end, setEnd] = createSignal<string | null>();
 
-export default function HistoryDays({ rank }: { rank: number }) {
+export default function HistoryDays(props: { rank: number }) {
   const dateContainer = css({
     display: "inline-block",
     width: "40%",
@@ -82,13 +82,13 @@ export default function HistoryDays({ rank }: { rank: number }) {
             <div>
               <h1>مسموح لك بالاطلاع علي سجل ورديات قسمك فقط</h1>
               <ShowHistory
-                rank={rank}
+                rank={props.rank}
                 departmentId={() => employee()!.department_id}
               />
             </div>
           }
         >
-          <ShowAllHistory rank={rank} />
+          <ShowAllHistory rank={props.rank} />
         </Show>
       </Show>
     </section>
@@ -105,19 +105,19 @@ const fetcher = async ({ departmentId }: {
   }).catch((err) => console.log(err))) as Day[];
 };
 
-function ShowAllHistory({ rank }: { rank: number }) {
+function ShowAllHistory(props: { rank: number }) {
   return (
     <Show when={departmentsNames()}>
       {(notNullDepartments) => (
         <ButtonsOrElementLite
-          rank={rank}
+          rank={props.rank}
           buttonElementPairs={() =>
             notNullDepartments()
               .filter((d) => d.id !== "00000000-0000-0000-0000-000000000000")
               .map((d) => [
                 d.name,
                 <ShowHistory
-                  rank={rank + 1}
+                  rank={props.rank + 1}
                   departmentId={() => d.id}
                 />,
               ])}
@@ -127,14 +127,11 @@ function ShowAllHistory({ rank }: { rank: number }) {
   );
 }
 
-function ShowHistory({
-  departmentId,
-  rank,
-}: {
+function ShowHistory(props : {
   rank: number;
   departmentId: () => string;
 }) {
-  const [days, { refetch }] = createResource({ departmentId }, fetcher);
+  const [days, { refetch }] = createResource({ departmentId:props.departmentId }, fetcher);
 
   createEffect(() => {
     const b = begin();
@@ -155,14 +152,14 @@ function ShowHistory({
       <Show when={days()}>
         {(notNullDays) => (
           <ButtonsOrElementLite
-            rank={rank}
+            rank={props.rank}
             buttonElementPairs={() =>
               notNullDays()
                 .map(
                   (x) => [
                     x.date.reverse().join(" / "),
                     <Shifts
-                      rank={rank + 1}
+                      rank={props.rank + 1}
                       shifts={() => x.shifts}
                     />,
                   ],
@@ -174,19 +171,18 @@ function ShowHistory({
   );
 }
 
-function Shifts(
-  { shifts, rank }: { shifts: () => [string, string][]; rank: number },
+function Shifts(props: { shifts: () => [string, string][]; rank: number },
 ) {
   return (
     <div>
       <ButtonsOrElementLite
-        rank={rank}
+        rank={props.rank}
         buttonElementPairs={() =>
-          shifts()
+          props.shifts()
             .map((x) => [
               x[1],
               <ShiftWrittenShow
-                rank={rank + 1}
+                rank={props.rank + 1}
                 shiftId={() => x[0]}
               />,
             ])}
