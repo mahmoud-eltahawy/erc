@@ -1,6 +1,11 @@
 import { invoke } from "@tauri-apps/api";
-import { createEffect, createResource, createSignal, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import {
+  Accessor,
+  createEffect,
+  createResource,
+  createSignal,
+  Show,
+} from "solid-js";
 import { css } from "solid-styled-components";
 import { departmentsNames, Name } from "../..";
 import { employee, permissions } from "../../App";
@@ -8,14 +13,14 @@ import Namer from "../atoms/Namer";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
 export default function HistoryProblems(props: { rank: number }) {
-  const [target, setTarget] = createStore<[string | null]>([null]);
+  const [target, setTarget] = createSignal<string | null>(null);
 
   const toggle = () => {
-    if (target[0] === "*") {
-      setTarget([" "]);
-      setTarget([null]);
+    if (target() === "*") {
+      setTarget(" ");
+      setTarget(null);
     } else {
-      setTarget(["*"]);
+      setTarget("*");
     }
   };
 
@@ -47,8 +52,8 @@ export default function HistoryProblems(props: { rank: number }) {
       >
         <div class={container}>
           <input
-            value={target[0]!}
-            onInput={(e) => setTarget([e.currentTarget.value])}
+            value={target()!}
+            onInput={(e) => setTarget(e.currentTarget.value)}
             class={targetStyle}
             type="text"
             placeholder="ادخل اسم المشكلة"
@@ -69,14 +74,15 @@ export default function HistoryProblems(props: { rank: number }) {
             </div>
           }
         >
-          <ShowAllHistory rank={props.rank + 1} target={() => target} />
+          <ShowAllHistory rank={props.rank + 1} target={target} />
         </Show>
       </Show>
     </section>
   );
 }
 
-function ShowAllToggleButton(props: { toggle: () => void; target: [string | null] },
+function ShowAllToggleButton(
+  props: { toggle: () => void; target: Accessor<string | null> },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -99,20 +105,22 @@ function ShowAllToggleButton(props: { toggle: () => void; target: [string | null
       onMouseLeave={() => setHover(false)}
       type="submit"
     >
-      {props.target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
+      {props.target() === "*" ? "شاهد اقل" : "شاهد الكل"}
     </button>
   );
 }
 
-const fetcher = async (props: { departmentId: string; name: () => string | null },
+const fetcher = async (
+  props: { departmentId: string; name: () => string | null },
 ) => {
   return (await invoke("search_problem", {
     name: props.name() !== " " ? props.name() : null,
-    departmentId:props.departmentId,
+    departmentId: props.departmentId,
   })) as Name[];
 };
 
-function ShowAllHistory(props: { target: () => [string | null]; rank: number },
+function ShowAllHistory(
+  props: { target: Accessor<string | null>; rank: number },
 ) {
   return (
     <Show when={departmentsNames()}>
@@ -127,7 +135,7 @@ function ShowAllHistory(props: { target: () => [string | null]; rank: number },
                 <ShowHistory
                   rank={props.rank + 1}
                   departmentId={d.id}
-                  target={props.target()}
+                  target={props.target}
                 />,
               ])}
         />
@@ -137,18 +145,17 @@ function ShowAllHistory(props: { target: () => [string | null]; rank: number },
 }
 
 function ShowHistory(props: {
-    rank: number;
-    departmentId: string;
-    target: [string | null];
-  },
-) {
+  rank: number;
+  departmentId: string;
+  target: Accessor<string | null>;
+}) {
   const [problems, { refetch }] = createResource({
     departmentId: props.departmentId,
-    name: () => props.target[0],
+    name: () => props.target(),
   }, fetcher);
 
   createEffect(() => {
-    if (props.target[0]) {
+    if (props.target()) {
       refetch();
     }
   });
@@ -181,7 +188,7 @@ const problem_fetcher = async ({ id }: { id: string }) => {
 };
 
 function Profile(props: { id: string }) {
-  const [profile] = createResource({ id:props.id }, problem_fetcher);
+  const [profile] = createResource({ id: props.id }, problem_fetcher);
 
   const tableStyle = css({
     width: "95%",

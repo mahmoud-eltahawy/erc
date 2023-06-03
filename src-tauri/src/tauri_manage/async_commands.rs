@@ -32,7 +32,7 @@ use rec::model::{
 use tauri::Window;
 use uuid::Uuid;
 
-fn verify_password(password: String, hash: &str) -> BcryptResult<bool> {
+pub fn verify_password(password: String, hash: &str) -> BcryptResult<bool> {
     bcrypt::verify(password, hash)
 }
 

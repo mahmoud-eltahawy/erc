@@ -12,7 +12,7 @@ use errc::{
         employee::{
             find_9_non_admins, find_9_non_admins_by_name, find_admins, find_department_8_employees,
             find_department_employees_by_name, find_employee_name_by_id,
-            find_employees_by_department_id_except_boss,
+            find_employees_by_department_id_except_boss, find_employee_by_id,
         },
         permissions::find_permissions_by_id,
     },
@@ -34,24 +34,24 @@ use uuid::Uuid;
 pub async fn search_non_admins(
     app_state: tauri::State<'_, AppState>,
     name: Option<String>,
-) -> Result<Vec<Name>, String> {
+) -> Result<Vec<Uuid>, String> {
     if let Some(name) = name {
         match find_9_non_admins_by_name(&app_state.pool, &name.trim()).await {
-            Ok(days) => Ok(days),
+            Ok(ids) => Ok(ids),
             Err(err) => Err(err.to_string()),
         }
     } else {
         match find_9_non_admins(&app_state.pool).await {
-            Ok(days) => Ok(days),
+            Ok(ids) => Ok(ids),
             Err(err) => Err(err.to_string()),
         }
     }
 }
 
 #[tauri::command]
-pub async fn search_admins(app_state: tauri::State<'_, AppState>) -> Result<Vec<Name>, String> {
+pub async fn search_admins(app_state: tauri::State<'_, AppState>) -> Result<Vec<Uuid>, String> {
     match find_admins(&app_state.pool).await {
-        Ok(days) => Ok(days),
+        Ok(ids) => Ok(ids),
         Err(err) => Err(err.to_string()),
     }
 }
@@ -137,6 +137,63 @@ pub async fn boss_employee(
     }
 }
 
+async fn change_password_helper(
+    app_state: &AppState,
+    updater_id: Uuid,
+    employee_id: Uuid,
+    old_password: String,
+    new_password: String,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let Some(time_stamp) = NaiveDateTime::from_timestamp_millis(Local::now().timestamp_millis()) else {
+        return Err("null time stamp".into());
+    };
+    let employee = find_employee_by_id(&app_state.pool, &employee_id).await?;
+    let verified = verify_password(old_password, &employee.password)?;
+
+    if verified {
+        let result = main_entry(
+            app_state,
+            TableRequest::Employee(TableCrud::Update(Environment {
+                target: UpdateEmployee::UpdatePassword(employee_id, new_password),
+                updater_id,
+                time_stamp,
+            })),
+        )
+        .await?;
+        match result {
+            TableResponse::Done => Ok(()),
+            TableResponse::Err(err) => Err(err.into()),
+            _ => unreachable!()
+        }
+    } else {
+        Err("كلمة مرور خاطئة".to_string().into())
+    }
+}
+
+#[tauri::command]
+pub async fn change_password(
+    app_state: tauri::State<'_, AppState>,
+    emp_and_uuid: tauri::State<'_, Mutex<Option<(Uuid, Uuid)>>>,
+    employee_id: Uuid,
+    old_password: String,
+    new_password: String,
+) -> Result<(), String> {
+    let Some((updater_id, _)) = *emp_and_uuid.lock().unwrap() else {
+        return Err("null empoyee id".to_string());
+    };
+    let app_state = &*app_state;
+    match change_password_helper(
+        app_state,
+        updater_id,
+        employee_id,
+        old_password,
+        new_password
+    ).await {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err.to_string())
+    }
+}
+
 #[tauri::command]
 pub async fn find_department(
     app_state: tauri::State<'_, AppState>,
@@ -160,6 +217,8 @@ pub async fn employee_name(
 }
 
 use strum::IntoEnumIterator;
+
+use crate::tauri_manage::async_commands::verify_password;
 
 #[tauri::command]
 pub async fn department_permissions(

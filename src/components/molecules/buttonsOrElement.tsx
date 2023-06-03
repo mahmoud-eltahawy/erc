@@ -1,10 +1,17 @@
-import { createEffect, createSignal, For, JSXElement, Show } from "solid-js";
+import {
+  Accessor,
+  createEffect,
+  createSignal,
+  For,
+  JSXElement,
+  Show,
+} from "solid-js";
 import { NavToggleButton } from "../../navBar";
 
 export function ButtonsOrElement(props: {
   rank: number;
   buttonElementPairs: () => [string, JSXElement][];
-  num: number[];
+  num: Accessor<number>;
   fun: () => void;
 }) {
   const [buttonIndex, setButtonIndex] = createSignal(-1);
@@ -18,8 +25,8 @@ export function ButtonsOrElement(props: {
   };
 
   createEffect(() => {
-    if (props.num[0] !== -1) {
-      toggle(props.num[0]);
+    if (props.num() !== -1) {
+      toggle(props.num());
       props.fun();
     }
   });

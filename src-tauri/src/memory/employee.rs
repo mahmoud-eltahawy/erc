@@ -370,15 +370,14 @@ pub async fn find_department_8_employees(
 pub async fn find_9_non_admins_by_name(
     pool: &Pool<Sqlite>,
     target: &str,
-) -> Result<Vec<Name>, Error> {
+) -> Result<Vec<Uuid>, Error> {
     let target = target.split(' ').collect::<Vec<&str>>();
     match target.len() {
         1 => {
             let name = target.get(0).unwrap().to_string() + "%";
             let records = query!(
                 r#"
-             SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-             FROM employee WHERE first_name LIKE $1 AND position = 'USER' LIMIT 9
+             SELECT id FROM employee WHERE first_name LIKE $1 AND position = 'USER' LIMIT 9
            "#,
                 name
             )
@@ -386,22 +385,16 @@ pub async fn find_9_non_admins_by_name(
             .await?;
             Ok(records
                 .into_iter()
-                .flat_map(|record| match Uuid::from_str(&record.id) {
-                    Ok(id) => Some(Name {
-                        id,
-                        name: record.name,
-                    }),
-                    Err(_) => None,
-                })
-                .collect_vec())
+                .flat_map(|record| Uuid::from_str(&record.id))
+                .collect_vec()
+            )
         }
         2 => {
             let name0 = target.get(0).unwrap().to_string();
             let name1 = target.get(1).unwrap().to_string() + "%";
             let records = query!(
                 r#"
-             SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-             FROM employee WHERE first_name = $1 AND
+             SELECT id FROM employee WHERE first_name = $1 AND
                (middle_name LIKE $2 AND position = 'USER') LIMIT 9
            "#,
                 name0,
@@ -411,13 +404,7 @@ pub async fn find_9_non_admins_by_name(
             .await?;
             Ok(records
                 .into_iter()
-                .flat_map(|record| match Uuid::from_str(&record.id) {
-                    Ok(id) => Some(Name {
-                        id,
-                        name: record.name,
-                    }),
-                    Err(_) => None,
-                })
+                .flat_map(|record| Uuid::from_str(&record.id))
                 .collect_vec())
         }
         3 => {
@@ -426,8 +413,7 @@ pub async fn find_9_non_admins_by_name(
             let name2 = target.get(2).unwrap().to_string() + "%";
             let records = query!(
                 r#"
-             SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-             FROM employee WHERE first_name = $1 AND (middle_name = $2 AND
+             SELECT id FROM employee WHERE first_name = $1 AND (middle_name = $2 AND
                (last_name LIKE $3 AND position = 'USER')) LIMIT 9
            "#,
                 name0,
@@ -438,13 +424,7 @@ pub async fn find_9_non_admins_by_name(
             .await?;
             Ok(records
                 .into_iter()
-                .flat_map(|record| match Uuid::from_str(&record.id) {
-                    Ok(id) => Some(Name {
-                        id,
-                        name: record.name,
-                    }),
-                    Err(_) => None,
-                })
+                .flat_map(|record| Uuid::from_str(&record.id))
                 .collect_vec())
         }
         _ => Ok(vec![]),
@@ -503,43 +483,29 @@ pub async fn find_limit_of_employees(
         .collect_vec())
 }
 
-pub async fn find_9_non_admins(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Error> {
+pub async fn find_9_non_admins(pool: &Pool<Sqlite>) -> Result<Vec<Uuid>, Error> {
     let records = query!(
         "
-    SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-    FROM employee WHERE position = 'USER' LIMIT 9;"
+    SELECT id FROM employee WHERE position = 'USER' LIMIT 9;"
     )
     .fetch_all(pool)
     .await?;
     Ok(records
         .into_iter()
-        .flat_map(|record| match Uuid::from_str(&record.id) {
-            Ok(id) => Some(Name {
-                id,
-                name: record.name,
-            }),
-            Err(_) => None,
-        })
+        .flat_map(|record| Uuid::from_str(&record.id))
         .collect_vec())
 }
 
-pub async fn find_admins(pool: &Pool<Sqlite>) -> Result<Vec<Name>, Error> {
+pub async fn find_admins(pool: &Pool<Sqlite>) -> Result<Vec<Uuid>, Error> {
     let records = query!(
         "
-    SELECT id, first_name || ' ' || middle_name || ' ' ||last_name AS name
-    FROM employee WHERE position = 'SUPER_USER' AND card_id <> 0;"
+    SELECT id FROM employee WHERE position = 'SUPER_USER' AND card_id <> 0;"
     )
     .fetch_all(pool)
     .await?;
     Ok(records
         .into_iter()
-        .flat_map(|record| match Uuid::from_str(&record.id) {
-            Ok(id) => Some(Name {
-                id,
-                name: record.name,
-            }),
-            Err(_) => None,
-        })
+        .flat_map(|record| Uuid::from_str(&record.id))
         .collect_vec())
 }
 

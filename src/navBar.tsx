@@ -11,14 +11,13 @@ export const [buttons, setButtons] = createSignal<NavButton[]>([]);
 const [hoverNavBar, setHoverNavBar] = createSignal(false);
 
 export default function NavBar() {
-
-  const isEmpty = () => buttons().length === 0
+  const isEmpty = () => buttons().length === 0;
   const heights = () => {
-      if (isEmpty()) {
-          return `${(height + margin)}px`
-      }
-      return `${(height + margin) * buttons().length}px`
-  }
+    if (isEmpty()) {
+      return `${(height + margin)}px`;
+    }
+    return `${(height + margin) * buttons().length}px`;
+  };
   const style = () =>
     css({
       position: "absolute",
@@ -40,8 +39,8 @@ export default function NavBar() {
       onMouseLeave={() => setHoverNavBar(false)}
     >
       <Show
-          when={!isEmpty()}
-          fallback={<h1>الصفحة الرئيسية</h1>}
+        when={!isEmpty()}
+        fallback={<h1>الصفحة الرئيسية</h1>}
       >
         <ul class={style()}>
           <For each={buttons()}>
@@ -53,8 +52,8 @@ export default function NavBar() {
   );
 }
 
-const height = 50
-const margin = 10
+const height = 50;
+const margin = 10;
 
 export function NavToggleButton({
   transition,
@@ -89,7 +88,9 @@ export function NavToggleButton({
 
   createEffect(() => {
     if (transition()) {
-      setButtons((buttons) => [{ rank, button: core, toggle: toggle }, ...buttons]);
+      setButtons((
+        buttons,
+      ) => [{ rank, button: core, toggle: toggle }, ...buttons]);
     } else {
       setButtons((buttons) => {
         for (const x of buttons) {
@@ -97,7 +98,7 @@ export function NavToggleButton({
             x.toggle();
           }
         }
-        return buttons.filter(x => x.rank < rank);
+        return buttons.filter((x) => x.rank < rank);
       });
     }
   });

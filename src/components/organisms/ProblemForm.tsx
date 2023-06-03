@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import {
+  Accessor,
   createEffect,
   createResource,
   createSignal,
@@ -7,7 +8,6 @@ import {
   Setter,
   Show,
 } from "solid-js";
-import { createStore, SetStoreFunction } from "solid-js/store";
 import { Name, ShiftProblem } from "../../index";
 import { listen } from "@tauri-apps/api/event";
 import { css } from "solid-styled-components";
@@ -30,7 +30,7 @@ async function init_fetcher(props: {
 }): Promise<InitType> {
   const { begin_time, end_time, machine_id, maintainer_id } = await invoke(
     "get_shift_problem_by_id",
-    { id:props.id },
+    { id: props.id },
   )
     .catch((err) => console.log(err)) as ShiftProblem;
   console.log(begin_time);
@@ -40,15 +40,15 @@ async function init_fetcher(props: {
     id: machine_id,
   }) as string;
   const machine = { id: machine_id, name: m_name } as Name;
-  const note = await invoke("get_shift_problem_note_by_id", { id:props.id }) as
+  const note = await invoke("get_shift_problem_note_by_id", { id: props.id }) as
     | string
     | null;
   const problems_ids = await invoke("get_shift_problem_problems_ids_by_id", {
-    id:props.id,
+    id: props.id,
   }) as string[];
   const spare_parts_ids = await invoke(
     "get_shift_problem_spare_parts_ids_by_id",
-    { id:props.id },
+    { id: props.id },
   ) as string[];
   const problems: Name[] = [];
   for (const id of problems_ids) {
@@ -76,7 +76,7 @@ export function ProblemUpdateForm(props: {
   toggle: () => void;
   id: string;
 }) {
-  const [init] = createResource({ id:props.id }, init_fetcher);
+  const [init] = createResource({ id: props.id }, init_fetcher);
 
   function Core({
     init,
@@ -95,10 +95,10 @@ export function ProblemUpdateForm(props: {
 
     const [beginTimeI, setBeginTime] = createSignal(begin_time);
     const [endTimeI, setEndTime] = createSignal(end_time);
-    const [employeesI, setEmployees] = createStore<Name[]>([maintainer]);
-    const [machinesI, setMachines] = createStore<Name[]>([machine]);
-    const [problemsI, setProblems] = createStore<Name[]>([...problems]);
-    const [sparePartsI, setSpareParts] = createStore<Name[]>([
+    const [employeesI, setEmployees] = createSignal<Name[]>([maintainer]);
+    const [machinesI, setMachines] = createSignal<Name[]>([machine]);
+    const [problemsI, setProblems] = createSignal<Name[]>([...problems]);
+    const [sparePartsI, setSpareParts] = createSignal<Name[]>([
       ...(spare_parts || []),
     ]);
     const [noteI, setNote] = createSignal(note);
@@ -107,15 +107,15 @@ export function ProblemUpdateForm(props: {
 
     const handleSubmit = async (e: Event) => {
       e.preventDefault();
-      if (!machinesI.at(0)) {
+      if (!machinesI().at(0)) {
         alert("يجب تحديد الالة التي تمت عليها الصيانة");
         return;
       }
-      if (!employeesI.at(0)) {
+      if (!employeesI().at(0)) {
         alert("يجب تحديد الموظف الذي قام بالصيانة");
         return;
       }
-      if (!problemsI.length) {
+      if (!problemsI().length) {
         alert("يجب تحديد مشكلة واحدة علي الاقل");
         return;
       }
@@ -124,8 +124,8 @@ export function ProblemUpdateForm(props: {
         await invoke("update_problem_detail", {
           shiftProblemId: props.id,
           core: [
-            [maintainer.id, employeesI[0].id],
-            [machine.id, machinesI[0].id],
+            [maintainer.id, employeesI().at(0)!.id],
+            [machine.id, machinesI().at(0)!.id],
             [
               begin_time,
               beginTimeI().length === 8 ? beginTimeI() : beginTimeI() + ":00",
@@ -137,11 +137,11 @@ export function ProblemUpdateForm(props: {
           ],
           problems: [
             problems.map((p) => p.id),
-            problemsI.map((problem) => problem.id),
+            problemsI().map((problem) => problem.id),
           ],
           spareParts: [
             spare_parts?.map((s) => s.id) || [],
-            sparePartsI?.map((part) => part.id) || [],
+            sparePartsI()?.map((part) => part.id) || [],
           ],
           note: [note, noteI()?.trim()],
         });
@@ -165,13 +165,13 @@ export function ProblemUpdateForm(props: {
               setEndTime={setEndTime}
             />
             <SearchBars
-              employees={employeesI}
+              employees={employeesI()}
               setEmployees={setEmployees}
-              problems={problemsI}
+              problems={problemsI()}
               setProblems={setProblems}
-              spareParts={sparePartsI}
+              spareParts={sparePartsI()}
               setSpareParts={setSpareParts}
-              machines={machinesI}
+              machines={machinesI()}
               setMachines={setMachines}
             />
             <ExtraNote note={() => noteI() || ""} setNote={setNote} />
@@ -199,10 +199,10 @@ export function ProblemSaveForm(props: {
 }) {
   const [beginTime, setBeginTime] = createSignal("");
   const [endTime, setEndTime] = createSignal("");
-  const [employees, setEmployees] = createStore<Name[]>([]);
-  const [machines, setMachines] = createStore<Name[]>([]);
-  const [spareParts, setSpareParts] = createStore<Name[]>([]);
-  const [problems, setProblems] = createStore<Name[]>([]);
+  const [employees, setEmployees] = createSignal<Name[]>([]);
+  const [machines, setMachines] = createSignal<Name[]>([]);
+  const [spareParts, setSpareParts] = createSignal<Name[]>([]);
+  const [problems, setProblems] = createSignal<Name[]>([]);
   const [note, setNote] = createSignal("");
 
   listen_selections_updates();
@@ -219,15 +219,15 @@ export function ProblemSaveForm(props: {
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
-    if (!machines.at(0)) {
+    if (!machines().at(0)) {
       alert("يجب تحديد الالة التي تمت عليها الصيانة");
       return;
     }
-    if (!employees.at(0)) {
+    if (!employees().at(0)) {
       alert("يجب تحديد الموظف الذي قام بالصيانة");
       return;
     }
-    if (!problems.length) {
+    if (!problems().length) {
       alert("يجب تحديد مشكلة واحدة علي الاقل");
       return;
     }
@@ -235,15 +235,15 @@ export function ProblemSaveForm(props: {
     try {
       const problemDetail = {
         shift_id: shiftId(),
-        maintainer_id: employees.at(0)!.id,
-        machine_id: machines.at(0)!.id,
+        maintainer_id: employees().at(0)!.id,
+        machine_id: machines().at(0)!.id,
         begin_time: beginTime().length === 8
           ? beginTime()
           : beginTime() + ":00",
         end_time: endTime().length === 8 ? endTime() : endTime() + ":00",
-        problems_ids: problems.map((problem) => problem.id),
-        spare_parts_ids: spareParts.length
-          ? spareParts.map((part) => part.id)
+        problems_ids: problems().map((problem) => problem.id),
+        spare_parts_ids: spareParts().length
+          ? spareParts().map((part) => part.id)
           : null,
         note: note() ? note().trim() : null,
       };
@@ -271,13 +271,13 @@ export function ProblemSaveForm(props: {
             setEndTime={setEndTime}
           />
           <SearchBars
-            employees={employees}
+            employees={employees()}
             setEmployees={setEmployees}
-            problems={problems}
+            problems={problems()}
             setProblems={setProblems}
-            spareParts={spareParts}
+            spareParts={spareParts()}
             setSpareParts={setSpareParts}
-            machines={machines}
+            machines={machines()}
             setMachines={setMachines}
           />
           <ExtraNote note={() => note()} setNote={setNote} />
@@ -342,42 +342,42 @@ const department_fetcher = async ({
 
 const listen_selections_updates = () => {
   listen("create_problem", () => {
-    setUpdates(["Problem"]);
+    setUpdates("Problem");
   });
   listen("delete_problem", () => {
-    setUpdates(["Problem"]);
+    setUpdates("Problem");
   });
 
   listen("create_employee", () => {
-    setUpdates(["Employee"]);
+    setUpdates("Employee");
   });
   listen("delete_employee", () => {
-    setUpdates(["Employee"]);
+    setUpdates("Employee");
   });
 
   listen("create_machine", () => {
-    setUpdates(["Machine"]);
+    setUpdates("Machine");
   });
   listen("delete_machine", () => {
-    setUpdates(["Machine"]);
+    setUpdates("Machine");
   });
 
   listen("create_spare_part", () => {
-    setUpdates(["SparePart"]);
+    setUpdates("SparePart");
   });
   listen("delete_spare_part", () => {
-    setUpdates(["SparePart"]);
+    setUpdates("SparePart");
   });
 };
 
 export type Updates =
-  | ["Problem"]
-  | ["SparePart"]
-  | ["Machine"]
-  | ["Employee"]
-  | ["None"];
+  | "Problem"
+  | "SparePart"
+  | "Machine"
+  | "Employee"
+  | "None";
 
-const [updates, setUpdates] = createStore<Updates>(["None"]);
+const [updates, setUpdates] = createSignal<Updates>("None");
 
 const container = css({
   display: "block",
@@ -452,7 +452,8 @@ function TimeConstraint(props: {
   );
 }
 
-function ExtraNote(props: { note: () => string | null; setNote: Setter<string> },
+function ExtraNote(
+  props: { note: () => string | null; setNote: Setter<string> },
 ) {
   const [displayNote, setDisplayNote] = createSignal(false);
 
@@ -480,8 +481,7 @@ function ExtraNote(props: { note: () => string | null; setNote: Setter<string> }
   );
 }
 
-function NoteText(props: { note: () => string; setNote: Setter<string> },
-) {
+function NoteText(props: { note: () => string; setNote: Setter<string> }) {
   const style = css({
     fontSize: "x-large",
     width: "90%",
@@ -502,8 +502,7 @@ function NoteText(props: { note: () => string; setNote: Setter<string> },
   );
 }
 
-function NoteButton(props: { length: () => number; toggleNote: () => void },
-) {
+function NoteButton(props: { length: () => number; toggleNote: () => void }) {
   const [hover, setHover] = createSignal(false);
 
   const style = () =>
@@ -532,13 +531,13 @@ function NoteButton(props: { length: () => number; toggleNote: () => void },
 
 function SearchBars(props: {
   machines: Name[];
-  setMachines: SetStoreFunction<Name[]>;
+  setMachines: Setter<Name[]>;
   employees: Name[];
-  setEmployees: SetStoreFunction<Name[]>;
+  setEmployees: Setter<Name[]>;
   problems: Name[];
-  setProblems: SetStoreFunction<Name[]>;
+  setProblems: Setter<Name[]>;
   spareParts: Name[];
-  setSpareParts: SetStoreFunction<Name[]>;
+  setSpareParts: Setter<Name[]>;
 }) {
   function fetcher_object({
     name,
@@ -634,7 +633,7 @@ function SearchBars(props: {
 
 function SearchBar(props: {
   subject: string;
-  updates: [string];
+  updates: Accessor<Updates>;
   defaultPlaceholder: string;
   resultPlaceholder: string;
   mtMessage: string;
@@ -642,7 +641,7 @@ function SearchBar(props: {
   isMulti: boolean;
   selection_fetcher: (name: () => string | null) => Promise<Name[]>;
   chosens: Name[];
-  setChosens: SetStoreFunction<Name[]>;
+  setChosens: Setter<Name[]>;
 }) {
   const [target, setTarget] = createSignal<string | null>(null);
   const [optionsList, { refetch }] = createResource(
@@ -651,7 +650,7 @@ function SearchBar(props: {
   );
 
   createEffect(() => {
-    if (updates[0] === props.subject || target()) {
+    if (updates() === props.subject || target()) {
       refetch();
     }
   });

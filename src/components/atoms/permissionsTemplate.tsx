@@ -40,7 +40,8 @@ export default function PermissionsTemplate(props: {
             <For each={allowed()}>
               {(item) => (
                 <option
-                  onClick={() => props.allowedHandler(props.permissions()!.id, item[1])}
+                  onClick={() =>
+                    props.allowedHandler(props.permissions()!.id, item[1])}
                 >
                   {item[0]}
                 </option>
@@ -60,7 +61,8 @@ export default function PermissionsTemplate(props: {
             <For each={forbidden()}>
               {(item) => (
                 <option
-                  onClick={() => props.forbiddenHandler(props.permissions()!.id, item[1])}
+                  onClick={() =>
+                    props.forbiddenHandler(props.permissions()!.id, item[1])}
                 >
                   {item[0]}
                 </option>

@@ -62,6 +62,7 @@ pub fn build_tauri(state: TauriState) -> Builder<Wry> {
             employee_permissions_classified,
             permission_allow,
             permission_forbid,
+            change_password,
             remove_shift_employee,
             add_shift_employee,
             save_shift_note,
