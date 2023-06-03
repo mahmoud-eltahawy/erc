@@ -1,8 +1,8 @@
-import { createSignal } from "solid-js";
+import { Accessor, createSignal } from "solid-js";
 import { css } from "solid-styled-components";
 
 export default function ShowAllToggleButton(
-  props: { toggle: () => void; target: [string | null] },
+  props: { toggle: () => void; target: Accessor<string | null> },
 ) {
   const [hover, setHover] = createSignal(false);
 
@@ -25,7 +25,7 @@ export default function ShowAllToggleButton(
       onMouseLeave={() => setHover(false)}
       type="submit"
     >
-      {props.target[0] === "*" ? "شاهد اقل" : "شاهد الكل"}
+      {props.target() === "*" ? "شاهد اقل" : "شاهد الكل"}
     </button>
   );
 }

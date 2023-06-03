@@ -1,4 +1,4 @@
-import { createStore } from "solid-js/store";
+import { createSignal } from "solid-js";
 import { css } from "solid-styled-components";
 import { shiftId } from "../../App";
 import AddShiftNote from "../molecules/AddShiftNote";
@@ -9,7 +9,7 @@ import ShiftWrittenShow from "../molecules/shiftWrittenNote";
 import { ProblemSaveForm } from "./ProblemForm";
 
 export default function CurrentShiftData(props: { rank: number }) {
-  const [last, setLast] = createStore([-1]);
+  const [last, setLast] = createSignal(-1);
 
   const container = css({
     display: "block",
@@ -26,19 +26,19 @@ export default function CurrentShiftData(props: { rank: number }) {
           [
             "اضافة عطل",
             <ProblemSaveForm
-              toggle={() => setLast([0])}
+              toggle={() => setLast(0)}
             />,
           ],
           [
             "تعريف مشكلة",
             <DefineProblem
-              toggle={() => setLast([1])}
+              toggle={() => setLast(1)}
             />,
           ],
           [
             "اضافة ملحوظة",
             <AddShiftNote
-              toggle={() => setLast([2])}
+              toggle={() => setLast(2)}
             />,
           ],
           ["اليومية", <SetShiftEmployees />],
@@ -51,7 +51,7 @@ export default function CurrentShiftData(props: { rank: number }) {
           ],
         ]}
         num={last}
-        fun={() => setLast([-1])}
+        fun={() => setLast(-1)}
       />
     </section>
   );

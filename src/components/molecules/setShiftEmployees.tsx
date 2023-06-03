@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
-import { createResource, For, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createResource, createSignal, For, Show } from "solid-js";
 import { css } from "solid-styled-components";
 import { employee, shiftId } from "../../App";
 import Namer from "../atoms/Namer";
@@ -22,7 +21,7 @@ export const existing_employees_fetcher = async (
 };
 
 export default function SetShiftEmployees() {
-  const [target, setTarget] = createStore<[string | null]>([null]);
+  const [target, setTarget] = createSignal<string | null>(null);
   const [nonExisting, nex] = createResource(non_existing_fetcher);
   const [existing, ex] = createResource(
     { shift_id: shiftId },
@@ -75,9 +74,9 @@ export default function SetShiftEmployees() {
         placeholder={"ابحث عن موظف للتسجيل"}
         class={inputStyle}
         type="text"
-        value={target[0]!}
+        value={target()!}
         onInput={(e) => {
-          setTarget([e.currentTarget.value]);
+          setTarget(e.currentTarget.value);
           nex.refetch();
         }}
       />

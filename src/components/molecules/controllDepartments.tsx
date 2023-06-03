@@ -93,11 +93,11 @@ function DepartmentSettings(
   props: { departmentId: string; rank: number },
 ) {
   const [permissions, dbf] = createResource(
-    { departmentId:props.departmentId },
+    { departmentId: props.departmentId },
     department_permissions_fetcher,
   );
   const [department, { refetch }] = createResource(
-    { departmentId:props.departmentId },
+    { departmentId: props.departmentId },
     department_fetcher,
   );
 
@@ -156,10 +156,9 @@ function DepartmentSettings(
 }
 
 function ChooseBoss(props: {
-    department: () => Department;
-    refetch: () => void;
-  },
-) {
+  department: () => Department;
+  refetch: () => void;
+}) {
   const [target, setTarget] = createSignal<string>("");
 
   const optionHandler = async (newBossId: string) => {
@@ -196,8 +195,9 @@ function ChooseBoss(props: {
   return (
     <section>
       <h1 class={css({ fontSize: "20px" })}>
-        رئيس القسم :{" "}
-        {props.department().boss?.name ? props.department().boss?.name : "لا يوجد"}
+        رئيس القسم : {props.department().boss?.name
+          ? props.department().boss?.name
+          : "لا يوجد"}
       </h1>
       <input
         class={inputStyle}

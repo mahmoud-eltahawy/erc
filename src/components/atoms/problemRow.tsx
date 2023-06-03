@@ -79,9 +79,13 @@ function Core(props: {
   const [begin_time, set_begin_time] = createSignal(props.init.begin_time);
   const [end_time, set_end_time] = createSignal(props.init.end_time);
   const [machine_id, set_machine_id] = createSignal(props.init.machine_id);
-  const [maintainer_id, set_maintainer_id] = createSignal(props.init.maintainer_id);
+  const [maintainer_id, set_maintainer_id] = createSignal(
+    props.init.maintainer_id,
+  );
   const [problems, set_problems] = createSignal(props.init.problems);
-  const [spare_parts, set_spare_parts] = createSignal(props.init.spare_parts || []);
+  const [spare_parts, set_spare_parts] = createSignal(
+    props.init.spare_parts || [],
+  );
   const [note, set_note] = createSignal(props.init.note);
 
   listen("update_shift_problem_begin_time", (e) => {

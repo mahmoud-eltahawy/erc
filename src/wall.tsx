@@ -10,6 +10,8 @@ import { ButtonsOrElementLite } from "./components/molecules/buttonsOrElement";
 import { listen } from "@tauri-apps/api/event";
 import NavBar, { setButtons } from "./navBar";
 
+const [changePassword, setChangePassword] = createSignal(false);
+
 export default function Wall(props: { rank: number }) {
   setInterval(() => {
     invoke("check_shift_time", {
@@ -22,6 +24,7 @@ export default function Wall(props: { rank: number }) {
     <section>
       <AboutParagraph />
       <LogoutButton />
+      <PasswordUpdate />
       <NavBar />
       {employee()?.card_id === 0
         ? <Controlling rank={props.rank} />
@@ -30,7 +33,10 @@ export default function Wall(props: { rank: number }) {
             rank={props.rank}
             buttonElementPairs={() => [
               ["التحكم", <Controlling rank={props.rank + 1} />],
-              ["بيانات الوردية الحالية", <CurrentShiftData rank={props.rank + 1} />],
+              [
+                "بيانات الوردية الحالية",
+                <CurrentShiftData rank={props.rank + 1} />,
+              ],
               ["السجل", <HistoryShow rank={props.rank + 1} />],
             ]}
           />
@@ -67,7 +73,7 @@ function AboutParagraph() {
       top: "0px",
       left: "0px",
       width: hover() ? "35%" : "15%",
-      height: hover() ? "15%" : "5%",
+      height: hover() ? "25%" : "8%",
       padding: ".5em",
       borderRight: "2px solid",
       borderBottom: "2px solid",
@@ -96,6 +102,16 @@ function AboutParagraph() {
               <p>{`رقم التعريف : ${employee()!.card_id}`}</p>
               <p>{`القسم : ${notNullDepartment().name}`}</p>
               <p>{`الرتبة : ${position()}`}</p>
+              <button
+                class={css({
+                  fontSize: "25px",
+                  margin: "2%",
+                  padding: "1%",
+                })}
+                onClick={() => setChangePassword(true)}
+              >
+                تغيير كلمة السر
+              </button>
             </Show>
           )}
         </Show>
@@ -143,5 +159,84 @@ function LogoutButton() {
     >
       تسجيل خروج
     </button>
+  );
+}
+
+function PasswordUpdate() {
+  const style = css({
+    display: "block",
+    backgroundColor: "lightyellow",
+    border: "2px solid",
+    borderRadius: "200px",
+    position: "absolute",
+    left: "15%",
+    top: "15%",
+    width: "70%",
+    height: "70%",
+  });
+  const inputStyle = css({
+    fontSize: "20px",
+    margin: "5%",
+    padding: "1%",
+  });
+  const buttonStyle = css({
+    fontSize: "25px",
+    margin: "2%",
+    padding: "1%",
+  });
+  let old_password: HTMLInputElement | undefined = undefined;
+  let new_password1: HTMLInputElement | undefined = undefined;
+  let new_password2: HTMLInputElement | undefined = undefined;
+
+  const handleSubmit = async (e: Event) => {
+    e.preventDefault();
+    if (new_password1?.value === new_password2?.value) {
+      await invoke("change_password", {
+        employeeId: employee()?.id,
+        oldPassword: old_password?.value,
+        newPassword: new_password1?.value,
+      }).catch((err) => alert(err));
+      setChangePassword(false);
+    } else {
+      alert("كلمة السر الجديدة غير متطابقة");
+    }
+  };
+
+  return (
+    <Show when={changePassword()}>
+      <section class={style}>
+        <form onSubmit={handleSubmit}>
+          <input
+            ref={old_password}
+            class={inputStyle}
+            type="password"
+            placeholder="كلمة السر الحالية"
+          />
+          <br />
+          <input
+            ref={new_password1}
+            class={inputStyle}
+            type="password"
+            placeholder="كلمة السر الجديدة"
+          />
+          <br />
+          <input
+            ref={new_password2}
+            class={inputStyle}
+            type="password"
+            placeholder="كلمة السر الجديدة مرة اخري"
+          />
+          <br />
+          <button class={buttonStyle} type="submit">تاكيد</button>
+          <button
+            class={buttonStyle}
+            type="reset"
+            onClick={() => setChangePassword(false)}
+          >
+            الغاء
+          </button>
+        </form>
+      </section>
+    </Show>
   );
 }

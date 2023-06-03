@@ -1,6 +1,11 @@
 import { invoke } from "@tauri-apps/api";
-import { createEffect, createResource, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import {
+  Accessor,
+  createEffect,
+  createResource,
+  createSignal,
+  Show,
+} from "solid-js";
 import { css } from "solid-styled-components";
 import { departmentsNames, Name, PermissionsClassified } from "../..";
 import PermissionsTemplate from "../atoms/permissionsTemplate";
@@ -8,14 +13,14 @@ import ShowAllToggleButton from "../atoms/showAllToggleButton";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
 export default function ControllEmployees(props: { rank: number }) {
-  const [target, setTarget] = createStore<[string | null]>([null]);
+  const [target, setTarget] = createSignal<string | null>(null);
 
   const toggle = () => {
-    if (target[0] === "*") {
-      setTarget([" "]);
-      setTarget([null]);
+    if (target() === "*") {
+      setTarget(" ");
+      setTarget(null);
     } else {
-      setTarget(["*"]);
+      setTarget("*");
     }
   };
 
@@ -42,8 +47,8 @@ export default function ControllEmployees(props: { rank: number }) {
     <section>
       <div class={container}>
         <input
-          value={target[0]!}
-          onInput={(e) => setTarget([e.currentTarget.value])}
+          value={target()!}
+          onInput={(e) => setTarget(e.currentTarget.value)}
           class={targetStyle}
           type="text"
           placeholder="ادخل اسم الموظف"
@@ -82,18 +87,17 @@ const department_employees_names_fetcher = async (
 };
 
 function DepartmentEmployees(props: {
-    target: [string | null];
-    departmentId: string;
-    rank: number;
-  },
-) {
+  target: Accessor<string | null>;
+  departmentId: string;
+  rank: number;
+}) {
   const [employees, { refetch }] = createResource({
-    name: () => props.departmentId[0],
-    departmentId:props.departmentId,
+    name: () => props.target(),
+    departmentId: props.departmentId,
   }, department_employees_names_fetcher);
 
   createEffect(() => {
-    if (props.target[0]) {
+    if (props.target()) {
       refetch();
     }
   });
@@ -117,11 +121,11 @@ function DepartmentEmployees(props: {
 }
 
 const employee_permissions_fetcher = async (props: {
-    employeeId: string
+  employeeId: string;
 }) => {
   const [id, allowed, forbidden] = await invoke(
     "employee_permissions_classified",
-    { employeeId:props.employeeId },
+    { employeeId: props.employeeId },
   )
     .catch((err) => {
       console.log(err);
@@ -136,7 +140,7 @@ const employee_permissions_fetcher = async (props: {
 
 function EmployeePermissions(props: { employeeId: string }) {
   const [permissions, { refetch }] = createResource(
-    { employeeId:props.employeeId },
+    { employeeId: props.employeeId },
     employee_permissions_fetcher,
   );
 

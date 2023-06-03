@@ -51,8 +51,9 @@ export default function DefineProblem(props: {
 }
 
 export function DescriptionInput(props: {
-    desc: () => string; setDesc: Setter<string> },
-) {
+  desc: () => string;
+  setDesc: Setter<string>;
+}) {
   const style = css({
     display: "block",
     width: "50%",
@@ -77,8 +78,7 @@ export function DescriptionInput(props: {
   );
 }
 
-function TitleInput(props: { title: () => string; setTitle: Setter<string> },
-) {
+function TitleInput(props: { title: () => string; setTitle: Setter<string> }) {
   const style = css({
     display: "block",
     width: "50%",

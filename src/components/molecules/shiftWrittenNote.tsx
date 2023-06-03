@@ -19,7 +19,7 @@ import { UpdateShiftNote } from "./AddShiftNote";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 import { existing_employees_fetcher } from "./setShiftEmployees";
 
-export default function ShiftWrittenShow(props : {
+export default function ShiftWrittenShow(props: {
   rank: number;
   shiftId: () => string;
 }) {
@@ -263,7 +263,7 @@ export const shift_shift_problems_ids_fetcher = async (props: {
   id: string;
 }) => {
   return (await invoke("get_shift_problems_ids_by_shift_id", {
-    id:props.id,
+    id: props.id,
   })) as string[];
 };
 

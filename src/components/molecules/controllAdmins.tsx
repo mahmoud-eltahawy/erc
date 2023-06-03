@@ -1,29 +1,26 @@
 import { invoke } from "@tauri-apps/api";
-import { createResource, For, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import { listen } from "@tauri-apps/api/event";
+import { createResource, createSignal, For, Show } from "solid-js";
 import { css } from "solid-styled-components";
-import { Name } from "../..";
+import Namer from "../atoms/Namer";
 
 const non_admins_fetcher = async (props: { name: () => string | null }) => {
   return (await invoke("search_non_admins", {
     name: props.name() !== " " ? props.name() : null,
-  })) as Name[];
+  })) as string[];
 };
 
 const admins_fetcher = async () => {
-  return (await invoke("search_admins")) as Name[];
+  return (await invoke("search_admins")) as string[];
 };
 
-const [target, setTarget] = createStore<[string | null]>([null]);
+const [target, setTarget] = createSignal<string | null>(null);
+
+const [admins, a] = createResource(admins_fetcher);
 const [nonAdmins, na] = createResource(
-  { name: () => target[0] },
+  { name: () => target() },
   non_admins_fetcher,
 );
-const [admins, a] = createResource(admins_fetcher);
-const refetch = () => {
-  na.refetch();
-  a.refetch();
-};
 
 export default function ControllAdmins() {
   const container = css({
@@ -52,9 +49,9 @@ export default function ControllAdmins() {
         placeholder={"ابحث عن موظف للتمكين"}
         class={inputStyle}
         type="text"
-        value={target[0]!}
+        value={target()!}
         onInput={(e) => {
-          setTarget([e.currentTarget.value]);
+          setTarget(e.currentTarget.value);
           na.refetch();
         }}
       />
@@ -83,15 +80,21 @@ const viewMember = css({
 function AdminsSection() {
   const handler = async (employeeId: string) => {
     await invoke("unadmin_employee", { employeeId });
-    refetch();
   };
+
+  const down = (id : string) => {
+      a.mutate(xs => xs?.filter(x => x != id))
+      na.refetch()
+  }
+
+  listen("update_employee_down",(e) => down(e.payload as string))
 
   return (
     <select multiple size={9} class={viewMember}>
       {
         <For each={admins()}>
-          {(item) => (
-            <option onClick={() => handler(item.id)}>{item.name}</option>
+          {(id) => (
+            <option onClick={() => handler(id)}><Namer command="employee_name" id={() => id}/></option>
           )}
         </For>
       }
@@ -105,15 +108,21 @@ function AdminsSection() {
 function NonAdminSection() {
   const handler = async (employeeId: string) => {
     await invoke("admin_employee", { employeeId });
-    refetch();
   };
+
+  const up = (id : string) => {
+      a.mutate(xs => [id,...(xs || [])])
+      na.refetch()
+  }
+
+  listen("update_employee_up",(e) => up(e.payload as string))
 
   return (
     <select multiple size={9} class={viewMember}>
       {
         <For each={nonAdmins()}>
-          {(item) => (
-            <option onClick={() => handler(item.id)}>{item.name}</option>
+          {(id) => (
+            <option onClick={() => handler(id)}><Namer command="employee_name" id={() => id}/></option>
           )}
         </For>
       }

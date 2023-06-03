@@ -1,5 +1,10 @@
-import { createEffect, createResource, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import {
+  Accessor,
+  createEffect,
+  createResource,
+  createSignal,
+  Show,
+} from "solid-js";
 import { css } from "solid-styled-components";
 import { employees_names_fetcher } from "../..";
 import { permissions } from "../../App";
@@ -7,14 +12,14 @@ import ShowAllToggleButton from "../atoms/showAllToggleButton";
 import { ButtonsOrElementLite } from "./buttonsOrElement";
 
 export default function HistoryEmployees(props: { rank: number }) {
-  const [target, setTarget] = createStore<[string | null]>([null]);
+  const [target, setTarget] = createSignal<string | null>(null);
 
   const toggle = () => {
-    if (target[0] === "*") {
-      setTarget([" "]);
-      setTarget([null]);
+    if (target() === "*") {
+      setTarget(" ");
+      setTarget(null);
     } else {
-      setTarget(["*"]);
+      setTarget("*");
     }
   };
 
@@ -45,8 +50,8 @@ export default function HistoryEmployees(props: { rank: number }) {
       >
         <div class={container}>
           <input
-            value={target[0]!}
-            onInput={(e) => setTarget([e.currentTarget.value])}
+            value={target()!}
+            onInput={(e) => setTarget(e.currentTarget.value)}
             class={targetStyle}
             type="text"
             placeholder="ادخل اسم الموظف"
@@ -60,15 +65,14 @@ export default function HistoryEmployees(props: { rank: number }) {
   );
 }
 
-function ShowHistory(props: { rank: number; target: [string | null] },
-) {
+function ShowHistory(props: { rank: number; target: Accessor<string | null> }) {
   const [employees, { refetch }] = createResource(
-    { name: () => props.target[0] },
+    { name: () => props.target() },
     employees_names_fetcher,
   );
 
   createEffect(() => {
-    if (props.target[0]) {
+    if (props.target()) {
       refetch();
     }
   });

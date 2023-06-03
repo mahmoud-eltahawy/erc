@@ -12,7 +12,9 @@ export default function ToggelableList(
   return (
     <ul>
       {tooLong()
-        ? props.elements().slice(0, limit).map((element) => <li>{element.name}</li>)
+        ? props.elements().slice(0, limit).map((element) => (
+          <li>{element.name}</li>
+        ))
         : props.elements().map((element) => <li>{element.name}</li>)}
       {togglingButton({
         showButton: () => props.elements().length > limit,

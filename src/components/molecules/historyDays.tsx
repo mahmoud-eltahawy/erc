@@ -127,11 +127,13 @@ function ShowAllHistory(props: { rank: number }) {
   );
 }
 
-function ShowHistory(props : {
+function ShowHistory(props: {
   rank: number;
   departmentId: () => string;
 }) {
-  const [days, { refetch }] = createResource({ departmentId:props.departmentId }, fetcher);
+  const [days, { refetch }] = createResource({
+    departmentId: props.departmentId,
+  }, fetcher);
 
   createEffect(() => {
     const b = begin();
@@ -171,8 +173,7 @@ function ShowHistory(props : {
   );
 }
 
-function Shifts(props: { shifts: () => [string, string][]; rank: number },
-) {
+function Shifts(props: { shifts: () => [string, string][]; rank: number }) {
   return (
     <div>
       <ButtonsOrElementLite

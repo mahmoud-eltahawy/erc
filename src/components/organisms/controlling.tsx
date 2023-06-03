@@ -6,7 +6,7 @@ import { Show } from "solid-js";
 import { employee } from "../../App";
 import { ButtonsOrElementLite } from "../molecules/buttonsOrElement";
 
-export default function Controlling(props : { rank: number }) {
+export default function Controlling(props: { rank: number }) {
   const container = css({
     display: "block",
     fontSize: "18px",
