@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use chrono::{Local, NaiveDateTime, NaiveTime};
-use errc::{
+use erc_ui::{
     api::main_entry,
     config::AppState,
     memory::{

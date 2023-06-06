@@ -1,6 +1,6 @@
 use std::error::Error;
 
-use errc::{config::AppState, test::insert_basic_data};
+use erc_ui::{config::AppState, test::insert_basic_data};
 
 use super::models::TauriState;
 use rusqlite::Connection;

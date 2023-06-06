@@ -1,4 +1,4 @@
-use errc::translator::{translate_date, translate_order};
+use erc_ui::translator::{translate_date, translate_order};
 use rec::timer::{get_current_date, get_current_order, get_relative_now};
 use std::sync::Mutex;
 use tauri::Window;

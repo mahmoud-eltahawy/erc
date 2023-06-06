@@ -2,9 +2,11 @@
 <html lang="ar">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vue.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>التقرير</title>
+    <link data-trunk rel="css" href="styles.css" />
+    <link data-trunk rel="copy-dir" href="public" />
+    <link data-trunk rel="rust" data-wasm-opt="z" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
       *{
         padding: 0;
@@ -22,7 +24,7 @@
       body {
         padding: 20px;
         min-height: 100vh;
-        background-image: url('./src/assets/errc-wallpaper.webp');
+        background-image: url('./public/errc-wallpaper.webp');
       }
 
       :root {
@@ -44,9 +46,4 @@
       }
     </style>
   </head>
-
-  <body>
-    <div id="root"></div>
-    <script src="/src/index.tsx" type="module"></script>
-  </body>
 </html>

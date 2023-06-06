@@ -1,14 +1,14 @@
 {
   "build": {
-    "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "trunk serve",
+    "beforeBuildCommand": "trunk build",
     "devPath": "http://localhost:1420",
     "distDir": "../dist",
-    "withGlobalTauri": false
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "erc",
-    "version": "0.1.0"
+    "version": "0.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -16,42 +16,18 @@
     },
     "bundle": {
       "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
-      "deb": {
-        "depends": []
-      },
-      "externalBin": [],
+      "targets": "all",
+      "identifier": "com.rondy.elegant",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
-      ],
-      "identifier": "com.rondy.elegant",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
-      }
+      ]
     },
     "security": {
       "csp": null
-    },
-    "updater": {
-      "active": false
     },
     "windows": [
       {

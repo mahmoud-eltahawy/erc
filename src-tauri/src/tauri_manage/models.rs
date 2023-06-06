@@ -1,4 +1,4 @@
-use errc::config::AppState;
+use erc_ui::config::AppState;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

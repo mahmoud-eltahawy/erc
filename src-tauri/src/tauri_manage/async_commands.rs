@@ -2,7 +2,7 @@ use std::{error::Error, sync::Mutex};
 
 use bcrypt::BcryptResult;
 use chrono::{Local, NaiveDateTime, NaiveTime};
-use errc::{
+use erc_ui::{
     api::main_entry,
     config::AppState,
     memory::{
